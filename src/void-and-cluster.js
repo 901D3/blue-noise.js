@@ -53,7 +53,7 @@ function blueNoise(
   const halfSqSz = sqSz * 0.5;
   const filled1 = floor(sqSz * initArrayDensity);
   const unshuffled = new Float32Array(sqSz);
-  const prototypeBinArray = fisherYatesShuffle(unshuffled);
+  const prototypeBinArray = shuffle(unshuffled);
   for (let i = 0; i < sqSz; i++) {
     if (i < filled1) unshuffled[i] = 1;
     else unshuffled[i] = 0;
@@ -238,4 +238,20 @@ function gaussianBlurWrap(inArray, width, height, sigma = 1.5, radius = 3) {
   }
 
   return out;
+}
+
+function shuffle(array) {
+  let m = array.length,
+    t,
+    i;
+
+  while (m) {
+    i = Math.floor(random() * random() * m--);
+
+    t = array[m];
+    array[m] = array[i];
+    array[i] = t;
+  }
+
+  return array;
 }
