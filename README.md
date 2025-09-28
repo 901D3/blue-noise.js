@@ -1,5 +1,5 @@
 # _**void-and-cluster.js**_
-JS implementation of void and cluster method by Robert Ulichney
+JS implementation of Void and Cluster method by Robert Ulichney
 
 I went around the internet to find a Void and Cluster js implementation but there seems to be none or less\
 Ethan Shulman did implement Void and Cluster but he default to "All Rights Reserved" so i can't use his implement\
