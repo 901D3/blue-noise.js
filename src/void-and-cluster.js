@@ -237,7 +237,7 @@ var blueNoise = (function () {
       i;
 
     while (m) {
-      i = Math.floor(random() * random() * m--);
+      i = Math.floor(Math.random() * Math.random() * m--);
 
       t = array[m];
       array[m] = array[i];
