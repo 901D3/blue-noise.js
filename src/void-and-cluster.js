@@ -6,21 +6,23 @@
  * This code is licensed with GPLv3 license
  */
 
+"use strict";
+
 /**
  * Generate blue noise with void and cluster method
  *
  * @param {int} width output dimension
  * @param {int} height output dimension
- * @param {float*} phase0Sigma sigma value for initializing binary pattern
- * @param {float} [phase1Sigma]
- * @param {float} [phase2Sigma]
- * @param {float} [phase3Sigma]
+ * @param {float} phase0Sigma sigma value for initializing binary pattern
+ * @param {float} phase1Sigma
+ * @param {float} phase2Sigma
+ * @param {float} phase3Sigma
  * @param {int} phase0KernelRadius kernel value for initializing binary pattern
- * @param {int} [phase1KernelRadius]
- * @param {int} [phase2KernelRadius]
- * @param {int} [phase3KernelRadius]
+ * @param {int} phase1KernelRadius
+ * @param {int} phase2KernelRadius
+ * @param {int} phase3KernelRadius
  * @param {float} initArrayDensity
- * @param {array} [initArray]
+ * @param {array} initArray
  * @returns {array}
  */
 
@@ -38,26 +40,45 @@ function blueNoise(
   initArrayDensity,
   initArray
 ) {
+  //safety checks
   if (width == null || height == null || initArrayDensity == null || phase0Sigma == null || phase0KernelRadius == null) {
-    return false;
+    throw new Error("'width', 'height', 'phase0Sigma', 'phase0KernelRadius' and 'initArrayDensity' arguments is mandatory");
   }
-  if (phase1Sigma == null) phase2Sigma = phase0Sigma;
-  if (phase2Sigma == null) phase2Sigma = phase0Sigma;
-  if (phase3Sigma == null) phase3Sigma = phase0Sigma;
-  if (phase1KernelRadius == null) phase1KernelRadius = phase0KernelRadius;
-  if (phase2KernelRadius == null) phase2KernelRadius = phase0KernelRadius;
-  if (phase3KernelRadius == null) phase3KernelRadius = phase0KernelRadius;
+  if (phase1Sigma == null) {
+    console.info("phase1Sigma falled back to " + phase0Sigma);
+    phase1Sigma = phase0Sigma;
+  }
+  if (phase2Sigma == null) {
+    console.info("phase2Sigma falled back to " + phase0Sigma);
+    phase2Sigma = phase0Sigma;
+  }
+  if (phase3Sigma == null) {
+    console.info("phase3Sigma falled back to " + phase0Sigma);
+    phase3Sigma = phase0Sigma;
+  }
+  if (phase1KernelRadius == null) {
+    console.info("phase1KernelRadius falled back to " + phase0KernelRadius);
+    phase1KernelRadius = phase0KernelRadius;
+  }
+  if (phase2KernelRadius == null) {
+    console.info("phase2KernelRadius falled back to " + phase0KernelRadius);
+    phase2KernelRadius = phase0KernelRadius;
+  }
+  if (phase3KernelRadius == null) {
+    console.info("phase3KernelRadius falled back to " + phase0KernelRadius);
+    phase3KernelRadius = phase0KernelRadius;
+  }
 
   let t0 = performance.now();
   let t1 = performance.now();
   const sqSz = width * height;
-  const halfSqSz = sqSz * 0.5;
+  const halfSqSz = sqSz / 2;
   const filled1 = floor(sqSz * initArrayDensity);
-  const unshuffled = new Float32Array(sqSz);
-  const prototypeBinArray = fisherYatesShuffle(unshuffled);
+  const tempArray = new Float32Array(sqSz);
+  const shuffled = fisherYatesShuffle(tempArray);
   for (let i = 0; i < sqSz; i++) {
-    if (i < filled1) unshuffled[i] = 1;
-    else unshuffled[i] = 0;
+    if (i < filled1) tempArray[i] = 1;
+    else tempArray[i] = 0;
   }
 
   const rankArray = new Int32Array(sqSz);
@@ -66,17 +87,17 @@ function blueNoise(
     binaryArray.set(initArray);
   } else {
     console.warn("Inputed initial array dimension does not match " + width + "x" + height + ", default to randomizer");
-    for (let i = 0; i < sqSz; i++) binaryArray[i] = prototypeBinArray[i];
+    for (let i = 0; i < sqSz; i++) binaryArray[i] = shuffled[i];
   }
   console.log("Setup took " + (performance.now() - t1) + "ms");
 
-  let blurred;
+  let blurred = new Float32Array(sqSz);
 
   //We skip initializing if the initial binary array is filled
   if (filled1 !== sqSz) {
     //Phase 0
     //Load Binary Pattern with Input Pattern.
-    blurred = gaussianBlurWrap(binaryArray, width, height, phase0Sigma, phase0KernelRadius);
+    gaussianBlurWrap(binaryArray, tempArray, width, height, phase0Sigma, phase0KernelRadius, blurred);
 
     while (true) {
       let clusterValue = 0;
@@ -96,7 +117,7 @@ function blueNoise(
       //Remove the "1" with the tightest cluster.
       binaryArray[clusterIdx] = 0;
       //Update blur array
-      blurred = gaussianBlurWrap(binaryArray, width, height, phase0Sigma, phase0KernelRadius);
+      gaussianBlurWrap(binaryArray, tempArray, width, height, phase0Sigma, phase0KernelRadius, blurred);
 
       //Find location of largest void. (All 0's are candidates.)
       for (let i = 0; i < sqSz; i++) {
@@ -115,14 +136,14 @@ function blueNoise(
       //no
       //Insert a "1" in largest void.
       binaryArray[voidIdx] = 1;
-      blurred = gaussianBlurWrap(binaryArray, width, height, phase0Sigma, phase0KernelRadius);
+      gaussianBlurWrap(binaryArray, tempArray, width, height, phase0Sigma, phase0KernelRadius, blurred);
     }
     console.log("Phase 0 took " + (performance.now() - t1) + "ms");
   }
 
   //Phase 1
   t1 = performance.now();
-  blurred = gaussianBlurWrap(binaryArray, width, height, phase1Sigma, phase1KernelRadius);
+  gaussianBlurWrap(binaryArray, tempArray, width, height, phase1Sigma, phase1KernelRadius, blurred);
   for (let rank = 0; rank < filled1; rank++) {
     let value = 0;
     let idx;
@@ -139,7 +160,7 @@ function blueNoise(
     //Remove "1" from tightest cluster in Binary Pattern.
     binaryArray[idx] = 0;
     rankArray[idx] = filled1 - rank;
-    blurred = gaussianBlurWrap(binaryArray, width, height, phase1Sigma, phase2KernelRadius);
+    gaussianBlurWrap(binaryArray, tempArray, width, height, phase1Sigma, phase2KernelRadius, blurred);
   }
   console.log("Phase 1 took " + (performance.now() - t1) + "ms");
 
@@ -147,7 +168,7 @@ function blueNoise(
   //We skip phase 2 if the initial binary array is filled
   if (filled1 !== sqSz) {
     t1 = performance.now();
-    blurred = gaussianBlurWrap(prototypeBinArray, width, height, phase2Sigma, phase2KernelRadius);
+    blurred = gaussianBlurWrap(shuffled, tempArray, width, height, phase2Sigma, phase2KernelRadius, blurred);
     for (let rank = filled1; rank < halfSqSz; rank++) {
       let value = 0;
       let idx;
@@ -155,16 +176,16 @@ function blueNoise(
       //Find location of tightest cluster in Binary Pattern.
       for (let j = 0; j < sqSz; j++) {
         const blurredValue = blurred[j];
-        if (prototypeBinArray[j] === 0 && blurredValue < value) {
+        if (shuffled[j] === 0 && blurredValue < value) {
           value = blurredValue;
           idx = j;
         }
       }
 
       //Remove "1" from tightest cluster in Binary Pattern.
-      prototypeBinArray[idx] = 1;
+      shuffled[idx] = 1;
       rankArray[idx] = rank;
-      blurred = gaussianBlurWrap(prototypeBinArray, width, height, phase2Sigma, phase2KernelRadius);
+      gaussianBlurWrap(shuffled, tempArray, width, height, phase2Sigma, phase2KernelRadius, blurred);
     }
     console.log("Phase 2 took " + (performance.now() - t1) + "ms");
   }
@@ -178,7 +199,7 @@ function blueNoise(
   }
 
   if (filled1 !== sqSz) {
-    blurred = gaussianBlurWrap(binaryArray, width, height, phase3Sigma, phase3KernelRadius);
+    gaussianBlurWrap(binaryArray, tempArray, width, height, phase3Sigma, phase3KernelRadius, blurred);
   } else {
     blurred = [0];
   }
@@ -198,41 +219,52 @@ function blueNoise(
     //Insert "1" in largest void in Binary Pattern
     binaryArray[idx] = 1;
     rankArray[idx] = rank;
-    blurred = gaussianBlurWrap(binaryArray, width, height, phase3Sigma, phase3KernelRadius);
+    gaussianBlurWrap(binaryArray, tempArray, width, height, phase3Sigma, phase3KernelRadius, blurred);
   }
   console.log("Phase 3 took " + (performance.now() - t1) + "ms\n" + "Total time: " + (performance.now() - t0) + "ms");
 
   return rankArray;
 }
 
-function gaussianBlurWrap(inArray, width, height, sigma, radius) {
-  const out = new Float32Array(inArray.length);
+const gaussianKernelLUT = new Map();
 
-  const kernelSize = 2 * radius + 1;
-  const kernel = new Float32Array(kernelSize);
-  let sum = 0;
+function getGaussianKernelLUT(sigma, radius) {
+  const key = sigma + "," + radius;
+  if (!gaussianKernelLUT.has(key)) {
+    const kernelSize = 2 * radius + 1;
+    const kernel = new Float32Array(kernelSize);
+    let sum = 0;
+    const denom = 2 * Math.pow(sigma, 2);
 
-  const denominator = 2 * Math.pow(sigma, 2);
-  for (let i = -radius; i <= radius; i++) {
-    const val = Math.exp(-Math.pow(i, 2) / denominator);
-    kernel[i + radius] = val;
-    sum += val;
+    for (let i = -radius; i <= radius; i++) {
+      const val = Math.exp(-Math.pow(i, 2) / denom);
+      kernel[i + radius] = val;
+      sum += val;
+    }
+
+    for (let i = 0; i < kernelSize; i++) kernel[i] /= sum;
+
+    gaussianKernelLUT.set(key, kernel);
   }
 
-  for (let i = 0; i < kernelSize; i++) kernel[i] /= sum;
+  return gaussianKernelLUT.get(key);
+}
 
-  const tmp = new Float32Array(inArray.length);
+function gaussianBlurWrap(inArray, tempArray, width, height, sigma, radius, outArray) {
+  const kernel = getGaussianKernelLUT(sigma, radius);
+
   for (let y = 0; y < height; y++) {
     const yOffs = y * width;
 
     for (let x = 0; x < width; x++) {
-      let acc = 0;
+      const xOffsK = x + width;
+      let sum = 0;
 
       for (let k = -radius; k <= radius; k++) {
-        acc += inArray[yOffs + ((x + k + width) % width)] * kernel[k + radius];
+        sum += inArray[yOffs + ((k + xOffsK) % width)] * kernel[k + radius];
       }
 
-      tmp[yOffs + x] = acc;
+      tempArray[yOffs + x] = sum;
     }
   }
 
@@ -241,15 +273,13 @@ function gaussianBlurWrap(inArray, width, height, sigma, radius) {
     const yOffs = y * width;
 
     for (let x = 0; x < width; x++) {
-      let acc = 0;
+      let sum = 0;
 
       for (let k = -radius; k <= radius; k++) {
-        acc += tmp[((k + yOffsK) % height) * width + x] * kernel[k + radius];
+        sum += tempArray[((k + yOffsK) % height) * width + x] * kernel[k + radius];
       }
 
-      out[yOffs + x] = acc;
+      outArray[yOffs + x] = sum;
     }
   }
-
-  return out;
 }
