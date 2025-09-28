@@ -55,9 +55,9 @@
       <button onclick="setTimeout(blueNoiseWrapper, 0)">generate</button>
     </div>
   </body>
-  <script src="scripts/lib/901D3/void-and-cluster.js"></script>
+  <script src="../scripts/lib/901D3/void-and-cluster.js"></script>
   <script>
-    var blueNoiseCanvas = gId("blueNoiseCanvas");
+    var blueNoiseCanvas = document.getElementById("blueNoiseCanvas");
     var blueNoiseCtx = blueNoiseCanvas.getContext("2d");
 
     function findHighest(matrix) {
