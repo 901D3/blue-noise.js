@@ -7,7 +7,6 @@
   <body class="display-flex top-bottom-flow" style="gap: 8px; background-color: black; color: white">
     <div class="settings_container">
       <canvas id="blueNoiseCanvas" data-text="$elN_A" style="border: 3px solid #ff0"></canvas>
-      <textarea id="blueNoiseInitArrayInput" placeholder="2D matrix only"></textarea>
       <div class="settings_label-input">
         <span data-text="$width"></span>
         <input type="number" id="blueNoiseWidth" value="64" />
@@ -89,7 +88,7 @@
         Number(document.getElementById("blueNoisePhase2KernelRadius").value),
         Number(document.getElementById("blueNoisePhase3KernelRadius").value),
         Number(document.getElementById("blueNoiseInitArrayDensity").value),
-        Number(document.getElementById("blueNoiseInitArray").value)
+        null
       );
       const frame = blueNoiseCtx.getImageData(0, 0, blueNoiseWidth, blueNoiseHeight);
       const imageData = frame.data;
