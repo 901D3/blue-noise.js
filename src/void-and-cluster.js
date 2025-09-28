@@ -171,7 +171,6 @@ var blueNoise = (function () {
 
     //Phase 2
     //We skip phase 2 if the initial binary array is filled
-    console.log(shuffled);
     t1 = performance.now();
     kernel = _getGaussianKernelLUT(phase2Sigma, phase2KernelRadius);
     _gaussianBlurWrap(shuffled, width, height, kernel, phase2KernelRadius, blurred);
