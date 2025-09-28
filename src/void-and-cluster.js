@@ -26,6 +26,8 @@
  * @returns {array}
  */
 
+//Non squared dimension produces weird result so stick with squared dimension for now
+
 function blueNoise(
   width,
   height,
@@ -257,11 +259,13 @@ function gaussianBlurWrap(inArray, tempArray, width, height, sigma, radius, outA
     const yOffs = y * width;
 
     for (let x = 0; x < width; x++) {
-      const xOffsK = x + width;
       let sum = 0;
 
       for (let k = -radius; k <= radius; k++) {
-        sum += inArray[yOffs + ((k + xOffsK) % width)] * kernel[k + radius];
+        let xi = x + k;
+        if (xi < 0) xi += width;
+        else if (xi >= width) xi -= width;
+        sum += inArray[yOffs + xi] * kernel[k + radius];
       }
 
       tempArray[yOffs + x] = sum;
