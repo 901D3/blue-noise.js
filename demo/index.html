@@ -6,13 +6,14 @@
   </head>
   <body class="display-flex top-bottom-flow" style="gap: 8px; background-color: black; color: white">
     <div class="settings_container">
-      <canvas id="blueNoiseCanvas" data-text="$elN_A" style="border: 3px solid #ff0"></canvas>
+      <canvas id="blueNoiseCanvas" style="border: 3px solid #ff0"></canvas>
+      <textarea id="blueNoiseInitArrayInput" placeholder="2D matrix only"></textarea>
       <div class="settings_label-input">
-        <span data-text="$width"></span>
+        <span>Width</span>
         <input type="number" id="blueNoiseWidth" value="64" />
       </div>
       <div class="settings_label-input">
-        <span data-text="$height"></span>
+        <span>Height</span>
         <input type="number" id="blueNoiseHeight" value="64" />
       </div>
       <div class="settings_label-slider-input">
@@ -54,9 +55,9 @@
       <button onclick="setTimeout(blueNoiseWrapper, 0)">generate</button>
     </div>
   </body>
-  <script src="../src/void-and-cluster.js"></script>
+  <script src="scripts/lib/901D3/void-and-cluster.js"></script>
   <script>
-    var blueNoiseCanvas = document.getElementById("blueNoiseCanvas");
+    var blueNoiseCanvas = gId("blueNoiseCanvas");
     var blueNoiseCtx = blueNoiseCanvas.getContext("2d");
 
     function findHighest(matrix) {
