@@ -11,6 +11,14 @@
 "use strict";
 
 var blueNoise = (function () {
+  function fisherYatesShuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
+      [array[i], array[j]] = [array[j], array[i]]; // swap
+    }
+    return array;
+  }
+
   /**
    * Generate blue noise with void and cluster method
    *
@@ -229,22 +237,6 @@ var blueNoise = (function () {
     console.log("Phase 3 took " + (performance.now() - t1) + "ms\n" + "Total time: " + (performance.now() - t0) + "ms");
 
     return rankArray;
-  }
-
-  function fisherYatesShuffle(array) {
-    let m = array.length,
-      t,
-      i;
-
-    while (m) {
-      i = Math.floor(Math.random() * Math.random() * m--);
-
-      t = array[m];
-      array[m] = array[i];
-      array[i] = t;
-    }
-
-    return array;
   }
 
   /**
