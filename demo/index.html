@@ -16,8 +16,16 @@
         <input type="number" id="blueNoiseHeight" value="64" />
       </div>
       <div class="settings_label-slider-input">
-        <span>Phase 0 sigma</span>
-        <input type="number" id="blueNoisePhase0Sigma" value="1.5" />
+        <span>PDS radius x</span>
+        <input type="number" id="blueNoisePDSRadiusX" value="5" />
+      </div>
+      <div class="settings_label-slider-input">
+        <span>PDS radius y</span>
+        <input type="number" id="blueNoisePDSRadiusY" value="5" />
+      </div>
+      <div class="settings_label-slider-input">
+        <span>PDS K value</span>
+        <input type="number" id="blueNoisePDSKValue" value="30" />
       </div>
       <div class="settings_label-slider-input">
         <span>Phase 1 sigma</span>
@@ -32,10 +40,6 @@
         <input type="number" id="blueNoisePhase3Sigma" value="1.5" />
       </div>
       <div class="settings_label-slider-input">
-        <span>Phase 0 kernel radius</span>
-        <input type="number" id="blueNoisePhase0KernelRadius" value="6" />
-      </div>
-      <div class="settings_label-slider-input">
         <span>Phase 1 kernel radius</span>
         <input type="number" id="blueNoisePhase1KernelRadius" value="6" />
       </div>
@@ -46,10 +50,6 @@
       <div class="settings_label-slider-input">
         <span>Phase 3 kernel radius</span>
         <input type="number" id="blueNoisePhase3KernelRadius" value="6" />
-      </div>
-      <div class="settings_label-slider-input">
-        <span>Init array value dots density?</span>
-        <input type="number" id="blueNoiseInitArrayDensity" value="1" />
       </div>
       <button onclick="setTimeout(blueNoiseWrapper, 0)">generate</button>
     </div>
@@ -79,15 +79,15 @@
       const result = blueNoise.voidAndCluster(
         Number(document.getElementById("blueNoiseWidth").value),
         Number(document.getElementById("blueNoiseHeight").value),
-        Number(document.getElementById("blueNoisePhase0Sigma").value),
+        Number(document.getElementById("blueNoisePDSRadiusX").value),
+        Number(document.getElementById("blueNoisePDSRadiusY").value),
+        Number(document.getElementById("blueNoisePDSKValue").value),
         Number(document.getElementById("blueNoisePhase1Sigma").value),
         Number(document.getElementById("blueNoisePhase2Sigma").value),
         Number(document.getElementById("blueNoisePhase3Sigma").value),
-        Number(document.getElementById("blueNoisePhase0KernelRadius").value),
         Number(document.getElementById("blueNoisePhase1KernelRadius").value),
         Number(document.getElementById("blueNoisePhase2KernelRadius").value),
         Number(document.getElementById("blueNoisePhase3KernelRadius").value),
-        Number(document.getElementById("blueNoiseInitArrayDensity").value),
         null
       );
       const frame = blueNoiseCtx.getImageData(0, 0, blueNoiseWidth, blueNoiseHeight);
