@@ -6,8 +6,7 @@
   </head>
   <body class="display-flex top-bottom-flow" style="gap: 8px; background-color: black; color: white">
     <div class="settings_container">
-      <canvas id="blueNoiseCanvas" style="border: 3px solid #ff0"></canvas>
-      <textarea id="blueNoiseInitArrayInput" placeholder="2D matrix only"></textarea>
+      <canvas id="blueNoiseCanvas" style="border: 3px solid #ff0; image-rendering: pixelated"></canvas>
       <div class="settings_label-input">
         <span>Width</span>
         <input type="number" id="blueNoiseWidth" value="64" />
@@ -55,9 +54,9 @@
       <button onclick="setTimeout(blueNoiseWrapper, 0)">generate</button>
     </div>
   </body>
-  <script src="scripts/lib/901D3/void-and-cluster.js"></script>
+  <script src="../src/void-and-cluster.js"></script>
   <script>
-    var blueNoiseCanvas = gId("blueNoiseCanvas");
+    var blueNoiseCanvas = document.getElementById("blueNoiseCanvas");
     var blueNoiseCtx = blueNoiseCanvas.getContext("2d");
 
     function findHighest(matrix) {
