@@ -15,7 +15,7 @@ Mine\
 256x256, all phases sigma = 2, all phases kernel radius = 18, PDS radius x and y= 5, PDS K value = 30, 99.998s\
 <img width="256" height="256" alt="image" src="https://raw.githubusercontent.com/901D3/void-and-cluster.js/refs/heads/main/out/256x256%2C%20all%20phases%20sigma%20%3D%202%2C%20all%20phases%20kernel%20radius%20%3D%2018%2C%20PDS%20radius%20x%20and%20y%3D%205%2C%20PDS%20K%20value%20%3D%2030%2C%2099.998s.png" />
 
-256x256, phase 1 phase 2 sigma = 2, phase 3 sigma = 1.5, phase 1 phase 2 kernel radius = 16, phase 3 kernel radius = 4, all PDS radius = 5, PDS K value = 30, 92.71389999999851s\
+256x256, phase 1 phase 2 sigma = 2,5, phase 3 sigma = 1.5, phase 1 phase 2 kernel radius = 16, phase 3 kernel radius = 4, all PDS radius = 5, PDS K value = 30, 92.71389999999851s\
 <img width="256" height="256" alt="image" src="https://raw.githubusercontent.com/901D3/void-and-cluster.js/refs/heads/main/out/256x256%2C%20phase%201%20phase%202%20sigma%20%3D%202%2C%20phase%203%20sigma%20%3D%201.5%2C%20phase%201%20phase%202%20kernel%20radius%20%3D%2016%2C%20phase%203%20kernel%20radius%20%3D%204%2C%20all%20PDS%20radius%20%3D%205%2C%20PDS%20K%20value%20%3D%2030%2C%2092.71389999999851s.png" />
 
 From Demofox\
