@@ -74,15 +74,12 @@ var blueNoise = (function () {
    *
    * @param {int} width output dimension
    * @param {int} height output dimension
-   * @param {float} phase0Sigma sigma value for initializing binary pattern
    * @param {float} phase1Sigma
    * @param {float} phase2Sigma
    * @param {float} phase3Sigma
-   * @param {int} phase0KernelRadiusCap kernel value for initializing binary pattern
    * @param {int} phase1KernelRadiusCap
    * @param {int} phase2KernelRadiusCap
    * @param {int} phase3KernelRadiusCap
-   * @param {float} initArrayDensity
    * @param {array} initArray
    * @returns {array}
    */
