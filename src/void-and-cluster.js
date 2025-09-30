@@ -144,28 +144,30 @@ var blueNoise = (function () {
     //Setup arrays
     const halfSqSz = sqSz / 2;
 
-    const binaryArray = new Uint8Array(sqSz);
+    const binArray = new Uint8Array(sqSz);
     const rankArray = new Int32Array(sqSz);
     const blurred = new Float32Array(sqSz);
     if (initArray && initArray.length === sqSz) {
-      binaryArray.set(initArray);
+      binArray.set(initArray);
     } else {
       console.warn(
         "Inputed initial array dimension does not match " + width + "x" + height + ", default to Poisson Disk Sampling"
       );
-      binaryArray.set(_poissonDiskSampling(width, height, PDSRadiusX, PDSRadiusY, PDSKValue));
+      binArray.set(_poissonDiskSampling(width, height, PDSRadiusX, PDSRadiusY, PDSKValue));
     }
 
-    const filled1 = binaryArray.reduce((sum, v) => sum + v, 0);
+    const filled1 = binArray.reduce((sum, v) => sum + v, 0);
 
     //Gaussian blurring stuff
     let kernel = _getGaussianKernelLUT(phase1Sigma, phase1KernelRadius);
-    _gaussianBlurWrap(binaryArray, width, height, kernel, phase1KernelRadius, blurred);
+    _gaussianBlurWrap(binArray, width, height, kernel, phase1KernelRadius, blurred);
 
     console.log("Setup took " + (performance.now() - t1) + "ms");
 
     //Phase 1
     t1 = performance.now();
+    //Temporary binArray, original binArray is left unchanged after phase 1
+    const temp = binArray.slice();
     for (let rank = 0; rank < filled1; rank++) {
       let value = -Infinity;
       let idx;
@@ -173,25 +175,23 @@ var blueNoise = (function () {
       //Find location of tightest cluster in Binary Pattern.
       for (let j = 0; j < sqSz; j++) {
         const blurredValue = blurred[j];
-        if (binaryArray[j] === 1 && blurredValue > value) {
+        if (temp[j] === 1 && blurredValue > value) {
           value = blurredValue;
           idx = j;
         }
       }
 
       //Remove "1" from tightest cluster in Binary Pattern.
-      binaryArray[idx] = 0;
+      temp[idx] = 0;
       rankArray[idx] = filled1 - rank;
       _deltaGaussianUpdate(width, height, idx, -1, blurred, kernel, phase1KernelRadius);
     }
-
     console.log("Phase 1 took " + (performance.now() - t1) + "ms");
 
     //Phase 2
     t1 = performance.now();
     kernel = _getGaussianKernelLUT(phase2Sigma, phase2KernelRadius);
-    _gaussianBlurWrap(binaryArray, width, height, kernel, phase2KernelRadius, blurred);
-    const temp = binaryArray.slice();
+    _gaussianBlurWrap(binArray, width, height, kernel, phase2KernelRadius, blurred);
     for (let rank = filled1; rank < halfSqSz; rank++) {
       let value = Infinity;
       let idx;
@@ -199,41 +199,42 @@ var blueNoise = (function () {
       //Find location of tightest cluster in Binary Pattern.
       for (let j = 0; j < sqSz; j++) {
         const blurredValue = blurred[j];
-        if (temp[j] === 0 && blurredValue < value) {
+        if (binArray[j] === 0 && blurredValue < value) {
           value = blurredValue;
           idx = j;
         }
       }
 
       //Remove "1" from tightest cluster in Binary Pattern.
-      temp[idx] = 1;
-      rankArray[idx] = rank;
+      binArray[idx] = 1;
+      rankArray[idx] = rank; //Number of 1s left in the binArray
       _deltaGaussianUpdate(width, height, idx, 1, blurred, kernel, phase2KernelRadius);
     }
     console.log("Phase 2 took " + (performance.now() - t1) + "ms");
 
     //Phase 3
     t1 = performance.now();
+    //Invert the binary array, 0 becomes 1 and vice versa
+    for (let i = 0; i < sqSz; i++) binArray[i] = binArray[i] === 1 ? 0 : 1;
 
     kernel = _getGaussianKernelLUT(phase3Sigma, phase3KernelRadius);
-    //Blur temp instead of binArray for randmizing
-    _gaussianBlurWrap(temp, width, height, kernel, phase3KernelRadius, blurred);
-
-    //Fills in the remaining 0s in binArray so rankArray is complete blue noise without any voids
-    let remaining0s = binaryArray.reduce((sum, v) => sum + (v === 0 ? 1 : 0), 0);
-    while (remaining0s-- > 0) {
+    _gaussianBlurWrap(binArray, width, height, kernel, phase3KernelRadius, blurred);
+    //Fills in the remaining "0s" in binArray so rankArray is complete blue noise without any voids
+    for (let rank = halfSqSz; rank < sqSz; rank++) {
       let value = -Infinity;
       let idx;
 
       for (let i = 0; i < sqSz; i++) {
-        if (binaryArray[i] === 0 && blurred[i] > value) {
+        //`binArray[i] === 1` because 0 is 1
+        if (binArray[i] === 1 && blurred[i] > value) {
           value = blurred[i];
           idx = i;
         }
       }
 
-      binaryArray[idx] = 1;
-      rankArray[idx] = sqSz - remaining0s;
+      //`binArray[idx] = 0` because 0 is 1
+      binArray[idx] = 0;
+      rankArray[idx] = rank;
       _deltaGaussianUpdate(width, height, idx, -1, blurred, kernel, phase3KernelRadius);
     }
     console.log("Phase 3 took " + (performance.now() - t1) + "ms\n" + "Total time: " + (performance.now() - t0) + "ms");
