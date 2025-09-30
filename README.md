@@ -19,8 +19,8 @@ Mine\
 <img width="256" height="256" alt="image" src="https://github.com/901D3/blue-noise.js/blob/main/out/256x256,%20phase%201%20phase%202%20sigma%20=%202.5,%20phase%203%20sigma%20=%201.5,%20phase%201%20phase%202%20kernel%20radius%20=%2016,%20phase%203%20kernel%20radius%20=%204,%20all%20PDS%20radius%20=%205,%20PDS%20K%20value%20=%2030,%2058.86489999999944s.png?raw=true" />
 
 From Demofox\
-255x256? 400.2s\
-<img width="255" height="256" alt="image" src="https://github.com/user-attachments/assets/a34febf6-3932-435b-b97c-4e691a0741a3" />
+256x256, 400.2s\
+<img width="256" height="256" alt="image" src="https://blog.demofox.org/wp-content/uploads/2019/06/bluevc_1m.png" />
 
 Ethan Shulman\
 256x256, sigma = 2, density = 0.1, 168.78s\
