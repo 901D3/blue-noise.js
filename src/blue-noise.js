@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney
  * Ultra optimized while keeping it readable
  * The result is high quality blue noise but somehow very fast
- * https://github.com/901D3/void-and-cluster.js
+ * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
  * This code is licensed with GPLv3 license
@@ -78,10 +78,10 @@ var blueNoise = (function () {
    * @param {float} phase1Sigma
    * @param {float} phase2Sigma
    * @param {float} phase3Sigma
-   * @param {int} phase0KernelRadius kernel value for initializing binary pattern
-   * @param {int} phase1KernelRadius
-   * @param {int} phase2KernelRadius
-   * @param {int} phase3KernelRadius
+   * @param {int} phase0KernelRadiusCap kernel value for initializing binary pattern
+   * @param {int} phase1KernelRadiusCap
+   * @param {int} phase2KernelRadiusCap
+   * @param {int} phase3KernelRadiusCap
    * @param {float} initArrayDensity
    * @param {array} initArray
    * @returns {array}
@@ -98,9 +98,9 @@ var blueNoise = (function () {
     phase1Sigma,
     phase2Sigma,
     phase3Sigma,
-    phase1KernelRadius,
-    phase2KernelRadius,
-    phase3KernelRadius,
+    phase1KernelRadiusCap,
+    phase2KernelRadiusCap,
+    phase3KernelRadiusCap,
     initArray
   ) {
     //safety checks
@@ -110,10 +110,10 @@ var blueNoise = (function () {
       PDSRadiusX == null ||
       PDSRadiusY == null ||
       phase1Sigma == null ||
-      phase1KernelRadius == null
+      phase1KernelRadiusCap == null
     ) {
       throw new Error(
-        "'width', 'height', 'PDSRadiusX', 'PDSRadiusY', 'phase1Sigma' and 'phase1KernelRadius' arguments is mandatory"
+        "'width', 'height', 'PDSRadiusX', 'PDSRadiusY', 'phase1Sigma' and 'phase1KernelRadiusCap' arguments is mandatory"
       );
     }
     if (PDSKValue == null) {
@@ -128,13 +128,13 @@ var blueNoise = (function () {
       console.warn("phase3Sigma falled back to " + phase1Sigma);
       phase3Sigma = phase1Sigma;
     }
-    if (phase2KernelRadius == null) {
-      console.warn("phase2KernelRadius falled back to " + phase1KernelRadius);
-      phase2KernelRadius = phase1KernelRadius;
+    if (phase2KernelRadiusCap == null) {
+      console.warn("phase2KernelRadiusCap falled back to " + phase1KernelRadiusCap);
+      phase2KernelRadiusCap = phase1KernelRadiusCap;
     }
-    if (phase3KernelRadius == null) {
-      console.warn("phase3KernelRadius falled back to " + phase1KernelRadius);
-      phase3KernelRadius = phase1KernelRadius;
+    if (phase3KernelRadiusCap == null) {
+      console.warn("phase3KernelRadiusCap falled back to " + phase1KernelRadiusCap);
+      phase3KernelRadiusCap = phase1KernelRadiusCap;
     }
 
     let t0 = performance.now();
@@ -158,9 +158,14 @@ var blueNoise = (function () {
 
     const filled1 = binArray.reduce((sum, v) => sum + v, 0);
 
+    function radiusCheck(sigma, radius) {
+      if (radius > Math.ceil(3 * sigma)) return Math.ceil(3 * sigma);
+    }
+
     //Gaussian blurring stuff
-    let kernel = _getGaussianKernelLUT(phase1Sigma, phase1KernelRadius);
-    _gaussianBlurWrap(binArray, width, height, kernel, phase1KernelRadius, blurred);
+    phase1KernelRadiusCap = radiusCheck(phase1Sigma, phase1KernelRadiusCap);
+    let kernel = _getGaussianKernelLUT(phase1Sigma, phase1KernelRadiusCap);
+    _gaussianBlurWrap(binArray, width, height, kernel, phase1KernelRadiusCap, blurred);
 
     console.log("Setup took " + (performance.now() - t1) + "ms");
 
@@ -184,14 +189,15 @@ var blueNoise = (function () {
       //Remove "1" from tightest cluster in Binary Pattern.
       temp[idx] = 0;
       rankArray[idx] = filled1 - rank;
-      _deltaGaussianUpdate(width, height, idx, -1, blurred, kernel, phase1KernelRadius);
+      _deltaGaussianUpdate(width, height, idx, -1, blurred, kernel, phase1KernelRadiusCap);
     }
     console.log("Phase 1 took " + (performance.now() - t1) + "ms");
 
     //Phase 2
     t1 = performance.now();
-    kernel = _getGaussianKernelLUT(phase2Sigma, phase2KernelRadius);
-    _gaussianBlurWrap(binArray, width, height, kernel, phase2KernelRadius, blurred);
+    phase2KernelRadiusCap = radiusCheck(phase2Sigma, phase2KernelRadiusCap);
+    kernel = _getGaussianKernelLUT(phase2Sigma, phase2KernelRadiusCap);
+    _gaussianBlurWrap(binArray, width, height, kernel, phase2KernelRadiusCap, blurred);
     for (let rank = filled1; rank < halfSqSz; rank++) {
       let value = Infinity;
       let idx;
@@ -208,7 +214,7 @@ var blueNoise = (function () {
       //Remove "1" from tightest cluster in Binary Pattern.
       binArray[idx] = 1;
       rankArray[idx] = rank; //Number of 1s left in the binArray
-      _deltaGaussianUpdate(width, height, idx, 1, blurred, kernel, phase2KernelRadius);
+      _deltaGaussianUpdate(width, height, idx, 1, blurred, kernel, phase2KernelRadiusCap);
     }
     console.log("Phase 2 took " + (performance.now() - t1) + "ms");
 
@@ -217,8 +223,9 @@ var blueNoise = (function () {
     //Invert the binary array, 0 becomes 1 and vice versa
     for (let i = 0; i < sqSz; i++) binArray[i] = binArray[i] === 1 ? 0 : 1;
 
-    kernel = _getGaussianKernelLUT(phase3Sigma, phase3KernelRadius);
-    _gaussianBlurWrap(binArray, width, height, kernel, phase3KernelRadius, blurred);
+    phase3KernelRadiusCap = radiusCheck(phase3Sigma, phase3KernelRadiusCap);
+    kernel = _getGaussianKernelLUT(phase3Sigma, phase3KernelRadiusCap);
+    _gaussianBlurWrap(binArray, width, height, kernel, phase3KernelRadiusCap, blurred);
     //Fills in the remaining "0s" in binArray so rankArray is complete blue noise without any voids
     for (let rank = halfSqSz; rank < sqSz; rank++) {
       let value = -Infinity;
@@ -235,7 +242,7 @@ var blueNoise = (function () {
       //`binArray[idx] = 0` because 0 is 1
       binArray[idx] = 0;
       rankArray[idx] = rank;
-      _deltaGaussianUpdate(width, height, idx, -1, blurred, kernel, phase3KernelRadius);
+      _deltaGaussianUpdate(width, height, idx, -1, blurred, kernel, phase3KernelRadiusCap);
     }
     console.log("Phase 3 took " + (performance.now() - t1) + "ms\n" + "Total time: " + (performance.now() - t0) + "ms");
 
@@ -253,6 +260,7 @@ var blueNoise = (function () {
   const gaussianKernelLUT = new Map();
 
   function _getGaussianKernelLUT(sigma, radius) {
+    if (radius > Math.ceil(3 * sigma)) radius = Math.ceil(3 * sigma);
     const key = sigma + "," + radius;
     if (!gaussianKernelLUT.has(key)) {
       const kernelSize = 2 * radius + 1;
