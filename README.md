@@ -1,4 +1,4 @@
-# _**void-and-cluster.js**_
+# _**blue-noise.js**_
 JS implementation of Void and Cluster method by Robert Ulichney
 
 I went around the internet to find a Void and Cluster js implementation but there seems to be none or less\
