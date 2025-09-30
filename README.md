@@ -20,7 +20,7 @@ Mine\
 
 From Demofox\
 256x256, 400.2s\
-<img width="256" height="256" alt="image" src="https://blog.demofox.org/wp-content/uploads/2019/06/bluevc_1m.png" />
+<img width="512" height="256" alt="image" src="https://blog.demofox.org/wp-content/uploads/2019/06/bluevc_1m.png" />
 
 Ethan Shulman\
 256x256, sigma = 2, density = 0.1, 168.78s\
