@@ -39,21 +39,21 @@
       <input type="number" id="blueNoisePhase3Sigma" value="1.5" />
     </div>
     <div class="settings_label-slider-input">
-      <span>Phase 1 kernel radius</span>
+      <span>Phase 1 kernel radius cap</span>
       <input type="number" id="blueNoisePhase1KernelRadius" value="6" />
     </div>
     <div class="settings_label-slider-input">
-      <span>Phase 2 kernel radius</span>
+      <span>Phase 2 kernel radius cap</span>
       <input type="number" id="blueNoisePhase2KernelRadius" value="6" />
     </div>
     <div class="settings_label-slider-input">
-      <span>Phase 3 kernel radius</span>
+      <span>Phase 3 kernel radius cap</span>
       <input type="number" id="blueNoisePhase3KernelRadius" value="6" />
     </div>
     <button onclick="setTimeout(blueNoiseWrapper, 0)">generate</button>
     <span id="generateTime"></span>
   </body>
-  <script src="../src/void-and-cluster.js"></script>
+  <script src="../src/blue-noise.js"></script>
   <script>
     var blueNoiseCanvas = document.getElementById("blueNoiseCanvas");
     var blueNoiseCtx = blueNoiseCanvas.getContext("2d");
