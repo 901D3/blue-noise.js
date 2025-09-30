@@ -9,14 +9,14 @@ Comparing mine, Demofox and Ethan Shulman Void and Cluster output\
 Note that the generate time may vary
 
 Mine\
-256x256, all phases sigma = 1, all phases kernel radius = 8, PDS radius x and y = 5, PDS K value = 30, 67.02359999999404s\
-<img width="256" height="256" alt="image" src="https://raw.githubusercontent.com/901D3/void-and-cluster.js/refs/heads/main/out/256x256%2C%20all%20phases%20sigma%20%3D%201%2C%20all%20phases%20kernel%20radius%20%3D%208%2C%20PDS%20radius%20x%20and%20y%20%3D%205%2C%20PDS%20K%20value%20%3D%2030%2C%2067.02359999999404s.png" />
+256x256, all phases sigma = 1, all phases kernel radius = 8, PDS radius x and y = 5, PDS K value = 30\
+<img width="256" height="256" alt="image" src="https://github.com/901D3/blue-noise.js/blob/main/out/256x256,%20all%20phases%20sigma%20=%201,%20all%20phases%20kernel%20radius%20cap%20=%208,%20PDS%20radius%20x%20and%20y%20=%205,%20PDS%20K%20value%20=%2030.png?raw=true" />
 
-256x256, all phases sigma = 2, all phases kernel radius = 18, PDS radius x and y= 5, PDS K value = 30, 99.998s\
-<img width="256" height="256" alt="image" src="https://raw.githubusercontent.com/901D3/void-and-cluster.js/refs/heads/main/out/256x256%2C%20all%20phases%20sigma%20%3D%202%2C%20all%20phases%20kernel%20radius%20%3D%2018%2C%20PDS%20radius%20x%20and%20y%3D%205%2C%20PDS%20K%20value%20%3D%2030%2C%2099.998s.png" />
+256x256, all phases sigma = 2, all phases kernel radius = 18, PDS radius x and y= 5, PDS K value = 30, 56.87109999999963s\
+<img width="256" height="256" alt="image" src="https://github.com/901D3/blue-noise.js/blob/main/out/256x256,%20all%20phases%20sigma%20=%202,%20all%20phases%20kernel%20radius%20cap%20=%2018,%20PDS%20radius%20x%20and%20y=%205,%20PDS%20K%20value%20=%2030,%2056.87109999999963s.png?raw=true" />
 
-256x256, phase 1 phase 2 sigma = 2,5, phase 3 sigma = 1.5, phase 1 phase 2 kernel radius = 16, phase 3 kernel radius = 4, all PDS radius = 5, PDS K value = 30, 92.71389999999851s\
-<img width="256" height="256" alt="image" src="https://raw.githubusercontent.com/901D3/void-and-cluster.js/refs/heads/main/out/256x256%2C%20phase%201%20phase%202%20sigma%20%3D%202%2C%20phase%203%20sigma%20%3D%201.5%2C%20phase%201%20phase%202%20kernel%20radius%20%3D%2016%2C%20phase%203%20kernel%20radius%20%3D%204%2C%20all%20PDS%20radius%20%3D%205%2C%20PDS%20K%20value%20%3D%2030%2C%2092.71389999999851s.png" />
+256x256, phase 1 phase 2 sigma = 2,5, phase 3 sigma = 1.5, phase 1 phase 2 kernel radius = 16, phase 3 kernel radius = 4, all PDS radius = 5, PDS K value = 30, 58.86489999999944s\
+<img width="256" height="256" alt="image" src="https://github.com/901D3/blue-noise.js/blob/main/out/256x256,%20phase%201%20phase%202%20sigma%20=%202.5,%20phase%203%20sigma%20=%201.5,%20phase%201%20phase%202%20kernel%20radius%20=%2016,%20phase%203%20kernel%20radius%20=%204,%20all%20PDS%20radius%20=%205,%20PDS%20K%20value%20=%2030,%2058.86489999999944s.png?raw=true" />
 
 From Demofox\
 255x256? 400.2s\
