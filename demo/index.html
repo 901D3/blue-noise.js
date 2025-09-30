@@ -5,54 +5,53 @@
     <title>Void and Cluster demo</title>
   </head>
   <body class="display-flex top-bottom-flow" style="gap: 8px; background-color: black; color: white">
-    <div class="settings_container">
-      <canvas id="blueNoiseCanvas" style="border: 3px solid #ff0; image-rendering: pixelated"></canvas>
-      <div class="settings_label-input">
-        <span>Width</span>
-        <input type="number" id="blueNoiseWidth" value="64" />
-      </div>
-      <div class="settings_label-input">
-        <span>Height</span>
-        <input type="number" id="blueNoiseHeight" value="64" />
-      </div>
-      <div class="settings_label-slider-input">
-        <span>PDS radius x</span>
-        <input type="number" id="blueNoisePDSRadiusX" value="5" />
-      </div>
-      <div class="settings_label-slider-input">
-        <span>PDS radius y</span>
-        <input type="number" id="blueNoisePDSRadiusY" value="5" />
-      </div>
-      <div class="settings_label-slider-input">
-        <span>PDS K value</span>
-        <input type="number" id="blueNoisePDSKValue" value="30" />
-      </div>
-      <div class="settings_label-slider-input">
-        <span>Phase 1 sigma</span>
-        <input type="number" id="blueNoisePhase1Sigma" value="1.5" />
-      </div>
-      <div class="settings_label-slider-input">
-        <span>Phase 2 sigma</span>
-        <input type="number" id="blueNoisePhase2Sigma" value="1.5" />
-      </div>
-      <div class="settings_label-slider-input">
-        <span>Phase 3 sigma</span>
-        <input type="number" id="blueNoisePhase3Sigma" value="1.5" />
-      </div>
-      <div class="settings_label-slider-input">
-        <span>Phase 1 kernel radius</span>
-        <input type="number" id="blueNoisePhase1KernelRadius" value="6" />
-      </div>
-      <div class="settings_label-slider-input">
-        <span>Phase 2 kernel radius</span>
-        <input type="number" id="blueNoisePhase2KernelRadius" value="6" />
-      </div>
-      <div class="settings_label-slider-input">
-        <span>Phase 3 kernel radius</span>
-        <input type="number" id="blueNoisePhase3KernelRadius" value="6" />
-      </div>
-      <button onclick="setTimeout(blueNoiseWrapper, 0)">generate</button>
+    <canvas id="blueNoiseCanvas" style="border: 3px solid #ff0; image-rendering: pixelated"></canvas>
+    <div class="settings_label-input">
+      <span>Width</span>
+      <input type="number" id="blueNoiseWidth" value="64" />
     </div>
+    <div class="settings_label-input">
+      <span>Height</span>
+      <input type="number" id="blueNoiseHeight" value="64" />
+    </div>
+    <div class="settings_label-slider-input">
+      <span>PDS radius x</span>
+      <input type="number" id="blueNoisePDSRadiusX" value="5" />
+    </div>
+    <div class="settings_label-slider-input">
+      <span>PDS radius y</span>
+      <input type="number" id="blueNoisePDSRadiusY" value="5" />
+    </div>
+    <div class="settings_label-slider-input">
+      <span>PDS K value</span>
+      <input type="number" id="blueNoisePDSKValue" value="30" />
+    </div>
+    <div class="settings_label-slider-input">
+      <span>Phase 1 sigma</span>
+      <input type="number" id="blueNoisePhase1Sigma" value="1.5" />
+    </div>
+    <div class="settings_label-slider-input">
+      <span>Phase 2 sigma</span>
+      <input type="number" id="blueNoisePhase2Sigma" value="1.5" />
+    </div>
+    <div class="settings_label-slider-input">
+      <span>Phase 3 sigma</span>
+      <input type="number" id="blueNoisePhase3Sigma" value="1.5" />
+    </div>
+    <div class="settings_label-slider-input">
+      <span>Phase 1 kernel radius</span>
+      <input type="number" id="blueNoisePhase1KernelRadius" value="6" />
+    </div>
+    <div class="settings_label-slider-input">
+      <span>Phase 2 kernel radius</span>
+      <input type="number" id="blueNoisePhase2KernelRadius" value="6" />
+    </div>
+    <div class="settings_label-slider-input">
+      <span>Phase 3 kernel radius</span>
+      <input type="number" id="blueNoisePhase3KernelRadius" value="6" />
+    </div>
+    <button onclick="setTimeout(blueNoiseWrapper, 0)">generate</button>
+    <span id="generateTime"></span>
   </body>
   <script src="../src/void-and-cluster.js"></script>
   <script>
@@ -76,6 +75,7 @@
       const blueNoiseHeight = Number(document.getElementById("blueNoiseHeight").value);
       blueNoiseCanvas.width = blueNoiseWidth;
       blueNoiseCanvas.height = blueNoiseHeight;
+      const t0 = performance.now();
       const result = blueNoise.voidAndCluster(
         Number(document.getElementById("blueNoiseWidth").value),
         Number(document.getElementById("blueNoiseHeight").value),
@@ -90,11 +90,12 @@
         Number(document.getElementById("blueNoisePhase3KernelRadius").value),
         null
       );
+      generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
       const frame = blueNoiseCtx.getImageData(0, 0, blueNoiseWidth, blueNoiseHeight);
       const imageData = frame.data;
       const sqSz = blueNoiseWidth * blueNoiseHeight;
       const sqSz4 = sqSz * 4;
-      const denom = (1 / findHighest(result)) * 255;
+      const denom = (1 / findHighest(result)) * 255; //Easier to debug with binary array...
 
       for (let i = 0; i < sqSz4; i += 4) imageData[i + 3] = 255;
 
