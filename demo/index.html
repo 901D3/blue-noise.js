@@ -4,51 +4,51 @@
     <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1" />
     <title>Void and Cluster demo</title>
   </head>
-  <body class="display-flex top-bottom-flow" style="gap: 8px; background-color: black; color: white">
+  <body style="gap: 8px; background-color: black; color: white; display: flex; flex-direction: column">
     <canvas id="blueNoiseCanvas" style="border: 3px solid #ff0; image-rendering: pixelated"></canvas>
-    <div class="settings_label-input">
+    <div>
       <span>Width</span>
       <input type="number" id="blueNoiseWidth" value="64" />
     </div>
-    <div class="settings_label-input">
+    <div>
       <span>Height</span>
       <input type="number" id="blueNoiseHeight" value="64" />
     </div>
-    <div class="settings_label-slider-input">
+    <div>
       <span>PDS radius x</span>
       <input type="number" id="blueNoisePDSRadiusX" value="5" />
     </div>
-    <div class="settings_label-slider-input">
+    <div>
       <span>PDS radius y</span>
       <input type="number" id="blueNoisePDSRadiusY" value="5" />
     </div>
-    <div class="settings_label-slider-input">
+    <div>
       <span>PDS K value</span>
       <input type="number" id="blueNoisePDSKValue" value="30" />
     </div>
-    <div class="settings_label-slider-input">
+    <div>
       <span>Phase 1 sigma</span>
       <input type="number" id="blueNoisePhase1Sigma" value="1.5" />
     </div>
-    <div class="settings_label-slider-input">
+    <div>
       <span>Phase 2 sigma</span>
       <input type="number" id="blueNoisePhase2Sigma" value="1.5" />
     </div>
-    <div class="settings_label-slider-input">
+    <div>
       <span>Phase 3 sigma</span>
       <input type="number" id="blueNoisePhase3Sigma" value="1.5" />
     </div>
-    <div class="settings_label-slider-input">
+    <div>
       <span>Phase 1 kernel radius cap</span>
-      <input type="number" id="blueNoisePhase1KernelRadius" value="999" />
+      <input type="number" id="blueNoisePhase1KernelRadius" value="6" />
     </div>
-    <div class="settings_label-slider-input">
+    <div>
       <span>Phase 2 kernel radius cap</span>
-      <input type="number" id="blueNoisePhase2KernelRadius" value="999" />
+      <input type="number" id="blueNoisePhase2KernelRadius" value="6" />
     </div>
-    <div class="settings_label-slider-input">
+    <div>
       <span>Phase 3 kernel radius cap</span>
-      <input type="number" id="blueNoisePhase3KernelRadius" value="999" />
+      <input type="number" id="blueNoisePhase3KernelRadius" value="6" />
     </div>
     <button onclick="setTimeout(blueNoiseWrapper, 0)">generate</button>
     <span id="generateTime"></span>
