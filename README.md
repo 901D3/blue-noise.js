@@ -27,10 +27,10 @@ Ethan Shulman\
 <img width="256" height="256" alt="image" src="https://github.com/user-attachments/assets/1c126adc-ec9c-4216-8092-9d6b37725989" />
 
 Demo for you guys!\
-[github.com/901D3/void-and-cluster.js/demo](https://901d3.github.io/void-and-cluster.js/demo)
+[github.com/901D3/blue-noise.js/demo](https://901d3.github.io/blue-noise.js/demo)
 
 Check out the source code!\
-[github.com/901D3/void-and-cluster.js](https://github.com/901D3/void-and-cluster.js)
+[github.com/901D3/blue-noise.js](https://github.com/901D3/blue-noise.js)
 
 ----------
 ## References
