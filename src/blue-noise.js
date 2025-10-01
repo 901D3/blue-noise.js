@@ -69,6 +69,17 @@ var blueNoise = (function () {
     return binArray;
   }
 
+  function _gaussianRadiusCheck(width, height, sigma, radius) {
+    const kernelRadius = Math.ceil(3 * sigma);
+    const minDimension = Math.min(width, height);
+    if (kernelRadius > Math.min(width, height)) {
+      console.warn("Kernel radius value " + kernelRadius + " clamped to " + minDimension);
+      return minDimension;
+    }
+
+    if (radius > Math.ceil(3 * sigma)) return Math.ceil(3 * sigma);
+  }
+
   /**
    * Generate blue noise with void and cluster method, initial binary array using Poisson Disk Sampling
    *
@@ -82,7 +93,7 @@ var blueNoise = (function () {
    * @param {int} phase3KernelRadiusCap Phase 3 Gaussian kernel size capping
    * @param {array} initArray Initial array, it act like user inputted seed, must have the same length as (<width> * <height>), array dimension doesn't matter
    * If no array if supplied it will default to randomized Poisson Disk Sampling
-   * 
+   *
    * @returns {array}
    */
 
@@ -156,14 +167,10 @@ var blueNoise = (function () {
 
     const filled1 = binArray.reduce((sum, v) => sum + v, 0);
 
-    function radiusCheck(sigma, radius) {
-      if (radius > Math.ceil(3 * sigma)) return Math.ceil(3 * sigma);
-    }
-
     //Gaussian blurring stuff
-    phase1KernelRadiusCap = radiusCheck(phase1Sigma, phase1KernelRadiusCap);
+    phase1KernelRadiusCap = _gaussianRadiusCheck(width, height, phase1Sigma, phase1KernelRadiusCap);
     let kernel = _getGaussianKernelLUT(phase1Sigma, phase1KernelRadiusCap);
-    _gaussianBlurWrap(binArray, width, height, kernel, phase1KernelRadiusCap, blurred);
+    _blurWrap(binArray, width, height, kernel, phase1KernelRadiusCap, blurred);
 
     console.log("Setup took " + (performance.now() - t1) + "ms");
 
@@ -204,9 +211,9 @@ var blueNoise = (function () {
 
     //Phase 2
     t1 = performance.now();
-    phase2KernelRadiusCap = radiusCheck(phase2Sigma, phase2KernelRadiusCap);
+    phase2KernelRadiusCap = _gaussianRadiusCheck(width, height, phase2Sigma, phase2KernelRadiusCap);
     kernel = _getGaussianKernelLUT(phase2Sigma, phase2KernelRadiusCap);
-    _gaussianBlurWrap(binArray, width, height, kernel, phase2KernelRadiusCap, blurred);
+    _blurWrap(binArray, width, height, kernel, phase2KernelRadiusCap, blurred);
 
     //Keep phase 2 greedy
     for (rank = filled1; rank < halfSqSz; rank++) {
@@ -234,9 +241,9 @@ var blueNoise = (function () {
     //Invert the binary array, 0 becomes 1 and vice versa
     for (let i = 0; i < sqSz; i++) binArray[i] = binArray[i] === 1 ? 0 : 1;
 
-    phase3KernelRadiusCap = radiusCheck(phase3Sigma, phase3KernelRadiusCap);
+    phase3KernelRadiusCap = _gaussianRadiusCheck(width, height, phase3Sigma, phase3KernelRadiusCap);
     kernel = _getGaussianKernelLUT(phase3Sigma, phase3KernelRadiusCap);
-    _gaussianBlurWrap(binArray, width, height, kernel, phase3KernelRadiusCap, blurred);
+    _blurWrap(binArray, width, height, kernel, phase3KernelRadiusCap, blurred);
     //Fills in the remaining "0s" in binArray so rankArray is complete blue noise without any voids
     while (rank < sqSz) {
       let value = -Infinity;
@@ -314,7 +321,7 @@ var blueNoise = (function () {
    * @param {array} outArray Output array, parse an existing array to this arg and after blurring, the result is stored inside that existing array
    */
 
-  function _gaussianBlurWrap(inArray, width, height, kernel, radius, outArray) {
+  function _blurWrap(inArray, width, height, kernel, radius, outArray) {
     const tempArray = new Float32Array(inArray.length);
 
     for (let y = 0; y < height; y++) {
@@ -375,9 +382,10 @@ var blueNoise = (function () {
 
   return {
     voidAndCluster: _voidAndCluster,
+    gaussianRadiusCheck: _gaussianRadiusCheck,
     poissonDiskSampling: _poissonDiskSampling,
     getGaussianKernelLUT: _getGaussianKernelLUT,
-    gaussianBlurWrap: _gaussianBlurWrap,
+    blurWrap: _blurWrap,
     deltaGaussianUpdate: _deltaGaussianUpdate,
   };
 })();
