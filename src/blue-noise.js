@@ -74,11 +74,9 @@ var blueNoise = (function () {
    *
    * @param {int} width output dimension
    * @param {int} height output dimension
-   * @param {float} phase0Sigma sigma value for initializing binary pattern
    * @param {float} phase1Sigma
    * @param {float} phase2Sigma
    * @param {float} phase3Sigma
-   * @param {int} phase0KernelRadiusCap kernel value for initializing binary pattern
    * @param {int} phase1KernelRadiusCap
    * @param {int} phase2KernelRadiusCap
    * @param {int} phase3KernelRadiusCap
@@ -388,7 +386,7 @@ var blueNoise = (function () {
 
   const width = 64;
   const height = 64;
-  const result = blueNoise.voidAndCluster(width, height, 5, 5, 30, 3, 1.5, 1.5, 1000, 1000, 1000);
+  const result = blueNoise.voidAndCluster(width, height, 1.5, null, null, null, 6, null, null, null, 1, null);
 
   const frame = ctx.getImageData(0, 0, width, height);
   const imageData = frame.data;
@@ -411,4 +409,4 @@ var blueNoise = (function () {
   }
 
   ctx.putImageData(frame, 0, 0);
-*/
+  */
