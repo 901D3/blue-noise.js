@@ -156,6 +156,7 @@ var blueNoise = (function () {
     const binArray = new Uint8Array(sqSz);
     const rankArray = new Int32Array(sqSz);
     const blurred = new Float32Array(sqSz);
+    const pds = _poissonDiskSampling(width, height, PDSRadiusX, PDSRadiusY, PDSKValue);
     if (initArray && initArray.flat().length === sqSz) {
       binArray.set(initArray.flat());
     } else {
@@ -222,10 +223,12 @@ var blueNoise = (function () {
 
       //Find location of tightest cluster in Binary Pattern.
       for (let j = 0; j < sqSz; j++) {
-        const blurredValue = blurred[j];
-        if (binArray[j] === 0 && blurredValue < value) {
-          value = blurredValue;
-          idx = j;
+        if (binArray[j] === 0) {
+          const blurredValue = blurred[j];
+          if (blurredValue < value) {
+            value = blurredValue;
+            idx = j;
+          }
         }
       }
 
@@ -238,20 +241,20 @@ var blueNoise = (function () {
 
     //Phase 3
     t1 = performance.now();
-    //Invert the binary array, 0 becomes 1 and vice versa
-    for (let i = 0; i < sqSz; i++) binArray[i] = binArray[i] === 1 ? 0 : 1;
+    //Copy binary array to temp and invert it, 0 becomes 1 and vice versa
+    for (let i = 0; i < sqSz; i++) temp[i] = 1 - binArray[i];
 
     phase3KernelRadiusCap = _gaussianRadiusCheck(width, height, phase3Sigma, phase3KernelRadiusCap);
     kernel = _getGaussianKernelLUT(phase3Sigma, phase3KernelRadiusCap);
-    _blurWrap(binArray, width, height, kernel, phase3KernelRadiusCap, blurred);
+    //Blur the temp array, so we use binArray[index] === 0
+    _blurWrap(temp, width, height, kernel, phase3KernelRadiusCap, blurred);
     //Fills in the remaining "0s" in binArray so rankArray is complete blue noise without any voids
     while (rank < sqSz) {
       let value = -Infinity;
       let idxs = [];
 
       for (let j = 0; j < sqSz; j++) {
-        //`binArray[i] === 1` because 0 is 1
-        if (binArray[j] === 1) {
+        if (binArray[j] === 0) {
           const blurredValue = blurred[j];
           if (blurredValue > value) {
             value = blurredValue;
@@ -265,8 +268,7 @@ var blueNoise = (function () {
       const idxsLength = idxs.length;
       for (let i = 0; i < idxsLength; i++) {
         const index = idxs[i];
-        //`binArray[idx] = 0` because 0 is 1
-        binArray[index] = 0;
+        binArray[index] = 1;
         rankArray[index] = rank;
         _deltaGaussianUpdate(width, height, index, -1, blurred, kernel, phase3KernelRadiusCap);
         rank++;
