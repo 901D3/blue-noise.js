@@ -5,8 +5,67 @@ I went around the internet to find a Void and Cluster js implementation but ther
 Ethan Shulman did implement Void and Cluster but he default to "All Rights Reserved" so i can't use his implement\
 Kinda devastated so i implement Void and Cluster myself with my optimization skills
 
+----------
+
+# _How to use_
+
+Source code: [blue-noise.js](https://github.com/901D3/blue-noise.js/blob/main/src/blue-noise.js)\
+To generate a blue noise texture, simply run
+
+```
+blueNoise.voidAndCluster(
+    width,
+    height,
+    PDSRadiusX,
+    PDSRadiusY,
+    PDSKValue,
+    phase1Sigma,
+    phase2Sigma,
+    phase3Sigma,
+    phase1KernelRadiusCap,
+    phase2KernelRadiusCap,
+    phase3KernelRadiusCap,
+    initArray)
+```
+
+It will return a typed array(1D), with values ranging from 0 to (<width> * <height>)
+
+All arguments description:
+
+```
+{int} width:
+Output array "width"
+
+{int} height:
+Output array "height"
+
+{float} phase1Sigma:
+Phase 1 sigma value
+
+{float} phase2Sigma:
+Phase 2 sigma value
+
+{float} phase3Sigma:
+Phase 3 sigma value
+
+{int} phase1KernelRadiusCap:
+Phase 1 Gaussian kernel size capping
+
+{int} phase2KernelRadiusCap:
+Phase 2 Gaussian kernel size capping
+
+{int} phase3KernelRadiusCap:
+Phase 3 Gaussian kernel size capping
+
+{array} initArray:
+Initial array, it act like user inputted seed, must have the same length as (<width> * <height>), dimension doesn't matter
+If no array if supplied it will default to randomized Poisson Disk Sampling
+```
+
+----------
+
 Comparing mine, Demofox and Ethan Shulman Void and Cluster output\
-My result is from commit [cb347ace96914194b7f2671804e16408f930a4cc](https://github.com/901D3/blue-noise.js/commit/cb347ace96914194b7f2671804e16408f930a4cc)\. I may change the algorithm in the future
+My result is from [cb347ace96914194b7f2671804e16408f930a4cc](https://github.com/901D3/blue-noise.js/commit/cb347ace96914194b7f2671804e16408f930a4cc)\. I may change the algorithm in the future
 
 Mine\
 256x256, all phases sigma = 1, all phases kernel radius = 8, PDS radius x and y = 5, PDS K value = 30\
@@ -34,7 +93,6 @@ Demo for you guys!\
 Check out the source code!\
 [github.com/901D3/blue-noise.js](https://github.com/901D3/blue-noise.js)
 
-----------
 ## References
 
 [blog.demofox.org/2019/06/25/generating-blue-noise-textures-with-void-and-cluster](https://blog.demofox.org/2019/06/25/generating-blue-noise-textures-with-void-and-cluster)
