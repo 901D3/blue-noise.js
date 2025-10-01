@@ -74,12 +74,15 @@ var blueNoise = (function () {
    *
    * @param {int} width output dimension
    * @param {int} height output dimension
+   * @param {float} phase0Sigma sigma value for initializing binary pattern
    * @param {float} phase1Sigma
    * @param {float} phase2Sigma
    * @param {float} phase3Sigma
+   * @param {int} phase0KernelRadiusCap kernel value for initializing binary pattern
    * @param {int} phase1KernelRadiusCap
    * @param {int} phase2KernelRadiusCap
    * @param {int} phase3KernelRadiusCap
+   * @param {float} initArrayDensity
    * @param {array} initArray
    * @returns {array}
    */
@@ -135,6 +138,7 @@ var blueNoise = (function () {
     let t0 = performance.now();
     let t1 = performance.now();
     const sqSz = width * height;
+    let rank = 0;
 
     //Setup arrays
     const halfSqSz = sqSz / 2;
@@ -168,23 +172,34 @@ var blueNoise = (function () {
     t1 = performance.now();
     //Temporary binArray, original binArray is left unchanged after phase 1
     const temp = binArray.slice();
-    for (let rank = 0; rank < filled1; rank++) {
+    while (rank < filled1) {
       let value = -Infinity;
-      let idx;
+      let idxs = [];
 
       //Find location of tightest cluster in Binary Pattern.
+      //Greedy version only take the last index of highest value if there are multiple highest value that they are equally the same
+      //This version is not greedy anymore
       for (let j = 0; j < sqSz; j++) {
-        const blurredValue = blurred[j];
-        if (temp[j] === 1 && blurredValue > value) {
-          value = blurredValue;
-          idx = j;
+        if (temp[j] === 1) {
+          const blurredValue = blurred[j];
+          if (blurredValue > value) {
+            value = blurredValue;
+            idxs = [j];
+          } else if (blurredValue === value) {
+            idxs.push(j);
+          }
         }
       }
 
+      const idxsLength = idxs.length;
       //Remove "1" from tightest cluster in Binary Pattern.
-      temp[idx] = 0;
-      rankArray[idx] = filled1 - rank;
-      _deltaGaussianUpdate(width, height, idx, -1, blurred, kernel, phase1KernelRadiusCap);
+      for (let i = 0; i < idxsLength; i++) {
+        const index = idxs[i];
+        temp[index] = 0;
+        rankArray[index] = filled1 - rank;
+        _deltaGaussianUpdate(width, height, index, -1, blurred, kernel, phase1KernelRadiusCap);
+        rank++;
+      }
     }
     console.log("Phase 1 took " + (performance.now() - t1) + "ms");
 
@@ -193,7 +208,9 @@ var blueNoise = (function () {
     phase2KernelRadiusCap = radiusCheck(phase2Sigma, phase2KernelRadiusCap);
     kernel = _getGaussianKernelLUT(phase2Sigma, phase2KernelRadiusCap);
     _gaussianBlurWrap(binArray, width, height, kernel, phase2KernelRadiusCap, blurred);
-    for (let rank = filled1; rank < halfSqSz; rank++) {
+
+    //Keep phase 2 greedy
+    for (rank = filled1; rank < halfSqSz; rank++) {
       let value = Infinity;
       let idx;
 
@@ -222,22 +239,32 @@ var blueNoise = (function () {
     kernel = _getGaussianKernelLUT(phase3Sigma, phase3KernelRadiusCap);
     _gaussianBlurWrap(binArray, width, height, kernel, phase3KernelRadiusCap, blurred);
     //Fills in the remaining "0s" in binArray so rankArray is complete blue noise without any voids
-    for (let rank = halfSqSz; rank < sqSz; rank++) {
+    while (rank < sqSz) {
       let value = -Infinity;
-      let idx;
+      let idxs = [];
 
-      for (let i = 0; i < sqSz; i++) {
+      for (let j = 0; j < sqSz; j++) {
         //`binArray[i] === 1` because 0 is 1
-        if (binArray[i] === 1 && blurred[i] > value) {
-          value = blurred[i];
-          idx = i;
+        if (binArray[j] === 1) {
+          const blurredValue = blurred[j];
+          if (blurredValue > value) {
+            value = blurredValue;
+            idxs = [j];
+          } else if (blurredValue === value) {
+            idxs.push(j);
+          }
         }
       }
 
-      //`binArray[idx] = 0` because 0 is 1
-      binArray[idx] = 0;
-      rankArray[idx] = rank;
-      _deltaGaussianUpdate(width, height, idx, -1, blurred, kernel, phase3KernelRadiusCap);
+      const idxsLength = idxs.length;
+      for (let i = 0; i < idxsLength; i++) {
+        const index = idxs[i];
+        //`binArray[idx] = 0` because 0 is 1
+        binArray[index] = 0;
+        rankArray[index] = rank;
+        _deltaGaussianUpdate(width, height, index, -1, blurred, kernel, phase3KernelRadiusCap);
+        rank++;
+      }
     }
     console.log("Phase 3 took " + (performance.now() - t1) + "ms\n" + "Total time: " + (performance.now() - t0) + "ms");
 
@@ -357,31 +384,31 @@ var blueNoise = (function () {
 })();
 
 /*
-//example
+  //example
 
-const width = 64;
-const height = 64;
-const result = blueNoise.voidAndCluster(width, height, 1.5, null, null, null, 6, null, null, null, 1, null);
+  const width = 64;
+  const height = 64;
+  const result = blueNoise.voidAndCluster(width, height, 1.5, null, null, null, 6, null, null, null, 1, null);
 
-const frame = ctx.getImageData(0, 0, width, height);
-const imageData = frame.data;
-const sqSz = width * height;
-const sqSz4 = sqSz * 4;
-const denom = (1 / findHighest(result)) * 255;
+  const frame = ctx.getImageData(0, 0, width, height);
+  const imageData = frame.data;
+  const sqSz = width * height;
+  const sqSz4 = sqSz * 4;
+  const denom = (1 / findHighest(result)) * 255;
 
-for (let i = 0; i < sqSz4; i += 4) imageData[i + 3] = 255;
+  for (let i = 0; i < sqSz4; i += 4) imageData[i + 3] = 255;
 
-for (let y = 0; y < blueNoiseHeight; y++) {
-  const yOffs = y * blueNoiseWidth;
-  for (let x = 0; x < blueNoiseWidth; x++) {
-    let i = yOffs + x;
-    const v = floor(result[i] * denom);
-    i <<= 2;
-    imageData[i] = v;
-    imageData[i + 1] = v;
-    imageData[i + 2] = v;
+  for (let y = 0; y < blueNoiseHeight; y++) {
+    const yOffs = y * blueNoiseWidth;
+    for (let x = 0; x < blueNoiseWidth; x++) {
+      let i = yOffs + x;
+      const v = floor(result[i] * denom);
+      i <<= 2;
+      imageData[i] = v;
+      imageData[i + 1] = v;
+      imageData[i + 2] = v;
+    }
   }
-}
 
-ctx.putImageData(frame, 0, 0);
-*/
+  ctx.putImageData(frame, 0, 0);
+  */
