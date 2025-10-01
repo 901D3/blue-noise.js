@@ -84,8 +84,6 @@ var blueNoise = (function () {
    * @returns {array}
    */
 
-  //Non squared dimension produces weird result so stick with squared dimension for now
-
   function _voidAndCluster(
     width,
     height,
