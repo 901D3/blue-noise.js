@@ -6,7 +6,7 @@ Ethan Shulman did implement Void and Cluster but he default to "All Rights Reser
 Kinda devastated so i implement Void and Cluster myself with my optimization skills
 
 Comparing mine, Demofox and Ethan Shulman Void and Cluster output\
-Note that the generate time may vary
+My result is from commit [cb347ace96914194b7f2671804e16408f930a4cc](https://github.com/901D3/blue-noise.js/commit/cb347ace96914194b7f2671804e16408f930a4cc)\. I may change the algorithm in the future
 
 Mine\
 256x256, all phases sigma = 1, all phases kernel radius = 8, PDS radius x and y = 5, PDS K value = 30\
