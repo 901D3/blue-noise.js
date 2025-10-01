@@ -50,6 +50,10 @@
       <span>Phase 3 kernel radius cap</span>
       <input type="number" id="blueNoisePhase3KernelRadius" value="10000" />
     </div>
+    <div>
+      <span>Candidate filling ratio</span>
+      <input type="number" id="blueNoiseCandidateFillingRatio" value="0.5" />
+    </div>
     <button onclick="setTimeout(blueNoiseWrapper, 0)">generate</button>
     <span id="generateTime"></span>
   </body>
@@ -88,6 +92,7 @@
         Number(document.getElementById("blueNoisePhase1KernelRadius").value),
         Number(document.getElementById("blueNoisePhase2KernelRadius").value),
         Number(document.getElementById("blueNoisePhase3KernelRadius").value),
+        Number(document.getElementById("blueNoiseCandidateFillingRatio").value),
         null
       );
       generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
