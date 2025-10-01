@@ -72,16 +72,17 @@ var blueNoise = (function () {
   /**
    * Generate blue noise with void and cluster method, initial binary array using Poisson Disk Sampling
    *
-   * @param {int} width output dimension
-   * @param {int} height output dimension
-   * @param {float} phase1Sigma
-   * @param {float} phase2Sigma
-   * @param {float} phase3Sigma
-   * @param {int} phase1KernelRadiusCap
-   * @param {int} phase2KernelRadiusCap
-   * @param {int} phase3KernelRadiusCap
-   * @param {float} initArrayDensity
-   * @param {array} initArray
+   * @param {int} width Output array "width"
+   * @param {int} height Output array "height"
+   * @param {float} phase1Sigma Phase 1 sigma value
+   * @param {float} phase2Sigma Phase 2 sigma value
+   * @param {float} phase3Sigma Phase 3 sigma value
+   * @param {int} phase1KernelRadiusCap Phase 1 Gaussian kernel size capping
+   * @param {int} phase2KernelRadiusCap Phase 2 Gaussian kernel size capping
+   * @param {int} phase3KernelRadiusCap Phase 3 Gaussian kernel size capping
+   * @param {array} initArray Initial array, it act like user inputted seed, must have the same length as (<width> * <height>), array dimension doesn't matter
+   * If no array if supplied it will default to randomized Poisson Disk Sampling
+   * 
    * @returns {array}
    */
 
@@ -144,8 +145,8 @@ var blueNoise = (function () {
     const binArray = new Uint8Array(sqSz);
     const rankArray = new Int32Array(sqSz);
     const blurred = new Float32Array(sqSz);
-    if (initArray && initArray.length === sqSz) {
-      binArray.set(initArray);
+    if (initArray && initArray.flat().length === sqSz) {
+      binArray.set(initArray.flat());
     } else {
       console.warn(
         "Inputed initial array dimension does not match " + width + "x" + height + ", default to Poisson Disk Sampling"
