@@ -83,15 +83,16 @@ var blueNoise = (function () {
   /**
    * Generate blue noise with void and cluster method, initial binary array using Poisson Disk Sampling
    *
-   * @param {int} width Output array "width"
-   * @param {int} height Output array "height"
-   * @param {float} phase1Sigma Phase 1 sigma value
-   * @param {float} phase2Sigma Phase 2 sigma value
-   * @param {float} phase3Sigma Phase 3 sigma value
-   * @param {int} phase1KernelRadiusCap Phase 1 Gaussian kernel size capping
-   * @param {int} phase2KernelRadiusCap Phase 2 Gaussian kernel size capping
-   * @param {int} phase3KernelRadiusCap Phase 3 Gaussian kernel size capping
-   * @param {array} initArray Initial array, it act like user inputted seed, must have the same length as (<width> * <height>), array dimension doesn't matter
+   * @param {int} width - Output array "width"
+   * @param {int} height - Output array "height"
+   * @param {float} phase1Sigma - Phase 1 sigma value
+   * @param {float} phase2Sigma - Phase 2 sigma value
+   * @param {float} phase3Sigma - Phase 3 sigma value
+   * @param {int} phase1KernelRadiusCap - Phase 1 Gaussian kernel size capping
+   * @param {int} phase2KernelRadiusCap - Phase 2 Gaussian kernel size capping
+   * @param {int} phase3KernelRadiusCap - Phase 3 Gaussian kernel size capping
+   * @param {int} candidateFillingRatio - Phase 3 Gaussian kernel size capping
+   * @param {array} initArray - Initial array, it act like user inputted seed, must have the same length as (<width> * <height>), array dimension doesn't matter
    * If no array if supplied it will default to randomized Poisson Disk Sampling
    *
    * @returns {array}
@@ -109,6 +110,7 @@ var blueNoise = (function () {
     phase1KernelRadiusCap,
     phase2KernelRadiusCap,
     phase3KernelRadiusCap,
+    candidateFillingRatio,
     initArray
   ) {
     //safety checks
@@ -144,6 +146,10 @@ var blueNoise = (function () {
       console.warn("phase3KernelRadiusCap falled back to " + phase1KernelRadiusCap);
       phase3KernelRadiusCap = phase1KernelRadiusCap;
     }
+    if (candidateFillingRatio == null) {
+      console.warn("candidateFillingRatio falled back to " + 0.5);
+      candidateFillingRatio = 0.5;
+    }
 
     let t0 = performance.now();
     let t1 = performance.now();
@@ -151,12 +157,10 @@ var blueNoise = (function () {
     let rank = 0;
 
     //Setup arrays
-    const halfSqSz = sqSz / 2;
 
     const binArray = new Uint8Array(sqSz);
     const rankArray = new Int32Array(sqSz);
     const blurred = new Float32Array(sqSz);
-    const pds = _poissonDiskSampling(width, height, PDSRadiusX, PDSRadiusY, PDSKValue);
     if (initArray && initArray.flat().length === sqSz) {
       binArray.set(initArray.flat());
     } else {
@@ -167,6 +171,11 @@ var blueNoise = (function () {
     }
 
     const filled1 = binArray.reduce((sum, v) => sum + v, 0);
+    candidateFillingRatio = Math.min(Math.max(candidateFillingRatio, 0), 1);
+    candidateFillingRatio = filled1 + Math.floor(candidateFillingRatio * (sqSz - filled1));
+
+    console.info("Number of initial placed points: " + filled1);
+    console.info("Candidate filling ratio: " + candidateFillingRatio);
 
     //Gaussian blurring stuff
     phase1KernelRadiusCap = _gaussianRadiusCheck(width, height, phase1Sigma, phase1KernelRadiusCap);
@@ -217,7 +226,7 @@ var blueNoise = (function () {
     _blurWrap(binArray, width, height, kernel, phase2KernelRadiusCap, blurred);
 
     //Keep phase 2 greedy
-    for (rank = filled1; rank < halfSqSz; rank++) {
+    for (rank = filled1; rank < candidateFillingRatio; rank++) {
       let value = Infinity;
       let idx;
 
@@ -315,12 +324,12 @@ var blueNoise = (function () {
   /**
    * Gaussian blurring with wrap around
    *
-   * @param {array} inArray Input array that is going to go through blurring
+   * @param {array} inArray - Input array that is going to go through blurring
    * @param {int} width
    * @param {int} height
-   * @param {array} kernel Gaussian kernel, usually from _getGaussianKernelLUT()
+   * @param {array} kernel - Gaussian kernel, usually from _getGaussianKernelLUT()
    * @param {int} radius
-   * @param {array} outArray Output array, parse an existing array to this arg and after blurring, the result is stored inside that existing array
+   * @param {array} outArray - Output array, parse an existing array to this arg and after blurring, the result is stored inside that existing array
    */
 
   function _blurWrap(inArray, width, height, kernel, radius, outArray) {
