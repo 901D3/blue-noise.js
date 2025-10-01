@@ -26,6 +26,8 @@ Ethan Shulman\
 256x256, sigma = 2, density = 0.1, 168.78s\
 <img width="256" height="256" alt="image" src="https://github.com/user-attachments/assets/1c126adc-ec9c-4216-8092-9d6b37725989" />
 
+My implement completely beats Demofox and Ethan Shulman implementation in generate time
+
 Demo for you guys!\
 [github.com/901D3/blue-noise.js/demo](https://901d3.github.io/blue-noise.js/demo)
 
