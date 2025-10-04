@@ -220,9 +220,6 @@ var blueNoise = (function () {
       let value = -Infinity;
       let idx;
 
-      //Find location of tightest cluster in Binary Pattern.
-      //Greedy version only take the last index of highest value if there are multiple highest value that they are equally the same
-      //This version is not greedy anymore
       for (let j = 0; j < sqSz; j++) {
         if (temp[j] === 1) {
           const blurredValue = blurred[j];
@@ -249,7 +246,6 @@ var blueNoise = (function () {
     kernel = _getGaussianKernelLUT(phase2SigmaStart, phase2KernelRadiusCap);
     _blurWrap(binArray, width, height, kernel, phase2KernelRadiusCap, blurred);
 
-    //Keep phase 2 greedy
     for (rank = filled1; rank < candidateFillingRatio; rank++) {
       let value = Infinity;
       let idx;
@@ -265,7 +261,7 @@ var blueNoise = (function () {
         }
       }
 
-      //Remove "1" from tightest cluster in Binary Pattern.
+      //Remove "0" from largest void in Binary Pattern.
       binArray[idx] = 1;
       rankArray[idx] = rank; //Number of 1s left in the binArray
       kernel = _getGaussianKernelLUT(
