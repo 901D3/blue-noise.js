@@ -2,6 +2,8 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney
  * Ultra optimized while keeping it readable
  * The result is high quality blue noise but somehow very fast
+ * 
+ * 32 Bits Float version of Void and Cluster
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -374,3 +376,4 @@ var blueNoiseFloat32 = (function () {
     getGaussianKernelLUT: _getGaussianKernelLUT,
   };
 })();
+
