@@ -2,10 +2,12 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney
  * Ultra optimized while keeping it readable
  * The result is high quality blue noise but somehow very fast
+ *
+ * Utilities for blue noise
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
- * This code is licensed with GPLv3 license
+ * This code and the whole project is licensed with GPLv3 license
  */
 
 "use strict";
