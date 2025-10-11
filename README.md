@@ -9,6 +9,19 @@ Kinda devastated so i implement Void and Cluster myself with my optimization ski
 
 # _How to use_
 
+Linking the required scripts in HTML(for compability reason)
+
+```
+<!--the utilities script is required for 3 other scripts-->
+<script src="<path to script>/blue-noise-utils.js"></script>
+<!--16 Bits Float version gives worst result but less memory usage-->
+<script src="<path to script>/blue-noise-float16.js"></script>
+<!--32 Bits Float version balances between quality and memory usage-->
+<script src="<path to script>/blue-noise-float32.js"></script>
+<!--64 Bits Float version gives best result but consumes more memory-->
+<script src="<path to script>/blue-noise-float64.js"></script>
+```
+
 To generate a blue noise texture, simply run
 
 ```
@@ -75,7 +88,6 @@ The ratio between phase 2 and phase 3
 {array} initArray:
 Initial array, it act like user inputted seed, must have the same length as (<width> * <height>), array dimension(2D 3D or 4D) doesn't matter
 If no array if supplied it will default to randomized Poisson Disk Sampling
-
 ```
 
 ----------
