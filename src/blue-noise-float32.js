@@ -32,7 +32,7 @@ var blueNoiseFloat32 = (function () {
    * @param {number[]} phase2Kernel - Phase 2 blur kernel
    * @param {number[]} phase3Kernel - Phase 3 blur kernel
    *
-   * @param {normalized} candidateFillingRatio - Phase 3 Gaussian kernel size capping
+   * @param {normalized} candidateFillingRatio - The ratio between phase 2 and phase 3
    * @param {Uint8Array} initArray - Initial array, it act like user inputted seed, must have the same length as (<width> * <height>), array dimension(2D 3D or 4D) doesn't matter
    * If no array if supplied it will default to randomized Poisson Disk Sampling
    *
