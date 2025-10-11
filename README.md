@@ -9,22 +9,25 @@ Kinda devastated so i implement Void and Cluster myself with my optimization ski
 
 # _How to use_
 
-Source code: [blue-noise.js](https://github.com/901D3/blue-noise.js/blob/main/src/blue-noise.js)\
 To generate a blue noise texture, simply run
 
 ```
-blueNoise.voidAndCluster(
+blueNoiseFloat<either 16, 32 or 64>.voidAndCluster(
     width,
     height,
     PDSRadiusX,
     PDSRadiusY,
     PDSKValue,
-    phase1Sigma,
-    phase2Sigma,
-    phase3Sigma,
-    phase1KernelRadiusCap,
-    phase2KernelRadiusCap,
-    phase3KernelRadiusCap,
+    phase1SigmaStart,
+    phase1SigmaEnd,
+    phase2SigmaStart,
+    phase2SigmaEnd,
+    phase3SigmaStart,
+    phase3SigmaEnd,
+    phase1Kernel,
+    phase2Kernel,
+    phase3Kernel,
+    candidateFillingRatio,
     initArray)
 ```
 
@@ -39,27 +42,40 @@ Output array "width"
 {int} height:
 Output array "height"
 
-{float} phase1Sigma:
-Phase 1 sigma value
+{number} phase1SigmaStart:
+Phase 1 sigma gradient start value
 
-{float} phase2Sigma:
-Phase 2 sigma value
+{number} phase1SigmaEnd:
+Phase 1 sigma gradient end value
 
-{float} phase3Sigma:
-Phase 3 sigma value
+{number} phase2SigmaStart:
+Phase 2 sigma gradient start value
 
-{int} phase1KernelRadiusCap:
-Phase 1 Gaussian kernel size capping
+{number} phase2SigmaEnd:
+Phase 2 sigma gradient end value
 
-{int} phase2KernelRadiusCap:
-Phase 2 Gaussian kernel size capping
+{number} phase3SigmaStart:
+Phase 3 sigma gradient start value
 
-{int} phase3KernelRadiusCap:
-Phase 3 Gaussian kernel size capping
+{number} phase3SigmaEnd:
+Phase 3 sigma gradient end value
+
+{number[]} phase1Kernel:
+Phase 1 blur kernel
+
+{number[]} phase2Kernel:
+Phase 2 blur kernel
+
+{number[]} phase3Kernel:
+Phase 3 blur kernel
+
+{normalized0to1} candidateFillingRatio:
+The ratio between phase 2 and phase 3
 
 {array} initArray:
-Initial array, it act like user inputted seed, must have the same length as (<width> * <height>), dimension doesn't matter
+Initial array, it act like user inputted seed, must have the same length as (<width> * <height>), array dimension(2D 3D or 4D) doesn't matter
 If no array if supplied it will default to randomized Poisson Disk Sampling
+
 ```
 
 ----------
