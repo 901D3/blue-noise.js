@@ -84,6 +84,13 @@
     var blueNoiseCanvas = document.getElementById("blueNoiseCanvas");
     var blueNoiseCtx = blueNoiseCanvas.getContext("2d");
 
+    document.getElementById("blueNoisePhase1Kernel").placeholder =
+      "[\n" + "[0, 1, 0],\n" + "[1, 2, 1],\n" + "[0, 1, 0],\n" + "]";
+    document.getElementById("blueNoisePhase2Kernel").placeholder =
+      "[\n" + "[0, 1, 0],\n" + "[1, 2, 1],\n" + "[0, 1, 0],\n" + "]";
+    document.getElementById("blueNoisePhase3Kernel").placeholder =
+      "[\n" + "[0, 1, 0],\n" + "[1, 2, 1],\n" + "[0, 1, 0],\n" + "]";
+
     function findHighest(matrix) {
       let result = 0;
       const matrixLength = matrix.length;
