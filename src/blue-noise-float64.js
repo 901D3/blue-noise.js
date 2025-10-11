@@ -7,7 +7,7 @@
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
- * This code is licensed with GPLv3 license
+ * This code and the whole project is licensed with GPLv3 license
  */
 
 "use strict";
@@ -384,4 +384,5 @@ var blueNoiseFloat64 = (function () {
     getGaussianKernelLUT: _getGaussianKernelLUT,
   };
 })();
+
 
