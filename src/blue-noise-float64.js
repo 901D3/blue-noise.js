@@ -384,3 +384,4 @@ var blueNoiseFloat64 = (function () {
     getGaussianKernelLUT: _getGaussianKernelLUT,
   };
 })();
+
