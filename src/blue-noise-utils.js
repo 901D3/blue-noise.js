@@ -1,13 +1,13 @@
 /**
- * Free JS implementation of Void and Cluster method by Robert Ulichney
+ * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Ultra optimized while keeping it readable
  * The result is high quality blue noise but somehow very fast
+ * Remember to link this script
  *
- * Utilities for blue noise
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
- * This code and the whole project is licensed with GPLv3 license
+ * This code is licensed with GPLv3 license
  */
 
 "use strict";
@@ -82,129 +82,27 @@ var blueNoiseUtils = (function () {
   }
 
   /**
-   * Simple function for getting Gaussian kernel + LUT
-   * Float16Array
-   *
-   * @param {float} sigma
-   * @returns {array}
-   */
-
-  const gaussianKernelLUTFloat16 = new Map();
-
-  function _getGaussianKernelLUTFloat16(sigma) {
-    const radius = Math.ceil(3 * sigma);
-
-    if (!gaussianKernelLUTFloat16.has(sigma)) {
-      const kernelSize = 2 * radius + 1;
-      const kernel = new Float16Array(Math.pow(kernelSize, 2));
-      let sum = 0;
-      const denom = 2 * Math.pow(sigma, 2);
-
-      for (let y = -radius; y <= radius; y++) {
-        const yOffs = (y + radius) * kernelSize;
-
-        for (let x = -radius; x <= radius; x++) {
-          const val = Math.exp(-(x * x + y * y) / denom);
-          kernel[yOffs + (x + radius)] = val;
-          sum += val;
-        }
-      }
-
-      for (let i = 0; i < kernel.length; i++) kernel[i] /= sum;
-
-      gaussianKernelLUTFloat16.set(sigma, kernel);
-    }
-
-    return gaussianKernelLUTFloat16.get(sigma);
-  }
-
-  /**
-   * Simple function for getting Gaussian kernel + LUT
-   * Float32Array
-   *
-   * @param {float} sigma
-   * @returns {array}
-   */
-
-  const gaussianKernelLUTFloat32 = new Map();
-
-  function _getGaussianKernelLUTFloat32(sigma) {
-    const radius = Math.ceil(3 * sigma);
-
-    if (!gaussianKernelLUTFloat32.has(sigma)) {
-      const kernelSize = 2 * radius + 1;
-      const kernel = new Float32Array(Math.pow(kernelSize, 2));
-      let sum = 0;
-      const denom = 2 * Math.pow(sigma, 2);
-
-      for (let y = -radius; y <= radius; y++) {
-        const yOffs = (y + radius) * kernelSize;
-
-        for (let x = -radius; x <= radius; x++) {
-          const val = Math.exp(-(x * x + y * y) / denom);
-          kernel[yOffs + (x + radius)] = val;
-          sum += val;
-        }
-      }
-
-      for (let i = 0; i < kernel.length; i++) kernel[i] /= sum;
-
-      gaussianKernelLUTFloat32.set(sigma, kernel);
-    }
-
-    return gaussianKernelLUTFloat32.get(sigma);
-  }
-
-  /**
-   * Simple function for getting Gaussian kernel + LUT
-   * Float64Array
-   *
-   * @param {float} sigma
-   * @returns {array}
-   */
-
-  const gaussianKernelLUTFloat64 = new Map();
-
-  function _getGaussianKernelLUTFloat64(sigma) {
-    const radius = Math.ceil(3 * sigma);
-
-    if (!gaussianKernelLUTFloat64.has(sigma)) {
-      const kernelSize = 2 * radius + 1;
-      const kernel = new Float64Array(Math.pow(kernelSize, 2));
-      let sum = 0;
-      const denom = 2 * Math.pow(sigma, 2);
-
-      for (let y = -radius; y <= radius; y++) {
-        const yOffs = (y + radius) * kernelSize;
-
-        for (let x = -radius; x <= radius; x++) {
-          const val = Math.exp(-(x * x + y * y) / denom);
-          kernel[yOffs + (x + radius)] = val;
-          sum += val;
-        }
-      }
-
-      for (let i = 0; i < kernel.length; i++) kernel[i] /= sum;
-
-      gaussianKernelLUTFloat64.set(sigma, kernel);
-    }
-
-    return gaussianKernelLUTFloat64.get(sigma);
-  }
-
-  /**
    * Gaussian blurring with wrap around
    *
-   * @param {array} inArray - Input array that is going to go through blurring
+   * @param {array} inArray - Input array
    * @param {int} width
    * @param {int} height
    * @param {array} kernel - Input kernel
-   * @param {array} outArray - Output array, parse an existing array to this arg and after blurring, the result is stored inside that existing array
+   * @param {array} blurred
+   * @param {array} kernelWidth
+   * @param {array} kernelHeight
    */
 
   function _blurWrap(inArray, width, height, kernel, blurred, kernelWidth, kernelHeight) {
-    const kHalfW = Math.floor(kernelWidth / 2);
-    const kHalfH = Math.floor(kernelHeight / 2);
+    // divide by 2 + flooring
+    const kHalfW = kernelWidth >> 1;
+    const kHalfH = kernelHeight >> 1;
+
+    const wMask = width - 1;
+    const hMask = height - 1;
+
+    const isPowerOf2W = (width & wMask) === 0;
+    const isPowerOf2H = (height & hMask) === 0;
 
     for (let y = 0; y < height; y++) {
       const yOffs = y * width;
@@ -213,13 +111,20 @@ var blueNoiseUtils = (function () {
         let sum = 0;
 
         for (let ky = 0; ky < kernelHeight; ky++) {
-          // wrap-around correctly
-          const iy = (y + ky - kHalfH + height) % height;
+          let iy = y + ky - kHalfH;
+          if (isPowerOf2H) iy &= hMask;
+          else if (iy < 0) iy += height;
+          else if (iy >= height) iy -= height;
+
           const iyOffs = iy * width;
           const kernelYOffs = ky * kernelWidth;
 
           for (let kx = 0; kx < kernelWidth; kx++) {
-            const ix = (x + kx - kHalfW + width) % width;
+            let ix = x + kx - kHalfW;
+            if (isPowerOf2W) ix &= wMask;
+            else if (ix < 0) ix += width;
+            else if (ix >= width) ix -= width;
+
             sum += inArray[iyOffs + ix] * kernel[kernelYOffs + kx];
           }
         }
@@ -234,10 +139,10 @@ var blueNoiseUtils = (function () {
    *
    * @param {int} width
    * @param {int} height
-   * @param {int} idx The index of the blurred array that is going to be added by <amount>
+   * @param {int} idx - The index of the blurred array that is going to be added by <amount>
    * @param {float} amount
-   * @param {array} blurredArray Blurred array input, also known as energy array
-   * @param {array} kernel Gaussian kernel, usually from _getGaussianKernelLUT()
+   * @param {binary[]} blurredArray Blurred array input, also known as energy array
+   * @param {array} kernel - Input kernel
    */
 
   function _deltaBlurUpdate(width, height, idx, amount, blurred, kernel, kernelWidth, kernelHeight) {
@@ -259,13 +164,34 @@ var blueNoiseUtils = (function () {
     }
   }
 
+  //function _gradientToCenterKernel(width, height) {
+  //  if (width % 2 === 0) throw new Error("Odd width required");
+  //  if (height % 2 === 0) throw new Error("Odd height required");
+  //
+  //  const sqSz = width * height;
+  //  const halfX = (width - 1) / 2;
+  //  const halfY = (height - 1) / 2;
+  //  const outArray = new Float32Array(sqSz);
+  //
+  //  const rMax = Math.sqrt(halfX * halfX + halfY * halfY);
+  //
+  //  let idx = 0;
+  //  for (let y = -halfY; y <= halfY; y++) {
+  //    const y2 = y * y;
+  //
+  //    for (let x = -halfX; x <= halfX; x++) {
+  //      outArray[idx++] = 1 - Math.sqrt(x * x + y2) / rMax;
+  //    }
+  //  }
+  //
+  //  return outArray;
+  //}
+
   return {
     poissonDiskSampling: _poissonDiskSampling,
     noiseArray: _noiseArray,
-    getGaussianKernelLUTFloat16: _getGaussianKernelLUTFloat16,
-    getGaussianKernelLUTFloat32: _getGaussianKernelLUTFloat32,
-    getGaussianKernelLUTFloat64: _getGaussianKernelLUTFloat64,
     blurWrap: _blurWrap,
     deltaBlurUpdate: _deltaBlurUpdate,
+    //gradientToCenterKernel: _gradientToCenterKernel,
   };
 })();
