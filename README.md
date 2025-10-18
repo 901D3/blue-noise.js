@@ -9,7 +9,7 @@ Kinda devastated so i implement Void and Cluster myself with my optimization ski
 
 # _How to use_
 
-Linking the required scripts in HTML(for compability reason)
+Linking the required scripts in HTML
 
 ```
 <!--the utilities script is required for 3 other scripts-->
@@ -22,73 +22,28 @@ Linking the required scripts in HTML(for compability reason)
 <script src="<path to script>/blue-noise-float64.js"></script>
 ```
 
-To generate a blue noise texture, simply run
+To generate a blue noise texture(32 Bits Float), simply run
 
 ```
-blueNoiseFloat<either 16, 32 or 64>.voidAndCluster(
+blueNoiseFloat32.voidAndCluster(
     width,
     height,
     PDSRadiusX,
     PDSRadiusY,
     PDSKValue,
-    phase1SigmaStart,
-    phase1SigmaEnd,
-    phase2SigmaStart,
-    phase2SigmaEnd,
-    phase3SigmaStart,
-    phase3SigmaEnd,
+    phase1Sigma,
+    phase2Sigma,
+    phase3Sigma,
     phase1Kernel,
     phase2Kernel,
     phase3Kernel,
     candidateFillingRatio,
-    initArray)
+    initArray,
+    verbose
+)
 ```
 
-It will return a typed array(1D), with values ranging from 0 to (<width> * <height>)
-
-All arguments description:
-
-```
-{int} width:
-Output array "width"
-
-{int} height:
-Output array "height"
-
-{number} phase1SigmaStart:
-Phase 1 sigma gradient start value
-
-{number} phase1SigmaEnd:
-Phase 1 sigma gradient end value
-
-{number} phase2SigmaStart:
-Phase 2 sigma gradient start value
-
-{number} phase2SigmaEnd:
-Phase 2 sigma gradient end value
-
-{number} phase3SigmaStart:
-Phase 3 sigma gradient start value
-
-{number} phase3SigmaEnd:
-Phase 3 sigma gradient end value
-
-{number[]} phase1Kernel:
-Phase 1 blur kernel
-
-{number[]} phase2Kernel:
-Phase 2 blur kernel
-
-{number[]} phase3Kernel:
-Phase 3 blur kernel
-
-{normalized0to1} candidateFillingRatio:
-The ratio between phase 2 and phase 3
-
-{array} initArray:
-Initial array, it act like user inputted seed, must have the same length as (<width> * <height>), array dimension(2D 3D or 4D) doesn't matter
-If no array if supplied it will default to randomized Poisson Disk Sampling
-```
+It will return a 2D flattened array, it's values ranging from 0 to (width * height)
 
 ----------
 
