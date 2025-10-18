@@ -46,28 +46,16 @@
       <input type="number" id="blueNoisePDSKValue" value="30" />
     </div>
     <div>
-      <span>Phase 1 sigma start</span>
-      <input type="number" id="blueNoisePhase1SigmaStart" value="6" />
+      <span>Phase 1 sigma</span>
+      <input type="number" id="blueNoisePhase1Sigma" value="6" />
     </div>
     <div>
-      <span>Phase 1 sigma end</span>
-      <input type="number" id="blueNoisePhase1SigmaEnd" value="6" />
+      <span>Phase 2 sigma</span>
+      <input type="number" id="blueNoisePhase2Sigma" value="2" />
     </div>
     <div>
-      <span>Phase 2 sigma start</span>
-      <input type="number" id="blueNoisePhase2SigmaStart" value="1.5" />
-    </div>
-    <div>
-      <span>Phase 2 sigma end</span>
-      <input type="number" id="blueNoisePhase2SigmaEnd" value="2" />
-    </div>
-    <div>
-      <span>Phase 3 sigma start</span>
-      <input type="number" id="blueNoisePhase3SigmaStart" value="2" />
-    </div>
-    <div>
-      <span>Phase 3 sigma end</span>
-      <input type="number" id="blueNoisePhase3SigmaEnd" value="2" />
+      <span>Phase 3 sigma</span>
+      <input type="number" id="blueNoisePhase3Sigma" value="2" />
     </div>
     <div>
       <span>Candidate filling ratio</span>
@@ -115,12 +103,9 @@
         Number(document.getElementById("blueNoisePDSRadiusX").value),
         Number(document.getElementById("blueNoisePDSRadiusY").value),
         Number(document.getElementById("blueNoisePDSKValue").value),
-        Number(document.getElementById("blueNoisePhase1SigmaStart").value),
-        Number(document.getElementById("blueNoisePhase1SigmaEnd").value),
-        Number(document.getElementById("blueNoisePhase2SigmaStart").value),
-        Number(document.getElementById("blueNoisePhase2SigmaEnd").value),
-        Number(document.getElementById("blueNoisePhase3SigmaStart").value),
-        Number(document.getElementById("blueNoisePhase3SigmaEnd").value),
+        Number(document.getElementById("blueNoisePhase1Sigma").value),
+        Number(document.getElementById("blueNoisePhase2Sigma").value),
+        Number(document.getElementById("blueNoisePhase3Sigma").value),
         document.getElementById("blueNoisePhase1Kernel").value != ""
           ? JSON.parse(document.getElementById("blueNoisePhase1Kernel").value)
           : null,
@@ -131,8 +116,10 @@
           ? JSON.parse(document.getElementById("blueNoisePhase3Kernel").value)
           : null,
         Number(document.getElementById("blueNoiseCandidateFillingRatio").value),
-        undefined
+        undefined,
+        true
       );
+      console.log(result);
 
       //const result = blueNoise.candidateAlgo(blueNoise.noiseArray(64, 64, 0.2), 64, 1.5, 10000);
       generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
@@ -140,7 +127,7 @@
       const imageData = frame.data;
       const sqSz = blueNoiseWidth * blueNoiseHeight;
       const sqSz4 = sqSz * 4;
-      const denom = (1 / findHighest(result)) * 255; //Easier to debug with binary array...
+      const denom = (1 / findHighest(result)) * 255; // Easier to debug with binary array...
 
       for (let i = 0; i < sqSz4; i += 4) imageData[i + 3] = 255;
 
