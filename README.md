@@ -1,11 +1,11 @@
 # _**blue-noise.js**_
-## Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
+### Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
 
 I went around the internet to find a Void and Cluster js implementation but there seems to be none or less\
 Ethan Shulman did implement Void and Cluster but he default to "All Rights Reserved" so i can't use his implement\
 Kinda devastated so i implement Void and Cluster myself with my optimization skills
 
-----------
+──────────
 
 # _How to use_
 
@@ -45,7 +45,7 @@ blueNoiseFloat32.voidAndCluster(
 
 It will return a 2D flattened array, it's values ranging from 0 to (width * height)
 
-----------
+──────────
 
 Comparing mine, Demofox and Ethan Shulman Void and Cluster output\
 My result is from [cb347ace96914194b7f2671804e16408f930a4cc](https://github.com/901D3/blue-noise.js/commit/cb347ace96914194b7f2671804e16408f930a4cc)\. The algorithm might varies in the future
