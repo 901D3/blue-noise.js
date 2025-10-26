@@ -28,15 +28,9 @@ To generate a blue noise texture(32 Bits Float), simply run
 blueNoiseFloat32.voidAndCluster(
     width,
     height,
-    PDSRadiusX,
-    PDSRadiusY,
-    PDSKValue,
-    phase1Sigma,
-    phase2Sigma,
-    phase3Sigma,
-    phase1Kernel,
-    phase2Kernel,
-    phase3Kernel,
+    sigma,
+    customKernel,
+    density,
     candidateFillingRatio,
     initArray,
     verbose
