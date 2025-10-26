@@ -22,20 +22,20 @@ var blueNoiseFloat32 = (function () {
 
   // Updated
   /**
-   * Generate blue noise with void and cluster method, initial binary array using Poisson Disk Sampling
+   * Generate blue noise with void and cluster method
    *
-   * @param {Int} width - Output array "width"
-   * @param {Int} height - Output array "height"
+   * @param {Int} width
+   * @param {Int} height
    *
-   * @param {Number} sigma - Phase 1 sigma
+   * @param {Number} sigma
    *
-   * @param {Number[]} kernel - Phase 1 blur kernel
+   * @param {Number[]} kernel
    *
    * @param {normalized} density
-   * @param {normalized} candidateFillingRatio - The ratio between phase 2 and phase 3
-   * @param {binary[]} initArray - Initial binary array, must have the same dimension as width and height
+   * @param {normalized} candidateFillingRatio
+   * @param {binary[]} initArray
    *
-   * @returns {Int[]} - Values ranging from 0 to (width * height)
+   * @returns {Int[]}
    */
 
   function _voidAndCluster(width, height, sigma, customKernel, density, candidateFillingRatio, initArray, verbose) {
@@ -177,7 +177,7 @@ var blueNoiseFloat32 = (function () {
 
   // New
   /**
-   * Generate blue noise with void and cluster method, initial binary array using Poisson Disk Sampling
+   * Generate blue noise with void and cluster method
    *
    * Solved the unevely distributed dots problem
    * Any developers who wants free and high quality blue noise please notice this!!
