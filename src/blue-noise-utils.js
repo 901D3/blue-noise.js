@@ -14,6 +14,17 @@
 
 var blueNoiseUtils = (function () {
   //Helpers
+
+  /**
+   *
+   * @param {*} width
+   * @param {*} height
+   * @param {*} radiusX
+   * @param {*} radiusY
+   * @param {*} k
+   * @returns
+   */
+
   function _poissonDiskSampling(width, height, radiusX, radiusY, k = 30) {
     const points = [];
     const active = [];
@@ -75,25 +86,25 @@ var blueNoiseUtils = (function () {
     const sqSz = width * height;
     const array = new Uint8Array(sqSz);
     for (let i = 0; i < sqSz; i++) {
-      array[i] = Math.random() > threshold ? 1 : 0;
+      array[i] = Math.random() < threshold ? 0 : 1;
     }
 
     return array;
   }
 
   /**
-   * Gaussian blurring with wrap around
+   * Blurring with wrap around
    *
-   * @param {array} inArray - Input array
-   * @param {int} width
-   * @param {int} height
-   * @param {array} kernel - Input kernel
-   * @param {array} blurred
-   * @param {array} kernelWidth
-   * @param {array} kernelHeight
+   * @param {*} inArray
+   * @param {*} width
+   * @param {*} height
+   * @param {*} kernel
+   * @param {*} blurred
+   * @param {*} kernelWidth
+   * @param {*} kernelHeight
    */
 
-  function _blurWrap(inArray, width, height, kernel, blurred, kernelWidth, kernelHeight) {
+  function _blurWrapInPlace(inArray, width, height, kernel, blurred, kernelWidth, kernelHeight) {
     // divide by 2 + flooring
     const kHalfW = kernelWidth >> 1;
     const kHalfH = kernelHeight >> 1;
@@ -135,63 +146,168 @@ var blueNoiseUtils = (function () {
   }
 
   /**
-   * Gaussian delta updater
+   * Blur delta updater
    *
-   * @param {int} width
-   * @param {int} height
-   * @param {int} idx - The index of the blurred array that is going to be added by <amount>
-   * @param {float} amount
-   * @param {binary[]} blurredArray Blurred array input, also known as energy array
-   * @param {array} kernel - Input kernel
+   * @param {*} width
+   * @param {*} height
+   * @param {*} idx
+   * @param {*} amount
+   * @param {*} blurred
+   * @param {*} kernel
+   * @param {*} kernelWidth
+   * @param {*} kernelHeight
    */
 
-  function _deltaBlurUpdate(width, height, idx, amount, blurred, kernel, kernelWidth, kernelHeight) {
+  function _deltaBlurUpdateInPlace(width, height, idx, amount, blurred, kernel, kernelWidth, kernelHeight) {
     const iy = Math.floor(idx / width);
     const ix = idx % width;
-    const kHalfW = Math.floor(kernelWidth / 2);
-    const kHalfH = Math.floor(kernelHeight / 2);
+    const kHalfW = -(kernelWidth >> 1) + width;
+    const kHalfH = -(kernelHeight >> 1) + height;
+
+    const iyOffs = iy + kHalfH;
+    const ixOffs = ix + kHalfW;
 
     for (let ky = 0; ky < kernelHeight; ky++) {
-      const y = (iy + ky - kHalfH + height) % height;
+      const yOffs = ((ky + iyOffs) % height) * width;
+      const kyOffs = ky * kernelWidth;
 
       for (let kx = 0; kx < kernelWidth; kx++) {
-        const x = (ix + kx - kHalfW + width) % width;
-
-        // map 2D kernel coordinates to 1D index
-        const kIdx = ky * kernelWidth + kx;
-        blurred[y * width + x] += kernel[kIdx] * amount;
+        blurred[yOffs + ((kx + ixOffs) % width)] += kernel[kyOffs + kx] * amount;
       }
     }
   }
 
-  //function _gradientToCenterKernel(width, height) {
-  //  if (width % 2 === 0) throw new Error("Odd width required");
-  //  if (height % 2 === 0) throw new Error("Odd height required");
-  //
-  //  const sqSz = width * height;
-  //  const halfX = (width - 1) / 2;
-  //  const halfY = (height - 1) / 2;
-  //  const outArray = new Float32Array(sqSz);
-  //
-  //  const rMax = Math.sqrt(halfX * halfX + halfY * halfY);
-  //
-  //  let idx = 0;
-  //  for (let y = -halfY; y <= halfY; y++) {
-  //    const y2 = y * y;
-  //
-  //    for (let x = -halfX; x <= halfX; x++) {
-  //      outArray[idx++] = 1 - Math.sqrt(x * x + y2) / rMax;
-  //    }
-  //  }
-  //
-  //  return outArray;
-  //}
+  const gaussianKernelLUTArrayLiteral = new Map();
+
+  /**
+   *
+   * @param {*} sigma
+   * @returns
+   */
+
+  function _getGaussianKernelLUTArrayLiteral(sigma) {
+    const radius = Math.ceil(3 * sigma);
+
+    if (!gaussianKernelLUTArrayLiteral.has(sigma)) {
+      const kernelSize = 2 * radius + 1;
+      const kernel = Array(kernelSize)
+        .fill(null)
+        .map(() => Array(kernelSize).fill(0));
+      const denom = 2 * sigma * sigma;
+
+      for (let y = -radius; y <= radius; y++) {
+        const dbY = y * y;
+        const yOffs = y + radius;
+
+        for (let x = -radius; x <= radius; x++) {
+          kernel[yOffs][x + radius] = Math.exp(-(x * x + dbY) / denom);
+        }
+      }
+
+      gaussianKernelLUTArrayLiteral.set(sigma, kernel);
+    }
+
+    return gaussianKernelLUTArrayLiteral.get(sigma);
+  }
+
+  /**
+   *
+   * @param {*} width
+   * @param {*} height
+   * @param {*} equation
+   * @param {*} kernel
+   * @param {*} normalize
+   */
+
+  function _generateWindowedKernelInPlace(width, height, equation, kernel, normalize) {
+    if ((width & 1) === 0) throw new Error("Odd width required");
+    if ((height & 2) === 0) throw new Error("Odd height required");
+    const cp = new Function("r", "N", "return " + equation);
+
+    const sqSz = width * height;
+    const halfX = (width - 1) / 2;
+    const halfY = (height - 1) / 2;
+
+    const N = Math.sqrt(halfX * halfX + halfY * halfY);
+
+    let idx = 0;
+    let maxValue = 0;
+    for (let y = -halfY; y <= halfY; y++) {
+      const y2 = y * y;
+
+      for (let x = -halfX; x <= halfX; x++) {
+        const r = Math.sqrt(x * x + y2);
+        const calculated = cp(r, N);
+        kernel[idx++] = calculated;
+        if (maxValue < calculated) maxValue = calculated;
+      }
+    }
+
+    for (let i = 0; i < sqSz; i++) kernel[i] = maxValue - kernel[i];
+
+    if (normalize) {
+      for (let i = 0; i < sqSz; i++) kernel[i] /= maxValue;
+    }
+  }
+
+  /**
+   *
+   * @param {*} width
+   * @param {*} height
+   * @param {*} equation
+   * @param {*} normalize
+   * @returns
+   */
+
+  function _generateWindowedKernelArrayLiteral(width, height, equation, normalize) {
+    if ((width & 1) === 0) throw new Error("Odd width required");
+    if ((height & 1) === 0) throw new Error("Odd height required");
+    const cp = new Function("r", "N", "return " + equation);
+
+    const halfX = (width - 1) / 2;
+    const halfY = (height - 1) / 2;
+    const kernel = Array(height)
+      .fill(null)
+      .map(() => Array(width).fill(0));
+
+    const N = Math.sqrt(halfX * halfX + halfY * halfY);
+
+    let maxValue = 0;
+    for (let y = -halfY; y <= halfY; y++) {
+      const y2 = y * y;
+
+      for (let x = -halfX; x <= halfX; x++) {
+        const r = Math.sqrt(x * x + y2);
+        const calculated = cp(r, N * 2);
+        kernel[y + halfY][x + halfX] = calculated;
+        if (maxValue < calculated) maxValue = calculated;
+      }
+    }
+
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        kernel[y][x] = maxValue - kernel[y][x];
+      }
+    }
+
+    if (normalize) {
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          kernel[y][x] /= maxValue;
+        }
+      }
+    }
+
+    return kernel;
+  }
 
   return {
     poissonDiskSampling: _poissonDiskSampling,
     noiseArray: _noiseArray,
-    blurWrap: _blurWrap,
-    deltaBlurUpdate: _deltaBlurUpdate,
-    //gradientToCenterKernel: _gradientToCenterKernel,
+    blurWrapInPlace: _blurWrapInPlace,
+    deltaBlurUpdateInPlace: _deltaBlurUpdateInPlace,
+    getGaussianKernelLUTArrayLiteral: _getGaussianKernelLUTArrayLiteral,
+    generateWindowedKernelInPlace: _generateWindowedKernelInPlace,
+    generateWindowedKernelArrayLiteral: _generateWindowedKernelArrayLiteral,
   };
 })();
