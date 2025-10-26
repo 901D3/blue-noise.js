@@ -4,7 +4,7 @@
  * The result is high quality blue noise but somehow very fast
  * Remember to link blue-noise-utils.js
  *
- * 32 Bits Float version
+ * 64 Bits Float version
  *
  * https://github.com/901D3/blue-noise.js
  *
@@ -21,21 +21,19 @@ var blueNoiseFloat64 = (function () {
    */
 
   // Updated
+
   /**
-   * Generate blue noise with void and cluster method
+   * Generate blue noise with Void and Cluster method
    *
-   * @param {Int} width
-   * @param {Int} height
-   *
-   * @param {Number} sigma
-   *
-   * @param {Number[]} kernel
-   *
-   * @param {normalized} density
-   * @param {normalized} candidateFillingRatio
-   * @param {binary[]} initArray
-   *
-   * @returns {Int[]}
+   * @param {*} width
+   * @param {*} height
+   * @param {*} sigma
+   * @param {*} customKernel
+   * @param {*} density
+   * @param {*} candidateFillingRatio
+   * @param {*} initArray
+   * @param {*} verbose
+   * @returns
    */
 
   function _voidAndCluster(width, height, sigma, customKernel, density, candidateFillingRatio, initArray, verbose) {
@@ -177,7 +175,7 @@ var blueNoiseFloat64 = (function () {
 
   // New
   /**
-   * Generate blue noise with void and cluster method
+   * Generate blue noise with Void and Cluster method
    *
    * Solved the unevely distributed dots problem
    * Any developers who wants free and high quality blue noise please notice this!!
