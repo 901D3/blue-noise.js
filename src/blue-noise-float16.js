@@ -14,7 +14,7 @@
 
 "use strict";
 
-var blueNoiseFloat32 = (function () {
+var blueNoiseFloat16 = (function () {
   /**
    * @typedef {Number} normalized - A number in the range of 0 - 1
    * @typedef {Array} binary[] - an integer array in the range of 0 - 1
@@ -22,20 +22,20 @@ var blueNoiseFloat32 = (function () {
 
   // Updated
   /**
-   * Generate blue noise with void and cluster method, initial binary array using Poisson Disk Sampling
+   * Generate blue noise with void and cluster method
    *
-   * @param {Int} width - Output array "width"
-   * @param {Int} height - Output array "height"
+   * @param {Int} width
+   * @param {Int} height
    *
-   * @param {Number} sigma - Phase 1 sigma
+   * @param {Number} sigma
    *
-   * @param {Number[]} kernel - Phase 1 blur kernel
+   * @param {Number[]} kernel
    *
    * @param {normalized} density
-   * @param {normalized} candidateFillingRatio - The ratio between phase 2 and phase 3
-   * @param {binary[]} initArray - Initial binary array, must have the same dimension as width and height
+   * @param {normalized} candidateFillingRatio
+   * @param {binary[]} initArray
    *
-   * @returns {Int[]} - Values ranging from 0 to (width * height)
+   * @returns {Int[]}
    */
 
   function _voidAndCluster(width, height, sigma, customKernel, density, candidateFillingRatio, initArray, verbose) {
@@ -62,7 +62,7 @@ var blueNoiseFloat32 = (function () {
     if (kernelCheck) {
       kernelHeight = customKernel.length;
       kernelWidth = customKernel[0].length;
-      kernel = new Float32Array(customKernel.flat());
+      kernel = new Float16Array(customKernel.flat());
     } else {
       console.warn("Inputted kernel is null or not an array. Default to Gaussian");
       kernel = _getGaussianKernelLUT(sigma);
@@ -75,7 +75,7 @@ var blueNoiseFloat32 = (function () {
     // Setup arrays
     const binArray = new Uint8Array(sqSz);
     const rankArray = new Int32Array(sqSz);
-    const blurred = new Float32Array(sqSz);
+    const blurred = new Float16Array(sqSz);
     binArray.set(blueNoiseUtils.noiseArray(width, height, density));
 
     if (initArray && initArray.flat().length === sqSz) {
@@ -177,7 +177,7 @@ var blueNoiseFloat32 = (function () {
 
   // New
   /**
-   * Generate blue noise with void and cluster method, initial binary array using Poisson Disk Sampling
+   * Generate blue noise with void and cluster method
    *
    * Solved the unevely distributed dots problem
    * Any developers who wants free and high quality blue noise please notice this!!
@@ -215,7 +215,7 @@ var blueNoiseFloat32 = (function () {
     //Setup arrays
     const binArray = new Uint8Array(sqSz);
     const rankArray = new Int32Array(sqSz);
-    const blurred = new Float32Array(sqSz);
+    const blurred = new Float16Array(sqSz);
 
     binArray.set(blueNoiseUtils.noiseArray(width, height, density));
 
@@ -340,7 +340,7 @@ var blueNoiseFloat32 = (function () {
 
   function _candidateAlgoInPlace(inArray, width, height, sigma, customKernel) {
     const sqSz = width * height;
-    const blurred = new Float32Array(sqSz);
+    const blurred = new Float16Array(sqSz);
 
     if (inArray == null) throw new Error("Inputted array is null");
 
@@ -352,14 +352,14 @@ var blueNoiseFloat32 = (function () {
     }
 
     const kernelCheck = customKernel != null && Array.isArray(customKernel);
-    let kernel = new Float32Array(2 * Math.ceil(3 * sigma) + 1);
+    let kernel = new Float16Array(2 * Math.ceil(3 * sigma) + 1);
     let kernelWidth;
     let kernelHeight;
 
     if (kernelCheck) {
       kernelWidth = customKernel.length;
       kernelHeight = customKernel[0].length;
-      kernel = new Float32Array(customKernel.flat());
+      kernel = new Float16Array(customKernel.flat());
     } else {
       console.warn("Inputted kernel is null or not an array. Default to Gaussian");
       kernel = _getGaussianKernelLUT(sigma);
@@ -421,7 +421,7 @@ var blueNoiseFloat32 = (function () {
 
     if (!gaussianKernelLUT.has(sigma)) {
       const kernelSize = 2 * radius + 1;
-      const kernel = new Float32Array(kernelSize * kernelSize);
+      const kernel = new Float16Array(kernelSize * kernelSize);
       const denom = 2 * sigma * sigma;
 
       for (let y = -radius; y <= radius; y++) {
@@ -457,7 +457,7 @@ var blueNoiseFloat32 = (function () {
     const key = N + " | " + trimmed;
 
     if (!windowFuncLUT.has(key)) {
-      const array = new Float32Array(N).fill(1);
+      const array = new Float16Array(N).fill(1);
       const cp = new Function("n", "N", "return " + trimmed);
 
       for (let n = 0; n < N; n++) array[n] *= cp(n, N);
