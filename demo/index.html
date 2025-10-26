@@ -12,6 +12,9 @@
     </style>
   </head>
   <body style="gap: 8px; background-color: black; color: white; display: flex; flex-direction: column; align-items: flex-start">
+    <div>
+      <button id="gotoVariableVACluster">Variable Void and Cluster</button>
+    </div>
     <canvas id="blueNoiseCanvas" style="border: 3px solid #ff0; image-rendering: pixelated"></canvas>
     <div>
       <span>Width</span>
@@ -22,40 +25,16 @@
       <input type="number" id="blueNoiseHeight" value="64" />
     </div>
     <div>
-      <span>Phase 1 kernel</span>
-      <textarea type="number" id="blueNoisePhase1Kernel"></textarea>
+      <span>Kernel</span>
+      <textarea type="number" id="blueNoiseKernel"></textarea>
     </div>
     <div>
-      <span>Phase 2 kernel</span>
-      <textarea type="number" id="blueNoisePhase2Kernel"></textarea>
+      <span>Sigma</span>
+      <input type="number" id="blueNoiseSigma" value="2" />
     </div>
     <div>
-      <span>Phase 3 kernel</span>
-      <textarea type="number" id="blueNoisePhase3Kernel"></textarea>
-    </div>
-    <div>
-      <span>PDS radius x</span>
-      <input type="number" id="blueNoisePDSRadiusX" value="8" />
-    </div>
-    <div>
-      <span>PDS radius y</span>
-      <input type="number" id="blueNoisePDSRadiusY" value="8" />
-    </div>
-    <div>
-      <span>PDS K value</span>
-      <input type="number" id="blueNoisePDSKValue" value="30" />
-    </div>
-    <div>
-      <span>Phase 1 sigma</span>
-      <input type="number" id="blueNoisePhase1Sigma" value="6" />
-    </div>
-    <div>
-      <span>Phase 2 sigma</span>
-      <input type="number" id="blueNoisePhase2Sigma" value="2" />
-    </div>
-    <div>
-      <span>Phase 3 sigma</span>
-      <input type="number" id="blueNoisePhase3Sigma" value="2" />
+      <span>Density</span>
+      <input type="number" id="blueNoiseDensity" value="0.05" />
     </div>
     <div>
       <span>Candidate filling ratio</span>
@@ -71,13 +50,9 @@
   <script>
     var blueNoiseCanvas = document.getElementById("blueNoiseCanvas");
     var blueNoiseCtx = blueNoiseCanvas.getContext("2d");
-
-    document.getElementById("blueNoisePhase1Kernel").placeholder =
-      "[\n" + "[0, 1, 0],\n" + "[1, 2, 1],\n" + "[0, 1, 0],\n" + "]";
-    document.getElementById("blueNoisePhase2Kernel").placeholder =
-      "[\n" + "[0, 1, 0],\n" + "[1, 2, 1],\n" + "[0, 1, 0],\n" + "]";
-    document.getElementById("blueNoisePhase3Kernel").placeholder =
-      "[\n" + "[0, 1, 0],\n" + "[1, 2, 1],\n" + "[0, 1, 0],\n" + "]";
+    document.getElementById("gotoVariableVACluster").addEventListener("click", function () {
+      window.location.href = "variable-blue-noise/";
+    });
 
     function findHighest(matrix) {
       let result = 0;
@@ -98,30 +73,16 @@
       blueNoiseCanvas.height = blueNoiseHeight;
       const t0 = performance.now();
       const result = blueNoiseFloat32.voidAndCluster(
-        Number(document.getElementById("blueNoiseWidth").value),
-        Number(document.getElementById("blueNoiseHeight").value),
-        Number(document.getElementById("blueNoisePDSRadiusX").value),
-        Number(document.getElementById("blueNoisePDSRadiusY").value),
-        Number(document.getElementById("blueNoisePDSKValue").value),
-        Number(document.getElementById("blueNoisePhase1Sigma").value),
-        Number(document.getElementById("blueNoisePhase2Sigma").value),
-        Number(document.getElementById("blueNoisePhase3Sigma").value),
-        document.getElementById("blueNoisePhase1Kernel").value != ""
-          ? JSON.parse(document.getElementById("blueNoisePhase1Kernel").value)
-          : null,
-        document.getElementById("blueNoisePhase2Kernel").value != ""
-          ? JSON.parse(document.getElementById("blueNoisePhase2Kernel").value)
-          : null,
-        document.getElementById("blueNoisePhase3Kernel").value != ""
-          ? JSON.parse(document.getElementById("blueNoisePhase3Kernel").value)
+        blueNoiseWidth,
+        blueNoiseHeight,
+        Number(document.getElementById("blueNoiseSigma").value),
+        document.getElementById("blueNoiseKernel").value != ""
+          ? JSON.parse(document.getElementById("blueNoiseKernel").value)
           : null,
         Number(document.getElementById("blueNoiseCandidateFillingRatio").value),
-        undefined,
-        true
+        null
       );
-      console.log(result);
 
-      //const result = blueNoise.candidateAlgo(blueNoise.noiseArray(64, 64, 0.2), 64, 1.5, 10000);
       generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
       const frame = blueNoiseCtx.getImageData(0, 0, blueNoiseWidth, blueNoiseHeight);
       const imageData = frame.data;
