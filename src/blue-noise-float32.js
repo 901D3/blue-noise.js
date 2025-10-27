@@ -177,9 +177,6 @@ var blueNoiseFloat32 = (function () {
   /**
    * Generate blue noise with Void and Cluster method
    *
-   * Solved the unevely distributed dots problem
-   * Any developers who wants free and high quality blue noise please notice this!!
-   *
    * @returns {array}
    */
 
@@ -474,3 +471,4 @@ var blueNoiseFloat32 = (function () {
     getWindowFunctionLUT: _getWindowFunctionLUT,
   };
 })();
+
