@@ -4,6 +4,7 @@
  * The result is high quality blue noise but somehow very fast
  * Remember to link blue-noise-utils.js
  *
+ * v0.2
  * 64 Bits Float version
  *
  * https://github.com/901D3/blue-noise.js
@@ -158,7 +159,7 @@ var blueNoiseFloat64 = (function () {
     width,
     height,
     sigma,
-    initialSigmaScale = 0.3, // Best value for adaptive candidate algorithim
+    initialSigmaScale = 0.3, // Best value for adaptive candidate algorithm
     customKernel,
     density = 0.1,
     candidateFillingRatio = 0.5,
