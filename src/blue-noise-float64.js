@@ -4,7 +4,7 @@
  * The result is high quality blue noise but somehow very fast
  * Remember to link blue-noise-utils.js
  *
- * v0.2
+ * v0.2.01
  * 64 Bits Float version
  *
  * https://github.com/901D3/blue-noise.js
@@ -79,7 +79,7 @@ var blueNoiseFloat64 = (function () {
       temp[idx] = 0;
       rankArray[idx] = rank--;
 
-      blueNoiseUtils.deltaBlurUpdateInPlace(width, height, idx, -2, blurred, kernel, kernelSize, kernelSize);
+      blueNoiseUtils.deltaBlurUpdateInPlace(width, height, idx, -1, blurred, kernel, kernelSize, kernelSize);
     }
     // End of Phase 1
 
@@ -560,3 +560,4 @@ var blueNoiseFloat64 = (function () {
     //getWindowFunctionLUT: _getWindowFunctionLUT,
   };
 })();
+
