@@ -41,8 +41,8 @@ It will return a 2D flattened array, it's values ranging from 0 to (width * heig
 
 ──────────
 
-Comparing mine, Demofox and Ethan Shulman Void and Cluster output\
-My result is from [cb347ace96914194b7f2671804e16408f930a4cc](https://github.com/901D3/blue-noise.js/commit/cb347ace96914194b7f2671804e16408f930a4cc)\. The algorithm might varies in the future
+Comparing mine, Demofox(Atrix256) and Ethan Shulman Void and Cluster output\
+The results is from [cb347ace96914194b7f2671804e16408f930a4cc](https://github.com/901D3/blue-noise.js/commit/cb347ace96914194b7f2671804e16408f930a4cc)\. The library might varies in the future
 
 Mine\
 256x256, all phases sigma = 1, all phases kernel radius = 8, PDS radius x and y = 5, PDS K value = 30\
