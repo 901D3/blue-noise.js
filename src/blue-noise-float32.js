@@ -159,7 +159,7 @@ var blueNoiseFloat32 = (function () {
     width,
     height,
     sigma,
-    initialSigmaScale = 0.3, // Best value for adaptive candidate algorithim
+    initialSigmaScale = 0.3, // Best value for adaptive candidate algorithm
     customKernel,
     density = 0.1,
     candidateFillingRatio = 0.5,
