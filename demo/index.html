@@ -12,10 +12,14 @@
     </style>
   </head>
   <body style="gap: 8px; background-color: black; color: white; display: flex; flex-direction: column; align-items: flex-start">
-    <div>
-      <button id="gotoVariableVACluster">Variable Void and Cluster</button>
-    </div>
     <canvas id="blueNoiseCanvas" style="border: 3px solid #ff0; image-rendering: pixelated"></canvas>
+    <div>
+      <span>Algorithm</span>
+      <select id="blueNoiseAlgo">
+        <option value="VACluster">Void and Cluster</option>
+        <option value="georgievFajardo">Georgiev-Fajardo(Relaxation)</option>
+      </select>
+    </div>
     <div>
       <span>Width</span>
       <input type="number" id="blueNoiseWidth" value="64" />
@@ -25,16 +29,24 @@
       <input type="number" id="blueNoiseHeight" value="64" />
     </div>
     <div>
-      <span>Kernel</span>
-      <textarea type="number" id="blueNoiseKernel"></textarea>
+      <span>Initial sigma scale</span>
+      <input type="number" id="blueNoiseInitialSigmaScale"></input>
     </div>
     <div>
-      <span>Sigma</span>
-      <input type="number" id="blueNoiseSigma" value="2" />
+      <span>Sigma(Image)</span>
+      <input type="number" id="blueNoiseSigmaImage" value="2" />
+    </div>
+    <div>
+      <span>Sigma sample</span>
+      <input type="number" id="blueNoiseSigmaSample" value="0.1" />
     </div>
     <div>
       <span>Density</span>
-      <input type="number" id="blueNoiseDensity" value="0.05" />
+      <input type="number" id="blueNoiseDensity" value="0.1" />
+    </div>
+    <div>
+      <span>Iterations</span>
+      <input type="number" id="blueNoiseIterations" value="500000" />
     </div>
     <div>
       <span>Candidate filling ratio</span>
@@ -71,22 +83,39 @@
       const blueNoiseHeight = Number(document.getElementById("blueNoiseHeight").value);
       blueNoiseCanvas.width = blueNoiseWidth;
       blueNoiseCanvas.height = blueNoiseHeight;
+      const sqSz = blueNoiseWidth * blueNoiseHeight;
       const t0 = performance.now();
-      const result = blueNoiseFloat32.voidAndCluster(
-        blueNoiseWidth,
-        blueNoiseHeight,
-        Number(document.getElementById("blueNoiseSigma").value),
-        document.getElementById("blueNoiseKernel").value != ""
-          ? JSON.parse(document.getElementById("blueNoiseKernel").value)
-          : null,
-        Number(document.getElementById("blueNoiseCandidateFillingRatio").value),
-        null
-      );
+      let result;
+
+      if (document.getElementById("blueNoiseAlgo").value === "VACluster") {
+        result = blueNoiseFloat32.extendedVoidAndCluster(
+          blueNoiseWidth,
+          blueNoiseHeight,
+          Number(document.getElementById("blueNoiseSigmaImage").value),
+          Number(document.getElementById("blueNoiseInitialSigmaScale").value),
+          null,
+          Number(document.getElementById("blueNoiseDensity").value),
+          Number(document.getElementById("blueNoiseCandidateFillingRatio").value),
+          null
+        );
+      } else if (document.getElementById("blueNoiseAlgo").value === "georgievFajardo") {
+        result = new Float32Array(sqSz);
+
+         for (let i = 0; i < sqSz; i++) result[i] = Math.floor(Math.random() * sqSz);
+
+        blueNoiseFloat32.georgievFajardoInPlace(
+          result,
+          blueNoiseWidth,
+          blueNoiseHeight,
+          Number(document.getElementById("blueNoiseSigmaImage").value),
+          Number(document.getElementById("blueNoiseSigmaSample").value),
+          Number(document.getElementById("blueNoiseIterations").value)
+        );
+      }
 
       generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
       const frame = blueNoiseCtx.getImageData(0, 0, blueNoiseWidth, blueNoiseHeight);
       const imageData = frame.data;
-      const sqSz = blueNoiseWidth * blueNoiseHeight;
       const sqSz4 = sqSz * 4;
       const denom = (1 / findHighest(result)) * 255; // Easier to debug with binary array...
 
