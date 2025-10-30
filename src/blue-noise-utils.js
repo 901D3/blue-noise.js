@@ -15,6 +15,7 @@
 var blueNoiseUtils = (function () {
   //Helpers
 
+  // Unused
   /**
    *
    * @param {*} width
@@ -25,12 +26,13 @@ var blueNoiseUtils = (function () {
    * @returns
    */
 
+  /*
   function _poissonDiskSampling(width, height, radiusX, radiusY, k = 30) {
     const points = [];
     const active = [];
     const twoPI = 2 * Math.PI;
     const binArray = new Uint8Array(width * height);
-
+  
     function isValid(p) {
       const pointLength = points.length;
       for (let i = 0; i < pointLength; i++) {
@@ -44,16 +46,16 @@ var blueNoiseUtils = (function () {
       }
       return true;
     }
-
+  
     const initial = {x: Math.random() * width, y: Math.random() * height};
     points.push(initial);
     active.push(initial);
-
+  
     while (active.length > 0) {
       const idx = Math.floor(Math.random() * active.length);
       const {x: centerX, y: centerY} = active[idx];
       let found = false;
-
+  
       for (let i = 0; i < k; i++) {
         const angle = Math.random() * twoPI;
         const rX = Math.cos(angle) * radiusX * (1 + Math.random());
@@ -62,7 +64,7 @@ var blueNoiseUtils = (function () {
           x: centerX + rX,
           y: centerY + rY,
         };
-
+  
         if (candidate.x >= 0 && candidate.x < width && candidate.y >= 0 && candidate.y < height && isValid(candidate)) {
           points.push(candidate);
           active.push(candidate);
@@ -70,23 +72,39 @@ var blueNoiseUtils = (function () {
           break;
         }
       }
-
+  
       if (!found) active.splice(idx, 1);
     }
-
+  
     const pointsLength = points.length;
     for (let i = 0; i < pointsLength; i++) {
       binArray[Math.round(points[i].y) * width + Math.round(points[i].x)] = 1;
     }
-
+  
     return binArray;
   }
+  */
 
-  function _noiseArray(width, height, threshold) {
+  // Updated
+  /**
+   *
+   * @param {*} width
+   * @param {*} height
+   * @param {*} threshold
+   * @returns
+   */
+
+  function _noiseArray(width, height, density) {
     const sqSz = width * height;
     const array = new Uint8Array(sqSz);
-    for (let i = 0; i < sqSz; i++) {
-      array[i] = Math.random() < threshold ? 0 : 1;
+    for (let i = 0; i < sqSz; i++) array[i] = i < sqSz * density ? 1 : 0;
+
+    for (let i = sqSz - 1; i >= 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+
+      const tmp = array[i];
+      array[i] = array[j];
+      array[j] = tmp;
     }
 
     return array;
@@ -98,22 +116,15 @@ var blueNoiseUtils = (function () {
    * @param {*} inArray
    * @param {*} width
    * @param {*} height
-   * @param {*} kernel
    * @param {*} blurred
+   * @param {*} kernel
    * @param {*} kernelWidth
    * @param {*} kernelHeight
    */
 
-  function _blurWrapInPlace(inArray, width, height, kernel, blurred, kernelWidth, kernelHeight) {
-    // divide by 2 + flooring
+  function _blurWrapInPlace(inArray, width, height, blurred, kernel, kernelWidth, kernelHeight) {
     const kHalfW = kernelWidth >> 1;
     const kHalfH = kernelHeight >> 1;
-
-    const wMask = width - 1;
-    const hMask = height - 1;
-
-    const isPowerOf2W = (width & wMask) === 0;
-    const isPowerOf2H = (height & hMask) === 0;
 
     for (let y = 0; y < height; y++) {
       const yOffs = y * width;
@@ -123,18 +134,16 @@ var blueNoiseUtils = (function () {
 
         for (let ky = 0; ky < kernelHeight; ky++) {
           let iy = y + ky - kHalfH;
-          if (isPowerOf2H) iy &= hMask;
-          else if (iy < 0) iy += height;
-          else if (iy >= height) iy -= height;
+          while (iy < 0) iy += height;
+          while (iy >= height) iy -= height;
 
           const iyOffs = iy * width;
           const kernelYOffs = ky * kernelWidth;
 
           for (let kx = 0; kx < kernelWidth; kx++) {
             let ix = x + kx - kHalfW;
-            if (isPowerOf2W) ix &= wMask;
-            else if (ix < 0) ix += width;
-            else if (ix >= width) ix -= width;
+            while (ix < 0) ix += width;
+            while (ix >= height) ix -= width;
 
             sum += inArray[iyOffs + ix] * kernel[kernelYOffs + kx];
           }
@@ -160,7 +169,9 @@ var blueNoiseUtils = (function () {
 
   function _deltaBlurUpdateInPlace(width, height, idx, amount, blurred, kernel, kernelWidth, kernelHeight) {
     const iy = Math.floor(idx / width);
-    const ix = idx % width;
+    let ix = idx;
+    while (ix < 0) ix += width;
+    while (ix >= height) ix -= width;
     const kHalfW = -(kernelWidth >> 1) + width;
     const kHalfH = -(kernelHeight >> 1) + height;
 
@@ -168,13 +179,91 @@ var blueNoiseUtils = (function () {
     const ixOffs = ix + kHalfW;
 
     for (let ky = 0; ky < kernelHeight; ky++) {
-      const yOffs = ((ky + iyOffs) % height) * width;
+      let kyiyOffs = ky + iyOffs;
+      while (kyiyOffs < 0) kyiyOffs += height;
+      while (kyiyOffs >= height) kyiyOffs -= height;
+
+      const yOffs = kyiyOffs * width;
       const kyOffs = ky * kernelWidth;
 
       for (let kx = 0; kx < kernelWidth; kx++) {
-        blurred[yOffs + ((kx + ixOffs) % width)] += kernel[kyOffs + kx] * amount;
+        let kxixOffs = kx + ixOffs;
+        while (kxixOffs < 0) kxixOffs += width;
+        while (kxixOffs >= height) kxixOffs -= width;
+
+        blurred[yOffs + kxixOffs] += kernel[kyOffs + kx] * amount;
       }
     }
+  }
+
+  function _getNeighbors(idx, width, height, radius) {
+    let x = idx;
+    while (x < 0) x += width;
+    while (x >= width) x -= width;
+
+    const y = Math.floor(idx / width);
+    const neighbors = [];
+
+    for (let dy = -radius; dy <= radius; dy++) {
+      let ny = y + dy + height;
+      while (ny < 0) ny += height;
+      while (ny >= height) ny -= height;
+
+      for (let dx = -radius; dx <= radius; dx++) {
+        let nx = x + dx + width;
+        while (nx < 0) nx += width;
+        while (nx >= width) nx -= width;
+
+        neighbors.push(ny * width + nx);
+      }
+    }
+
+    return neighbors;
+  }
+
+  function _computeEnergySigmaAt(inArray, width, height, idx, sigmaImage, sigmaSample, d) {
+    let x = idx;
+    while (x < 0) x += width;
+    while (x >= width) x -= width;
+    const y = Math.floor(idx / width);
+    const radius = Math.ceil(3 * sigmaImage);
+    const invSigmaImage2 = sigmaImage * sigmaImage;
+    const invSigmaSample2 = sigmaSample * sigmaSample;
+    const dimension = d / 2;
+
+    let total = 0;
+    const ps = inArray[idx];
+
+    const yHeight = y + height;
+    const xWidth = x + width;
+
+    for (let dy = -radius; dy <= radius; dy++) {
+      let ny = dy + yHeight;
+      while (ny < 0) ny += height;
+      while (ny >= height) ny -= height;
+
+      const rowOffs = ny * width;
+
+      let dyWrap = Math.abs(y - ny);
+      if (dyWrap > height >> 1) dyWrap = height - dyWrap;
+      dyWrap *= dyWrap;
+
+      for (let dx = -radius; dx <= radius; dx++) {
+        let nx = dx + xWidth;
+        while (nx < 0) nx += width;
+        while (nx >= width) nx -= width;
+
+        let dxWrap = Math.abs(x - nx);
+        if (dxWrap > width >> 1) dxWrap = width - dxWrap;
+
+        total += Math.exp(
+          -(dxWrap * dxWrap + dyWrap) * invSigmaImage2 -
+            (Math.sqrt(Math.abs(ps - inArray[rowOffs + nx])) * invSigmaSample2) ** dimension
+        );
+      }
+    }
+
+    return total;
   }
 
   const gaussianKernelLUTArrayLiteral = new Map();
@@ -302,10 +391,12 @@ var blueNoiseUtils = (function () {
   }
 
   return {
-    poissonDiskSampling: _poissonDiskSampling,
+    //poissonDiskSampling: _poissonDiskSampling,
     noiseArray: _noiseArray,
     blurWrapInPlace: _blurWrapInPlace,
     deltaBlurUpdateInPlace: _deltaBlurUpdateInPlace,
+    computeEnergySigmaAt: _computeEnergySigmaAt,
+    getNeighbors: _getNeighbors,
     getGaussianKernelLUTArrayLiteral: _getGaussianKernelLUTArrayLiteral,
     generateWindowedKernelInPlace: _generateWindowedKernelInPlace,
     generateWindowedKernelArrayLiteral: _generateWindowedKernelArrayLiteral,
