@@ -30,7 +30,7 @@
     </div>
     <div>
       <span>Initial sigma scale</span>
-      <input type="number" id="blueNoiseInitialSigmaScale"></input>
+      <input type="number" id="blueNoiseInitialSigmaScale" value="0.3" />
     </div>
     <div>
       <span>Sigma(Image)</span>
@@ -42,7 +42,7 @@
     </div>
     <div>
       <span>Density</span>
-      <input type="number" id="blueNoiseDensity" value="0.1" />
+      <input type="number" id="blueNoiseDensity" value="0.01" />
     </div>
     <div>
       <span>Iterations</span>
@@ -101,7 +101,7 @@
       } else if (document.getElementById("blueNoiseAlgo").value === "georgievFajardo") {
         result = new Float32Array(sqSz);
 
-         for (let i = 0; i < sqSz; i++) result[i] = Math.floor(Math.random() * sqSz);
+        for (let i = 0; i < sqSz; i++) result[i] = Math.floor(Math.random() * sqSz);
 
         blueNoiseFloat32.georgievFajardoInPlace(
           result,
