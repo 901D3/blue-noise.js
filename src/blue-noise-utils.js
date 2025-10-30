@@ -4,6 +4,7 @@
  * The result is high quality blue noise but somehow very fast
  * Remember to link this script
  *
+ * v0.2.01
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -143,7 +144,7 @@ var blueNoiseUtils = (function () {
           for (let kx = 0; kx < kernelWidth; kx++) {
             let ix = x + kx - kHalfW;
             while (ix < 0) ix += width;
-            while (ix >= height) ix -= width;
+            while (ix >= width) ix -= width;
 
             sum += inArray[iyOffs + ix] * kernel[kernelYOffs + kx];
           }
@@ -171,7 +172,7 @@ var blueNoiseUtils = (function () {
     const iy = Math.floor(idx / width);
     let ix = idx;
     while (ix < 0) ix += width;
-    while (ix >= height) ix -= width;
+    while (ix >= width) ix -= width;
     const kHalfW = -(kernelWidth >> 1) + width;
     const kHalfH = -(kernelHeight >> 1) + height;
 
@@ -189,7 +190,7 @@ var blueNoiseUtils = (function () {
       for (let kx = 0; kx < kernelWidth; kx++) {
         let kxixOffs = kx + ixOffs;
         while (kxixOffs < 0) kxixOffs += width;
-        while (kxixOffs >= height) kxixOffs -= width;
+        while (kxixOffs >= width) kxixOffs -= width;
 
         blurred[yOffs + kxixOffs] += kernel[kyOffs + kx] * amount;
       }
