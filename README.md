@@ -52,11 +52,11 @@ Candidate filling ratio: 0.5\
 64265.239200000025ms\
 <img width="256" height="256" alt="image" src="https://raw.githubusercontent.com/901D3/blue-noise.js/refs/heads/main/out/image_167.png" />
 
-### Atrix256's\
+### Atrix256's
 256x256, 400.2s\
 <img width="512" height="256" alt="image" src="https://blog.demofox.org/wp-content/uploads/2019/06/bluevc_1m.png" />
 
-### Ethan Shulman's\
+### Ethan Shulman's
 256x256, sigma = 2, density = 0.1, 168.78s\
 <img width="256" height="256" alt="image" src="https://github.com/user-attachments/assets/1c126adc-ec9c-4216-8092-9d6b37725989" />
 
