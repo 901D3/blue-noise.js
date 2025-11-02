@@ -17,6 +17,8 @@
       <span>Algorithm</span>
       <select id="blueNoiseAlgo">
         <option value="VACluster">Void and Cluster</option>
+        <option value="extendedVACluster">Extended Void and Cluster</option>
+        <option value="bartWronskiVACluster">Bart Wronski's Void and Cluster</option>
         <option value="georgievFajardo">Georgiev-Fajardo(Relaxation)</option>
       </select>
     </div>
@@ -27,6 +29,10 @@
     <div>
       <span>Height</span>
       <input type="number" id="blueNoiseHeight" value="64" />
+    </div>
+    <div>
+      <span>Sigma radius multiplier</span>
+      <input type="number" id="blueNoiseGaussianSigmaRadiusMultiplier" value="4" />
     </div>
     <div>
       <span>Initial sigma scale</span>
@@ -62,9 +68,6 @@
   <script>
     var blueNoiseCanvas = document.getElementById("blueNoiseCanvas");
     var blueNoiseCtx = blueNoiseCanvas.getContext("2d");
-    document.getElementById("gotoVariableVACluster").addEventListener("click", function () {
-      window.location.href = "variable-blue-noise/";
-    });
 
     function findHighest(matrix) {
       let result = 0;
@@ -81,13 +84,25 @@
     function blueNoiseWrapper() {
       const blueNoiseWidth = Number(document.getElementById("blueNoiseWidth").value);
       const blueNoiseHeight = Number(document.getElementById("blueNoiseHeight").value);
+      const blueNoiseAlgo = document.getElementById("blueNoiseAlgo").value;
       blueNoiseCanvas.width = blueNoiseWidth;
       blueNoiseCanvas.height = blueNoiseHeight;
       const sqSz = blueNoiseWidth * blueNoiseHeight;
       const t0 = performance.now();
       let result;
 
-      if (document.getElementById("blueNoiseAlgo").value === "VACluster") {
+      blueNoiseFloat32.gaussianSigmaRadiusMultiplier = Number(
+        document.getElementById("blueNoiseGaussianSigmaRadiusMultiplier").value
+      );
+
+      if (blueNoiseAlgo === "VACluster") {
+        result = blueNoiseFloat32.originalVoidAndCluster(
+          blueNoiseWidth,
+          blueNoiseHeight,
+          Number(document.getElementById("blueNoiseSigmaImage").value),
+          Number(document.getElementById("blueNoiseDensity").value)
+        );
+      } else if (blueNoiseAlgo === "extendedVACluster") {
         result = blueNoiseFloat32.extendedVoidAndCluster(
           blueNoiseWidth,
           blueNoiseHeight,
@@ -95,13 +110,25 @@
           Number(document.getElementById("blueNoiseInitialSigmaScale").value),
           null,
           Number(document.getElementById("blueNoiseDensity").value),
-          Number(document.getElementById("blueNoiseCandidateFillingRatio").value),
-          null
+          Number(document.getElementById("blueNoiseCandidateFillingRatio").value)
         );
-      } else if (document.getElementById("blueNoiseAlgo").value === "georgievFajardo") {
+      } else if (blueNoiseAlgo === "bartWronskiVACluster") {
+        result = blueNoiseFloat32.bartWronskiVoidAndCluster(
+          blueNoiseWidth,
+          blueNoiseHeight,
+          Number(document.getElementById("blueNoiseSigmaImage").value),
+          Number(document.getElementById("blueNoiseInitialSigmaScale").value),
+          Number(document.getElementById("blueNoiseDensity").value)
+        );
+      } else if (blueNoiseAlgo === "georgievFajardo") {
         result = new Float32Array(sqSz);
+        let initArray;
+        if (Array.isArray(gId("blueNoiseInitArrayInput").value)) {
+          initArray = JSON.parse(gId("blueNoiseInitArrayInput").value);
+        }
 
-        for (let i = 0; i < sqSz; i++) result[i] = Math.floor(Math.random() * sqSz);
+        if (initArray && initArray.flat().length === sqSz) result.set(initArray.flat());
+        else for (let i = 0; i < sqSz; i++) result[i] = Math.floor(Math.random() * sqSz);
 
         blueNoiseFloat32.georgievFajardoInPlace(
           result,
@@ -117,7 +144,7 @@
       const frame = blueNoiseCtx.getImageData(0, 0, blueNoiseWidth, blueNoiseHeight);
       const imageData = frame.data;
       const sqSz4 = sqSz * 4;
-      const denom = (1 / findHighest(result)) * 255; // Easier to debug with binary array...
+      const denom = (1 / findHighest(result)) * 255;
 
       for (let i = 0; i < sqSz4; i += 4) imageData[i + 3] = 255;
 
