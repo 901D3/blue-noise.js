@@ -58,8 +58,9 @@
       <span>Candidate filling ratio</span>
       <input type="number" id="blueNoiseCandidateFillingRatio" value="0.5" />
     </div>
-    <button onclick="setTimeout(blueNoiseWrapper, 0)">generate</button>
+    <button onclick="blueNoiseWrapper()">Generate</button>
     <span id="generateTime"></span>
+    <button onclick="downloadRaw()">Download raw</button>
   </body>
   <script src="../src/blue-noise-utils.js"></script>
   <script src="../src/blue-noise-float16.js"></script>
@@ -68,6 +69,7 @@
   <script>
     var blueNoiseCanvas = document.getElementById("blueNoiseCanvas");
     var blueNoiseCtx = blueNoiseCanvas.getContext("2d");
+    let result;
 
     function findHighest(matrix) {
       let result = 0;
@@ -89,7 +91,6 @@
       blueNoiseCanvas.height = blueNoiseHeight;
       const sqSz = blueNoiseWidth * blueNoiseHeight;
       const t0 = performance.now();
-      let result;
 
       blueNoiseFloat32.gaussianSigmaRadiusMultiplier = Number(
         document.getElementById("blueNoiseGaussianSigmaRadiusMultiplier").value
@@ -161,6 +162,16 @@
       }
 
       blueNoiseCtx.putImageData(frame, 0, 0);
+    }
+
+    function downloadRaw() {
+      const blob = new Blob([result.buffer], {type: "application/octet-stream"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "blue_noise.raw";
+      a.click();
+      URL.revokeObjectURL(url);
     }
   </script>
 </html>
