@@ -9,7 +9,6 @@ Kinda devastated so i implement Void and Cluster myself with my optimization ski
 ──────────
 
 # _How to use_
-
 Linking the required scripts in HTML
 
 ```
@@ -53,7 +52,9 @@ Candidate filling ratio: 0.5\
 <img width="256" height="256" alt="image" src="https://raw.githubusercontent.com/901D3/blue-noise.js/refs/heads/main/out/image_167.png" />
 
 ### Atrix256's
-256x256, 400.2s\
+Sigma: 1.9?\
+Density: 0.1\
+400.2s\
 <img width="512" height="256" alt="image" src="https://blog.demofox.org/wp-content/uploads/2019/06/bluevc_1m.png" />
 
 ### Ethan Shulman's
@@ -69,6 +70,7 @@ Check out the source code!\
 [github.com/901D3/blue-noise.js](https://github.com/901D3/blue-noise.js)
 
 ## References
-
+[cv.ulichney.com/papers/1993-void-cluster.pdf](http://cv.ulichney.com/papers/1993-void-cluster.pdf)\
 [blog.demofox.org/2019/06/25/generating-blue-noise-textures-with-void-and-cluster](https://blog.demofox.org/2019/06/25/generating-blue-noise-textures-with-void-and-cluster)\
+[momentsingraphics.de/BlueNoise.html](https://momentsingraphics.de/BlueNoise.html)\
 [xaloez.com/o/bluenoise](https://xaloez.com/o/bluenoise)
