@@ -40,7 +40,15 @@ const blueNoiseUtils = (function () {
    * @param {*} radiusHeight
    */
 
-  const _blurWrapInPlace = (inArray, width, height, blurred, kernel, radiusWidth, radiusHeight) => {
+  const _blurWrapInPlace = (
+    inArray,
+    width,
+    height,
+    blurred,
+    kernel,
+    radiusWidth,
+    radiusHeight
+  ) => {
     const kernelHalfWidth = radiusWidth >> 1;
     const kernelHalfHeight = radiusHeight >> 1;
 
@@ -85,7 +93,16 @@ const blueNoiseUtils = (function () {
    * @param {*} radiusHeight
    */
 
-  const _deltaBlurUpdateInPlace = (width, height, idx, amount, blurred, kernel, radiusWidth, radiusHeight) => {
+  const _deltaBlurUpdateInPlace = (
+    width,
+    height,
+    idx,
+    amount,
+    blurred,
+    kernel,
+    radiusWidth,
+    radiusHeight
+  ) => {
     const inArrayX = idx - Math.floor(idx / width) * width;
     const inArrayY = Math.floor(idx / width);
 
