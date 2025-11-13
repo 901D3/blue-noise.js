@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link blue-noise-utils.js
  *
- * v0.2.21
+ * v0.2.21.1
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -37,7 +37,8 @@ const blueNoiseFloat16 = (function () {
     // Safety checks
     if (width == null) throw new Error("'width' arguments is mandatory");
     if (height == null) throw new Error("'height' arguments is mandatory");
-    if (!Number.isInteger(width) || !Number.isInteger(height)) throw new Error("'width' and 'height' must be integers");
+    if (!Number.isInteger(width) || !Number.isInteger(height))
+      throw new Error("'width' and 'height' must be integers");
     if (sigma === 0) throw new Error("Divide by 0");
 
     const kernel = _getGaussianKernelLUT(sigma);
@@ -50,7 +51,8 @@ const blueNoiseFloat16 = (function () {
     const rankArray = new Uint32Array(sqSz);
     const blurred = new Float16Array(sqSz);
 
-    for (let i = 0, threshold = Math.floor(sqSz * density); i < sqSz; i++) binArray[i] = i < threshold ? 1 : 0;
+    for (let i = 0, threshold = Math.floor(sqSz * density); i < sqSz; i++)
+      binArray[i] = i < threshold ? 1 : 0;
     blueNoiseUtils.shuffle(binArray);
     _adaptiveCandidateAlgoInPlace(binArray, width, height, _initialSigmaScale);
 
@@ -60,7 +62,15 @@ const blueNoiseFloat16 = (function () {
     // Temporary binary array, original binary array is left unchanged after phase 1
     const temp = binArray.slice();
 
-    blueNoiseUtils.blurWrapInPlace(binArray, width, height, blurred, kernel, kernelSize, kernelSize);
+    blueNoiseUtils.blurWrapInPlace(
+      binArray,
+      width,
+      height,
+      blurred,
+      kernel,
+      kernelSize,
+      kernelSize
+    );
 
     let rank = filled1 - 1;
     while (rank >= 0) {
@@ -81,12 +91,29 @@ const blueNoiseFloat16 = (function () {
       temp[idx] = 0;
       rankArray[idx] = rank--;
 
-      blueNoiseUtils.deltaBlurUpdateInPlace(width, height, idx, -1, blurred, kernel, kernelSize, kernelSize);
+      blueNoiseUtils.deltaBlurUpdateInPlace(
+        width,
+        height,
+        idx,
+        -1,
+        blurred,
+        kernel,
+        kernelSize,
+        kernelSize
+      );
     }
     // End of Phase 1
 
     // Phase 2
-    blueNoiseUtils.blurWrapInPlace(binArray, width, height, blurred, kernel, kernelSize, kernelSize);
+    blueNoiseUtils.blurWrapInPlace(
+      binArray,
+      width,
+      height,
+      blurred,
+      kernel,
+      kernelSize,
+      kernelSize
+    );
 
     // Start from filled 1
     const halfSqSz = Math.floor(sqSz / 2);
@@ -110,7 +137,16 @@ const blueNoiseFloat16 = (function () {
       binArray[idx] = 1;
       rankArray[idx] = rank++;
 
-      blueNoiseUtils.deltaBlurUpdateInPlace(width, height, idx, 1, blurred, kernel, kernelSize, kernelSize);
+      blueNoiseUtils.deltaBlurUpdateInPlace(
+        width,
+        height,
+        idx,
+        1,
+        blurred,
+        kernel,
+        kernelSize,
+        kernelSize
+      );
     }
     // End of Phase 2
 
@@ -119,9 +155,18 @@ const blueNoiseFloat16 = (function () {
     for (let i = 0; i < sqSz; i++) temp[i] = 1 ^ binArray[i];
 
     // Blur the temp array, so we can use binArray[idx] === 0
-    blueNoiseUtils.blurWrapInPlace(temp, width, height, blurred, kernel, kernelSize, kernelSize);
+    blueNoiseUtils.blurWrapInPlace(
+      temp,
+      width,
+      height,
+      blurred,
+      kernel,
+      kernelSize,
+      kernelSize
+    );
 
     // Fills in the remaining "0s" in binArray so rankArray is complete blue noise without any voids
+    rank = halfSqSz - 1;
     while (rank < sqSz) {
       let value = -Infinity;
       let idx;
@@ -139,7 +184,16 @@ const blueNoiseFloat16 = (function () {
       binArray[idx] = 1;
       rankArray[idx] = rank++;
 
-      blueNoiseUtils.deltaBlurUpdateInPlace(width, height, idx, -1, blurred, kernel, kernelSize, kernelSize);
+      blueNoiseUtils.deltaBlurUpdateInPlace(
+        width,
+        height,
+        idx,
+        -1,
+        blurred,
+        kernel,
+        kernelSize,
+        kernelSize
+      );
     }
     // End of Phase 3
 
@@ -163,9 +217,15 @@ const blueNoiseFloat16 = (function () {
     // Safety checks
     if (width == null) throw new Error("'width' arguments is mandatory");
     if (height == null) throw new Error("'height' arguments is mandatory");
-    if (!Number.isInteger(width) || !Number.isInteger(height)) throw new Error("'width' and 'height' must be integers");
+    if (!Number.isInteger(width) || !Number.isInteger(height)) {
+      throw new Error("'width' and 'height' must be integers");
+    }
+
     const kernelCheck = customKernel != null && Array.isArray(customKernel);
-    if (!kernelCheck && sigma == null) throw new Error("kernelCheck is " + kernelCheck + ". 'sigma' arguments is mandatory");
+    if (!kernelCheck && sigma == null) {
+      throw new Error("kernelCheck is " + kernelCheck + ". 'sigma' arguments is mandatory");
+    }
+
     if (sigma === 0) throw new Error("Divide by 0");
 
     // Get custom kernel dimension before flat them
@@ -191,10 +251,12 @@ const blueNoiseFloat16 = (function () {
     const rankArray = new Uint32Array(sqSz);
     const blurred = new Float16Array(sqSz);
 
-    for (let i = 0, threshold = Math.floor(sqSz * density); i < sqSz; i++) binArray[i] = i < threshold ? 1 : 0;
+    for (let i = 0, threshold = Math.floor(sqSz * density); i < sqSz; i++)
+      binArray[i] = i < threshold ? 1 : 0;
     blueNoiseUtils.shuffle(binArray);
 
-    _adaptiveCandidateAlgoInPlace(binArray, width, height, _initialSigmaScale);
+    if (kernelCheck) _candidateAlgoInPlace(binArray, width, height, sigma, customKernel);
+    else _adaptiveCandidateAlgoInPlace(binArray, width, height, _initialSigmaScale);
 
     const temp = new Uint8Array(binArray);
 
@@ -208,7 +270,15 @@ const blueNoiseFloat16 = (function () {
     const filled1 = clusterIndexes.length;
 
     // Phase 1
-    blueNoiseUtils.blurWrapInPlace(binArray, width, height, blurred, kernel, kernelWidth, kernelHeight);
+    blueNoiseUtils.blurWrapInPlace(
+      binArray,
+      width,
+      height,
+      blurred,
+      kernel,
+      kernelWidth,
+      kernelHeight
+    );
 
     for (let rank = filled1 - 1; rank > 0; rank--) {
       let value = -Infinity;
@@ -231,12 +301,29 @@ const blueNoiseFloat16 = (function () {
       temp[idx] = 0;
       rankArray[idx] = rank;
 
-      blueNoiseUtils.deltaBlurUpdateInPlace(width, height, idx, -1, blurred, kernel, kernelWidth, kernelHeight);
+      blueNoiseUtils.deltaBlurUpdateInPlace(
+        width,
+        height,
+        idx,
+        -1,
+        blurred,
+        kernel,
+        kernelWidth,
+        kernelHeight
+      );
     }
     // End of Phase 1
 
     // Phase 2
-    blueNoiseUtils.blurWrapInPlace(binArray, width, height, blurred, kernel, kernelWidth, kernelHeight);
+    blueNoiseUtils.blurWrapInPlace(
+      binArray,
+      width,
+      height,
+      blurred,
+      kernel,
+      kernelWidth,
+      kernelHeight
+    );
 
     // Start from filled 1
     for (let rank = filled1; rank < sqSz; rank++) {
@@ -257,7 +344,16 @@ const blueNoiseFloat16 = (function () {
       binArray[idx] = 1;
       rankArray[idx] = rank;
 
-      blueNoiseUtils.deltaBlurUpdateInPlace(width, height, idx, 1, blurred, kernel, kernelWidth, kernelHeight);
+      blueNoiseUtils.deltaBlurUpdateInPlace(
+        width,
+        height,
+        idx,
+        1,
+        blurred,
+        kernel,
+        kernelWidth,
+        kernelHeight
+      );
     }
     // End of Phase 2
 
@@ -277,7 +373,8 @@ const blueNoiseFloat16 = (function () {
   const _bartWronskiVoidAndCluster = (width, height, sigma, density = 0.1) => {
     if (width == null) throw new Error("'width' arguments is mandatory");
     if (height == null) throw new Error("'height' arguments is mandatory");
-    if (!Number.isInteger(width) || !Number.isInteger(height)) throw new Error("'width' and 'height' must be integers");
+    if (!Number.isInteger(width) || !Number.isInteger(height))
+      throw new Error("'width' and 'height' must be integers");
     if (sigma === 0) throw new Error("Divide by 0");
     const sqSz = width * height;
 
@@ -288,11 +385,20 @@ const blueNoiseFloat16 = (function () {
     const rankArray = new Uint32Array(sqSz);
     const blurred = new Float16Array(sqSz);
 
-    for (let i = 0, threshold = Math.floor(sqSz * density); i < sqSz; i++) binArray[i] = i < threshold ? 1 : 0;
+    for (let i = 0, threshold = Math.floor(sqSz * density); i < sqSz; i++)
+      binArray[i] = i < threshold ? 1 : 0;
     blueNoiseUtils.shuffle(binArray);
     _adaptiveCandidateAlgoInPlace(binArray, width, height, _initialSigmaScale);
 
-    blueNoiseUtils.blurWrapInPlace(binArray, width, height, blurred, kernel, kernelSize, kernelSize);
+    blueNoiseUtils.blurWrapInPlace(
+      binArray,
+      width,
+      height,
+      blurred,
+      kernel,
+      kernelSize,
+      kernelSize
+    );
 
     const temp = new Uint8Array(binArray);
 
@@ -306,7 +412,15 @@ const blueNoiseFloat16 = (function () {
     const filled1 = clusterIndexes.length;
 
     // Phase 1
-    blueNoiseUtils.blurWrapInPlace(binArray, width, height, blurred, kernel, kernelSize, kernelSize);
+    blueNoiseUtils.blurWrapInPlace(
+      binArray,
+      width,
+      height,
+      blurred,
+      kernel,
+      kernelSize,
+      kernelSize
+    );
 
     for (let rank = filled1 - 1; rank > 0; rank--) {
       let value = -Infinity;
@@ -329,7 +443,16 @@ const blueNoiseFloat16 = (function () {
       temp[idx] = 0;
       rankArray[idx] = rank;
 
-      blueNoiseUtils.deltaBlurUpdateInPlace(width, height, idx, -1, blurred, kernel, kernelSize, kernelSize);
+      blueNoiseUtils.deltaBlurUpdateInPlace(
+        width,
+        height,
+        idx,
+        -1,
+        blurred,
+        kernel,
+        kernelSize,
+        kernelSize
+      );
     }
 
     for (let rank = filled1; rank < sqSz; rank++) {
@@ -349,7 +472,16 @@ const blueNoiseFloat16 = (function () {
       binArray[idx] = 1;
       rankArray[idx] = rank;
 
-      blueNoiseUtils.deltaBlurUpdateInPlace(width, height, idx, 1, blurred, kernel, kernelSize, kernelSize);
+      blueNoiseUtils.deltaBlurUpdateInPlace(
+        width,
+        height,
+        idx,
+        1,
+        blurred,
+        kernel,
+        kernelSize,
+        kernelSize
+      );
     }
 
     return rankArray;
@@ -368,12 +500,27 @@ const blueNoiseFloat16 = (function () {
    * @param {*} iterations
    */
 
-  const _georgievFajardoInPlace = (inArray, width, height, sigmaImage, sigmaSample, iterations) => {
+  const _georgievFajardoInPlace = (
+    inArray,
+    width,
+    height,
+    sigmaImage,
+    sigmaSample,
+    iterations
+  ) => {
     const sqSz = width * height;
 
     const energy = new Float16Array(sqSz);
     for (let i = 0; i < sqSz; i++) {
-      energy[i] = blueNoiseUtils.computeEnergySigmaAt(inArray, width, height, i, sigmaImage, sigmaSample, 2);
+      energy[i] = blueNoiseUtils.computeEnergySigmaAt(
+        inArray,
+        width,
+        height,
+        i,
+        sigmaImage,
+        sigmaSample,
+        2
+      );
     }
 
     let currentEnergy = 0;
@@ -388,8 +535,24 @@ const blueNoiseFloat16 = (function () {
 
       [inArray[idx1], inArray[idx2]] = [inArray[idx2], inArray[idx1]];
 
-      const newEnergy1 = blueNoiseUtils.computeEnergySigmaAt(inArray, width, height, idx1, sigmaImage, sigmaSample, 2);
-      const newEnergy2 = blueNoiseUtils.computeEnergySigmaAt(inArray, width, height, idx2, sigmaImage, sigmaSample, 2);
+      const newEnergy1 = blueNoiseUtils.computeEnergySigmaAt(
+        inArray,
+        width,
+        height,
+        idx1,
+        sigmaImage,
+        sigmaSample,
+        2
+      );
+      const newEnergy2 = blueNoiseUtils.computeEnergySigmaAt(
+        inArray,
+        width,
+        height,
+        idx2,
+        sigmaImage,
+        sigmaSample,
+        2
+      );
 
       nextEnergy += newEnergy1 + newEnergy2;
 
@@ -411,7 +574,7 @@ const blueNoiseFloat16 = (function () {
    * @param {*} customKernel
    */
 
-  const _candidateAlgoInPlace = (inArray, width, height, sigma) => {
+  const _candidateAlgoInPlace = (inArray, width, height, sigma, customKernel) => {
     if (inArray == null) throw new Error("Inputted array is null");
     if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not ArrayBuffer");
 
@@ -422,12 +585,39 @@ const blueNoiseFloat16 = (function () {
     if (filled1 === 0) throw new Error("Inputted array have no dot");
     if (filled1 === sqSz) throw new Error("Inputted array is full of dots");
 
+    const kernelCheck = customKernel != null && Array.isArray(customKernel);
+    if (!kernelCheck && sigma == null) {
+      throw new Error("kernelCheck is " + kernelCheck + ". 'sigma' arguments is mandatory");
+    }
+
+    if (sigma === 0) throw new Error("Divide by 0");
+
     const blurred = new Float16Array(sqSz);
 
-    const kernel = _getGaussianKernelLUT(sigma);
-    const kernelSize = 2 * Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) + 1;
+    let kernel;
+    let kernelWidth;
+    let kernelHeight;
 
-    blueNoiseUtils.blurWrapInPlace(inArray, width, height, blurred, kernel, kernelSize, kernelSize);
+    if (kernelCheck) {
+      kernelHeight = customKernel.length;
+      kernelWidth = customKernel[0].length;
+      kernel = new Float16Array(customKernel.flat());
+    } else {
+      console.warn("Inputted kernel is null or not an array. Default to Gaussian");
+      kernel = _getGaussianKernelLUT(sigma);
+      kernelHeight = 2 * Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) + 1;
+      kernelWidth = kernelHeight;
+    }
+
+    blueNoiseUtils.blurWrapInPlace(
+      inArray,
+      width,
+      height,
+      blurred,
+      kernel,
+      kernelWidth,
+      kernelHeight
+    );
 
     while (true) {
       let value = -Infinity;
@@ -446,7 +636,16 @@ const blueNoiseFloat16 = (function () {
 
       inArray[clusterIdx] = 0;
 
-      blueNoiseUtils.deltaBlurUpdateInPlace(width, height, clusterIdx, -1, blurred, kernel, kernelSize, kernelSize);
+      blueNoiseUtils.deltaBlurUpdateInPlace(
+        width,
+        height,
+        clusterIdx,
+        -1,
+        blurred,
+        kernel,
+        kernelWidth,
+        kernelHeight
+      );
 
       value = Infinity;
 
@@ -464,7 +663,16 @@ const blueNoiseFloat16 = (function () {
 
       inArray[voidIdx] = 1;
 
-      blueNoiseUtils.deltaBlurUpdateInPlace(width, height, voidIdx, 1, blurred, kernel, kernelSize, kernelSize);
+      blueNoiseUtils.deltaBlurUpdateInPlace(
+        width,
+        height,
+        voidIdx,
+        1,
+        blurred,
+        kernel,
+        kernelWidth,
+        kernelHeight
+      );
     }
   };
 
@@ -485,7 +693,8 @@ const blueNoiseFloat16 = (function () {
       inArray,
       width,
       height,
-      Math.sqrt(sqSz / Math.abs(filled1 > sqSz / 2 ? sqSz - filled1 : filled1)) * _initialSigmaScale
+      Math.sqrt(sqSz / Math.abs(filled1 > sqSz / 2 ? sqSz - filled1 : filled1)) *
+        _initialSigmaScale
     );
   };
 
@@ -528,37 +737,6 @@ const blueNoiseFloat16 = (function () {
     return gaussianKernelLUT.get(key);
   };
 
-  // Unused
-  /**
-   *
-   * @param {*} N
-   * @param {*} equation
-   * @returns
-   */
-
-  /*
-  const windowFuncLUT = new Map();
-  
-  function _getWindowFunctionLUT(N, equation) {
-    if (!Number.isInteger(N)) throw new Error("N must be an integer");
-    if (equation == null) throw new Error("Unknown equation input: " + equation);
-  
-    const trimmed = equation.replace(/\s/g, "");
-    const key = N + " | " + trimmed;
-  
-    if (!windowFuncLUT.has(key)) {
-      const array = new Float16Array(N).fill(1);
-      const cp = new Function("n", "N", "return " + trimmed);
-  
-      for (let n = 0; n < N; n++) array[n] *= cp(n, N);
-  
-      windowFuncLUT.set(key, array);
-    }
-  
-    return windowFuncLUT.get(key);
-  }
-  */
-
   return {
     get gaussianSigmaRadiusMultiplier() {
       return _gaussianSigmaRadiusMultiplier;
@@ -580,6 +758,5 @@ const blueNoiseFloat16 = (function () {
     candidateAlgoInPlace: _candidateAlgoInPlace,
     candidateAlgoInPlaceAdaptive: _adaptiveCandidateAlgoInPlace,
     getGaussianKernelLUT: _getGaussianKernelLUT,
-    //getWindowFunctionLUT: _getWindowFunctionLUT,
   };
 })();
