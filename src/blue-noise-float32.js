@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link blue-noise-utils.js
  *
- * v0.2.21.1
+ * v0.2.22
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -209,7 +209,6 @@ const blueNoiseFloat32 = (function () {
    * @param {*} sigma
    * @param {*} customKernel
    * @param {*} density
-   * @param {*} candidateFillingRatio
    * @returns
    */
 
@@ -251,8 +250,10 @@ const blueNoiseFloat32 = (function () {
     const rankArray = new Uint32Array(sqSz);
     const blurred = new Float32Array(sqSz);
 
-    for (let i = 0, threshold = Math.floor(sqSz * density); i < sqSz; i++)
+    for (let i = 0, threshold = sqSz * density; i < sqSz; i++) {
       binArray[i] = i < threshold ? 1 : 0;
+    }
+
     blueNoiseUtils.shuffle(binArray);
 
     if (kernelCheck) _candidateAlgoInPlace(binArray, width, height, sigma, customKernel);
@@ -528,8 +529,8 @@ const blueNoiseFloat32 = (function () {
 
     for (let iter = 0; iter < iterations; iter++) {
       const idx1 = Math.floor(Math.random() * sqSz);
-      let idx2 = Math.floor(Math.random() * sqSz);
-      while (idx1 === idx2) idx2 = Math.floor(Math.random() * sqSz);
+      let idx2 = (sqSz - iter) % sqSz;
+      if (idx2 < 0) idx2 += sqSz;
 
       let nextEnergy = currentEnergy - energy[idx1] - energy[idx2];
 
