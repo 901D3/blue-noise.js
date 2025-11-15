@@ -64,7 +64,8 @@ Density: 0.1\
 My implement completely beats Atrix256 and Ethan Shulman implementation in generate time while the quality is similar to Atrix256's
 
 Demo for you guys!\
-[github.com/901D3/blue-noise.js/demo](https://901d3.github.io/blue-noise.js/demo)
+[901d3.github.io/blue-noise.js/demo/float32](https://901d3.github.io/blue-noise.js/demo/float32)
+[901d3.github.io/blue-noise.js/demo/float64](https://901d3.github.io/blue-noise.js/demo/float64)
 
 Check out the source code!\
 [github.com/901D3/blue-noise.js](https://github.com/901D3/blue-noise.js)
