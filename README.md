@@ -2,7 +2,6 @@
 ### Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
 
 I went around the internet to find a Void and Cluster JS implementation but there seems to be not many\
-Most of the JS implements is hard to integrate to my project(in my opinion)\
 Ethan Shulman did implement Void and Cluster but he didn't put a clear license or legal notice so i can't use his\
 Kinda devastated so i implement Void and Cluster myself with my optimization skills
 
