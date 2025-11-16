@@ -77,7 +77,7 @@
     </div>
     <div>
       <span>Density</span>
-      <input type="number" id="blueNoiseDensity" value="0.1" />
+      <input type="number" id="blueNoiseDensity" value="0.01" />
     </div>
     <div>
       <span>Iterations</span>
@@ -155,8 +155,8 @@
           Number(document.getElementById("blueNoiseDensity").value)
         );
       } else if (blueNoiseAlgo === "georgievFajardo") {
-        result = new Float64Array(sqSz);
-        for (let i = 0; i < sqSz; i++) result[i] = Math.floor(Math.random() * sqSz);
+        result = new Uint32Array(sqSz);
+        for (let i = 0; i < sqSz; i++) result[i] = i;
 
         blueNoiseFloat64.georgievFajardoInPlace(
           result,
