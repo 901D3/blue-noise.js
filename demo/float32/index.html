@@ -51,6 +51,7 @@
       </select>
     </div>
     <textarea id="blueNoiseCustomKernel" placeholder="2D matrix"></textarea>
+    <textarea id="blueNoiseMatrixOutput" placeholder="Output matrix"></textarea>
     <div>
       <span>Width</span>
       <input type="number" id="blueNoiseWidth" value="64" />
@@ -77,15 +78,16 @@
     </div>
     <div>
       <span>Density</span>
-      <input type="number" id="blueNoiseDensity" value="0.1" />
+      <input type="number" id="blueNoiseDensity" value="0.01" />
     </div>
     <div>
       <span>Iterations</span>
       <input type="number" id="blueNoiseIterations" value="500000" />
     </div>
     <button onclick="blueNoiseWrapper()">Generate</button>
-    <span id="generateTime"></span>
+    <button onclick="showResult()">Show result as matrix</button>
     <button onclick="downloadRaw()">Download raw</button>
+    <span id="generateTime"></span>
   </body>
   <script src="../../src/blue-noise-utils.js"></script>
   <script src="../../src/blue-noise-float32.js"></script>
@@ -155,8 +157,8 @@
           Number(document.getElementById("blueNoiseDensity").value)
         );
       } else if (blueNoiseAlgo === "georgievFajardo") {
-        result = new Float32Array(sqSz);
-        for (let i = 0; i < sqSz; i++) result[i] = Math.floor(Math.random() * sqSz);
+        result = new Uint32Array(sqSz);
+        for (let i = 0; i < sqSz; i++) result[i] = i;
 
         blueNoiseFloat32.georgievFajardoInPlace(
           result,
@@ -199,6 +201,25 @@
       a.download = "blue_noise.raw";
       a.click();
       URL.revokeObjectURL(url);
+    }
+
+    function showResult() {
+      const blueNoiseWidth = Number(document.getElementById("blueNoiseWidth").value);
+      const blueNoiseHeight = Number(document.getElementById("blueNoiseHeight").value);
+
+      const matrixResult = [];
+
+      for (let y = 0; y < blueNoiseHeight; y++) {
+        if (!matrixResult[y]) matrixResult[y] = [];
+
+        const yOffs = y * blueNoiseWidth;
+
+        for (let x = 0; x < blueNoiseWidth; x++) {
+          matrixResult[y][x] = result[yOffs + x];
+        }
+      }
+
+      document.getElementById("blueNoiseMatrixOutput").value = JSON.stringify(matrixResult);
     }
   </script>
 </html>
