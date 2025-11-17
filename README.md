@@ -32,6 +32,7 @@ It will return a 2D flattened array, it's values ranging from 0 to (width * heig
 
 Comparing mine, Atrix256 and Ethan Shulman Void and Cluster output\
 The results is from [5905481bf29252a04ab397ca017b680d6fd59cd6](https://github.com/901D3/blue-noise.js/commit/5905481bf29252a04ab397ca017b680d6fd59cd6)
+Generating time may vary
 
 ### Mine
 Float 64\
