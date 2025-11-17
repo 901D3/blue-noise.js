@@ -12,7 +12,7 @@ Linking the required scripts in HTML(either float16, float32 or float64), the ut
 
 ```
 <script src="<path to script>/blue-noise-utils.js"></script>
-<script src="<path to script>/blue-noise-float64.js"></script>
+<script src="<path to script>/blue-noise-float32.js"></script>
 ```
 
 To generate a blue noise texture(32 Bits Float), simply run
@@ -34,7 +34,7 @@ Comparing mine, Atrix256 and Ethan Shulman Void and Cluster output\
 The results is from [5905481bf29252a04ab397ca017b680d6fd59cd6](https://github.com/901D3/blue-noise.js/commit/5905481bf29252a04ab397ca017b680d6fd59cd6)
 
 ### Mine
-Float 64
+Float 64\
 Algorithm: Extended Void and Cluster\
 Sigma radius multiplier: 15\
 Initial sigma scale: 0.4\
