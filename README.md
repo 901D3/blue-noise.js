@@ -50,8 +50,8 @@ Density: 0.1\
 <img width="512" height="256" alt="image" src="https://blog.demofox.org/wp-content/uploads/2019/06/bluevc_1m.png" />
 
 ### Ethan Shulman's
-sigma = 2
-density = 0.1
+Sigma: 2
+Density: 0.1
 168.78s\
 <img width="256" height="256" alt="image" src="https://github.com/user-attachments/assets/1c126adc-ec9c-4216-8092-9d6b37725989" />
 
