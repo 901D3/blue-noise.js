@@ -8,16 +8,10 @@ Kinda devastated so i implement Void and Cluster myself with my optimization ski
 ──────────
 
 # _How to use_
-Linking the required scripts in HTML
+Linking the required scripts in HTML(either float16, float32 or float64), the utils is mandatory
 
 ```
-<!--the utilities script is required for 3 other scripts-->
 <script src="<path to script>/blue-noise-utils.js"></script>
-<!--16 Bits Float version gives worst result but less memory usage-->
-<script src="<path to script>/blue-noise-float16.js"></script>
-<!--32 Bits Float version balances between quality and memory usage-->
-<script src="<path to script>/blue-noise-float32.js"></script>
-<!--64 Bits Float version gives best result but consumes more memory-->
 <script src="<path to script>/blue-noise-float64.js"></script>
 ```
 
@@ -37,18 +31,17 @@ It will return a 2D flattened array, it's values ranging from 0 to (width * heig
 ──────────
 
 Comparing mine, Atrix256 and Ethan Shulman Void and Cluster output\
-The results is from [7ca4da6245eb9f1ea58fdf13d0f1214632c813a4](https://github.com/901D3/blue-noise.js/commit/7ca4da6245eb9f1ea58fdf13d0f1214632c813a4)\
-The library might change in the future
+The results is from [5905481bf29252a04ab397ca017b680d6fd59cd6](https://github.com/901D3/blue-noise.js/commit/5905481bf29252a04ab397ca017b680d6fd59cd6)
 
 ### Mine
+Float 64
 Algorithm: Extended Void and Cluster\
 Sigma radius multiplier: 15\
-Initial sigma scale: 0.3\
-Sigma: 2\
-Density: 0.01\
-Candidate filling ratio: 0.5\
-64265.239200000025ms\
-<img width="256" height="256" alt="image" src="https://raw.githubusercontent.com/901D3/blue-noise.js/refs/heads/main/out/image_167.png" />
+Initial sigma scale: 0.4\
+Sigma: 1.9\
+Density: 0.95\
+40531.19999999972ms\
+<img width="256" height="256" alt="image" src="https://raw.githubusercontent.com/901D3/blue-noise.js/refs/heads/main/out/image_208.png" />
 
 ### Atrix256's
 Sigma: 1.9?\
