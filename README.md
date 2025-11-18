@@ -18,10 +18,11 @@ Linking the required scripts in HTML(either float16, float32 or float64), the ut
 To generate a blue noise texture(32 Bits Float), simply run
 
 ```
-blueNoiseFloat32.originalVoidAndCluster(
+blueNoiseFloat32.extendedVoidAndCluster(
     width,
     height,
     sigma,
+    null, // custom kernel
     density
 )
 ```
