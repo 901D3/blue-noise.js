@@ -44,13 +44,12 @@
     <div>
       <span>Algorithm</span>
       <select id="blueNoiseAlgo">
-        <option value="VACluster">Void and Cluster</option>
         <option value="extendedVACluster">Extended Void and Cluster</option>
         <option value="bartWronskiVACluster">Bart Wronski's Void and Cluster</option>
         <option value="georgievFajardo">Georgiev-Fajardo(Relaxation)</option>
       </select>
     </div>
-    <textarea id="blueNoiseCustomKernel" placeholder="2D matrix"></textarea>
+    <textarea id="blueNoiseCustomKernel" placeholder="Convolve kernel. 2D matrix"></textarea>
     <textarea id="blueNoiseMatrixOutput" placeholder="Output matrix"></textarea>
     <div>
       <span>Width</span>
@@ -62,7 +61,7 @@
     </div>
     <div>
       <span>Sigma radius multiplier</span>
-      <input type="number" id="blueNoiseGaussianSigmaRadiusMultiplier" value="4" />
+      <input type="number" id="blueNoiseGaussianSigmaRadiusMultiplier" value="10" />
     </div>
     <div>
       <span>Initial sigma scale</span>
@@ -70,7 +69,7 @@
     </div>
     <div>
       <span>Sigma(Image)</span>
-      <input type="number" id="blueNoiseSigmaImage" value="1.9" />
+      <input type="number" id="blueNoiseSigmaImage" value="1.5" />
     </div>
     <div>
       <span>Sigma sample</span>
@@ -84,13 +83,21 @@
       <span>Iterations</span>
       <input type="number" id="blueNoiseIterations" value="500000" />
     </div>
+    <div>
+      <input type="checkbox" id="blueNoiseUseTailGaussian" checked="" />
+      <span>Use Tail Gaussian</span>
+    </div>
+    <div>
+      <span>Tailing exponent</span>
+      <input type="number" id="blueNoiseTailingExponent" value="0.8" />
+    </div>
     <button onclick="blueNoiseWrapper()">Generate</button>
     <button onclick="showResult()">Show result as matrix</button>
     <button onclick="downloadRaw()">Download raw</button>
     <span id="generateTime"></span>
   </body>
   <script src="../../src/blue-noise-utils.js"></script>
-  <script src="../../src/blue-noise-float32.js"></script>
+  <script src="../../src/blue-noise-Float32.js"></script>
   <script>
     var blueNoiseCanvas = document.getElementById("blueNoiseCanvas");
     var blueNoiseCtx = blueNoiseCanvas.getContext("2d");
@@ -120,7 +127,6 @@
       blueNoiseFloat32.gaussianSigmaRadiusMultiplier = Number(
         document.getElementById("blueNoiseGaussianSigmaRadiusMultiplier").value
       );
-
       blueNoiseUtils.gaussianSigmaRadiusMultiplier = Number(
         document.getElementById("blueNoiseGaussianSigmaRadiusMultiplier").value
       );
@@ -129,14 +135,15 @@
         document.getElementById("blueNoiseInitialSigmaScale").value
       );
 
-      if (blueNoiseAlgo === "VACluster") {
-        result = blueNoiseFloat32.originalVoidAndCluster(
-          blueNoiseWidth,
-          blueNoiseHeight,
-          Number(document.getElementById("blueNoiseSigmaImage").value),
-          Number(document.getElementById("blueNoiseDensity").value)
-        );
-      } else if (blueNoiseAlgo === "extendedVACluster") {
+      blueNoiseFloat32.useTailGaussian = document.getElementById(
+        "blueNoiseUseTailGaussian"
+      ).checked;
+
+      blueNoiseFloat32.tailGaussianExp = document.getElementById(
+        "blueNoiseTailingExponent"
+      ).value;
+
+      if (blueNoiseAlgo === "extendedVACluster") {
         let kernel = null;
         if (document.getElementById("blueNoiseCustomKernel").value) {
           kernel = JSON.parse(document.getElementById("blueNoiseCustomKernel").value);
