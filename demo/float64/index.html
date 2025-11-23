@@ -45,7 +45,6 @@
       <span>Algorithm</span>
       <select id="blueNoiseAlgo">
         <option value="extendedVACluster">Extended Void and Cluster</option>
-        <option value="bartWronskiVACluster">Bart Wronski's Void and Cluster</option>
         <option value="georgievFajardo">Georgiev-Fajardo(Relaxation)</option>
       </select>
     </div>
@@ -64,16 +63,12 @@
       <input type="number" id="blueNoiseGaussianSigmaRadiusMultiplier" value="10" />
     </div>
     <div>
-      <span>Initial sigma scale</span>
-      <input type="number" id="blueNoiseInitialSigmaScale" value="0.4" />
-    </div>
-    <div>
       <span>Sigma(Image)</span>
       <input type="number" id="blueNoiseSigmaImage" value="1.9" />
     </div>
     <div>
-      <span>Sigma sample</span>
-      <input type="number" id="blueNoiseSigmaSample" value="0.1" />
+      <span>Sigma sample(candidate method)</span>
+      <input type="number" id="blueNoiseSigmaSample" value="1" />
     </div>
     <div>
       <span>Density</span>
@@ -81,7 +76,15 @@
     </div>
     <div>
       <span>Iterations</span>
-      <input type="number" id="blueNoiseIterations" value="500000" />
+      <input type="number" id="blueNoiseIterations" value="100000" />
+    </div>
+    <div>
+      <input type="checkbox" id="blueNoiseUseAdaptiveSigma" />
+      <span>Use adaptive sigma(uneven dots fix)</span>
+    </div>
+    <div>
+      <span>Initial sigma scale</span>
+      <input type="number" id="blueNoiseInitialSigmaScale" value="0.4" />
     </div>
     <div>
       <input type="checkbox" id="blueNoiseUseTailGaussian" />
@@ -127,9 +130,10 @@
       blueNoiseFloat64.gaussianSigmaRadiusMultiplier = Number(
         document.getElementById("blueNoiseGaussianSigmaRadiusMultiplier").value
       );
-      blueNoiseUtils.gaussianSigmaRadiusMultiplier = Number(
-        document.getElementById("blueNoiseGaussianSigmaRadiusMultiplier").value
-      );
+
+      blueNoiseFloat64.useAdaptiveSigmaCandidateAlgo = document.getElementById(
+        "blueNoiseUseAdaptiveSigma"
+      ).checked;
 
       blueNoiseFloat64.initialSigmaScale = Number(
         document.getElementById("blueNoiseInitialSigmaScale").value
@@ -145,6 +149,7 @@
 
       if (blueNoiseAlgo === "extendedVACluster") {
         let kernel = null;
+
         if (document.getElementById("blueNoiseCustomKernel").value) {
           kernel = JSON.parse(document.getElementById("blueNoiseCustomKernel").value);
         }
@@ -153,14 +158,8 @@
           blueNoiseWidth,
           blueNoiseHeight,
           Number(document.getElementById("blueNoiseSigmaImage").value),
+          Number(document.getElementById("blueNoiseSigmaSample").value),
           kernel,
-          Number(document.getElementById("blueNoiseDensity").value)
-        );
-      } else if (blueNoiseAlgo === "bartWronskiVACluster") {
-        result = blueNoiseFloat64.bartWronskiVoidAndCluster(
-          blueNoiseWidth,
-          blueNoiseHeight,
-          Number(document.getElementById("blueNoiseSigmaImage").value),
           Number(document.getElementById("blueNoiseDensity").value)
         );
       } else if (blueNoiseAlgo === "georgievFajardo") {
