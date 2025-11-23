@@ -22,6 +22,7 @@ blueNoiseFloat32.extendedVoidAndCluster(
     width,
     height,
     sigma,
+    candidateMethodSigma,
     null, // custom kernel
     density
 )
