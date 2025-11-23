@@ -235,8 +235,8 @@ const blueNoiseFloat64 = (function () {
     width,
     height,
     sigma,
-    customKernel,
     candidateMethodSigma,
+    customKernel,
     density = 0.1
   ) => {
     // Safety checks
@@ -253,7 +253,6 @@ const blueNoiseFloat64 = (function () {
 
     if (sigma === 0) throw new Error("Divide by 0");
 
-    // Get custom kernel dimension before flat them
     let kernel = _getGaussianKernelLUT(sigma);
     let kernelWidth = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
     let kernelHeight = kernelWidth;
