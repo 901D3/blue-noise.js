@@ -235,8 +235,8 @@ const blueNoiseFloat32 = (function () {
     width,
     height,
     sigma,
-    customKernel,
     candidateMethodSigma,
+    customKernel,
     density = 0.1
   ) => {
     // Safety checks
