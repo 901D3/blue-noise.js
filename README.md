@@ -64,7 +64,7 @@ Demo for you guys!\
 [901d3.github.io/blue-noise.js/demo/float32](https://901d3.github.io/blue-noise.js/demo/float32)\
 [901d3.github.io/blue-noise.js/demo/float64](https://901d3.github.io/blue-noise.js/demo/float64)
 
-Free blue noise texture and raw data
+Free blue noise texture and raw data\
 [github.com/901D3/blue-noise.js/tree/main/out](https://github.com/901D3/blue-noise.js/tree/main/out)
 
 Check out the source code!\
