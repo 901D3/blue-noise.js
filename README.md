@@ -5,7 +5,7 @@ I went around the internet to find a Void and Cluster JS implementation but ther
 Ethan Shulman did implement Void and Cluster but he didn't put a clear license or legal notice so i can't use his\
 Kinda devastated so i implement Void and Cluster myself with my optimization skills
 
-──────────
+_**Free blue noise texture and raw data is at the bottom of README**_
 
 # _How to use_
 Linking the required scripts in HTML(either float16, float32 or float64), the utils is mandatory
@@ -63,6 +63,9 @@ My implement completely beats Atrix256 and Ethan Shulman implementation in gener
 Demo for you guys!\
 [901d3.github.io/blue-noise.js/demo/float32](https://901d3.github.io/blue-noise.js/demo/float32)\
 [901d3.github.io/blue-noise.js/demo/float64](https://901d3.github.io/blue-noise.js/demo/float64)
+
+Free blue noise texture and raw data
+[github.com/901D3/blue-noise.js/tree/main/out](https://github.com/901D3/blue-noise.js/tree/main/out)
 
 Check out the source code!\
 [github.com/901D3/blue-noise.js](https://github.com/901D3/blue-noise.js)
