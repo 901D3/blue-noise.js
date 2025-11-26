@@ -2,29 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="../styles.css" />
     <title>blue-noise.js Demo</title>
-    <style>
-      body {
-        margin: 0px;
-        padding: 0px;
-      }
-
-      h1,
-      h2,
-      h3,
-      h4,
-      h5,
-      h6 {
-        margin: 0px;
-        padding: 0px;
-      }
-
-      textarea {
-        width: 200px;
-        height: 100px;
-        font-family: "Courier New", Courier, monospace;
-      }
-    </style>
   </head>
   <body
     style="
@@ -41,63 +20,57 @@
     <canvas
       id="blueNoiseCanvas"
       style="border: 3px solid #ff0; image-rendering: pixelated"></canvas>
-    <div>
-      <span>Algorithm</span>
-      <select id="blueNoiseAlgo">
-        <option value="extendedVACluster">Extended Void and Cluster</option>
-        <option value="georgievFajardo">Georgiev-Fajardo(Relaxation)</option>
-      </select>
+    <div
+      class="settings_container"
+      style="background-color: #a4947b; border: 2px solid #ff9d00; padding: 3px; width: 500px">
+      <div class="settings_label-select">
+        <span>Algorithm</span>
+        <select id="blueNoiseAlgo">
+          <option value="extendedVACluster">Extended Void and Cluster</option>
+          <option value="georgievFajardo">Georgiev-Fajardo(Relaxation)</option>
+        </select>
+      </div>
+      <textarea id="blueNoiseCustomKernel" placeholder="Convolve kernel. 2D array"></textarea>
+      <textarea id="blueNoiseMatrixOutput" placeholder="Output array"></textarea>
+      <button onclick="showResult()">Show result as matrix</button>
+      <div class="whitehr"></div>
+      <div class="settings_label-input">
+        <span>Width</span>
+        <input type="number" id="blueNoiseWidth" value="64" />
+      </div>
+      <div class="settings_label-input">
+        <span>Height</span>
+        <input type="number" id="blueNoiseHeight" value="64" />
+      </div>
+      <div class="settings_label-input">
+        <span>Sigma radius multiplier</span>
+        <input type="number" id="blueNoiseGaussianSigmaRadiusMultiplier" value="10" />
+      </div>
+      <div class="settings_label-input">
+        <span>Sigma(Image)</span>
+        <input type="number" id="blueNoiseSigmaImage" value="1.9" />
+      </div>
+      <div class="settings_label-input">
+        <span>Sigma sample(candidate method)</span>
+        <input type="number" id="blueNoiseSigmaSample" value="1" />
+      </div>
+      <div class="settings_label-input">
+        <span>Density</span>
+        <input type="number" id="blueNoiseDensity" value="0.1" />
+      </div>
+      <div class="settings_label-input">
+        <span>Iterations</span>
+        <input type="number" id="blueNoiseIterations" value="100000" />
+      </div>
+      <div class="settings_checkbox-label-input">
+        <input type="checkbox" id="blueNoiseUseAdaptiveSigma" />
+        <span>Use adaptive sigma(uneven dots fix)</span>
+        <input type="number" id="blueNoiseInitialSigmaScale" value="0.4" />
+      </div>
+      <button onclick="blueNoiseWrapper()">Generate</button>
+      <button onclick="downloadRaw()">Download raw</button>
+      <span id="generateTime"></span>
     </div>
-    <textarea id="blueNoiseCustomKernel" placeholder="Convolve kernel. 2D matrix"></textarea>
-    <textarea id="blueNoiseMatrixOutput" placeholder="Output matrix"></textarea>
-    <div>
-      <span>Width</span>
-      <input type="number" id="blueNoiseWidth" value="64" />
-    </div>
-    <div>
-      <span>Height</span>
-      <input type="number" id="blueNoiseHeight" value="64" />
-    </div>
-    <div>
-      <span>Sigma radius multiplier</span>
-      <input type="number" id="blueNoiseGaussianSigmaRadiusMultiplier" value="10" />
-    </div>
-    <div>
-      <span>Sigma(Image)</span>
-      <input type="number" id="blueNoiseSigmaImage" value="1.9" />
-    </div>
-    <div>
-      <span>Sigma sample(candidate method)</span>
-      <input type="number" id="blueNoiseSigmaSample" value="1" />
-    </div>
-    <div>
-      <span>Density</span>
-      <input type="number" id="blueNoiseDensity" value="0.1" />
-    </div>
-    <div>
-      <span>Iterations</span>
-      <input type="number" id="blueNoiseIterations" value="100000" />
-    </div>
-    <div>
-      <input type="checkbox" id="blueNoiseUseAdaptiveSigma" />
-      <span>Use adaptive sigma(uneven dots fix)</span>
-    </div>
-    <div>
-      <span>Initial sigma scale</span>
-      <input type="number" id="blueNoiseInitialSigmaScale" value="0.4" />
-    </div>
-    <div>
-      <input type="checkbox" id="blueNoiseUseTailGaussian" />
-      <span>Use Tail Gaussian(low sigma fix)</span>
-    </div>
-    <div>
-      <span>Tailing exponent</span>
-      <input type="number" id="blueNoiseTailingExponent" value="0.8" />
-    </div>
-    <button onclick="blueNoiseWrapper()">Generate</button>
-    <button onclick="showResult()">Show result as matrix</button>
-    <button onclick="downloadRaw()">Download raw</button>
-    <span id="generateTime"></span>
   </body>
   <script src="../../src/blue-noise-utils.js"></script>
   <script src="../../src/blue-noise-Float32.js"></script>
@@ -138,14 +111,6 @@
       blueNoiseFloat32.initialSigmaScale = Number(
         document.getElementById("blueNoiseInitialSigmaScale").value
       );
-
-      blueNoiseFloat32.useTailGaussian = document.getElementById(
-        "blueNoiseUseTailGaussian"
-      ).checked;
-
-      blueNoiseFloat32.tailGaussianExp = document.getElementById(
-        "blueNoiseTailingExponent"
-      ).value;
 
       if (blueNoiseAlgo === "extendedVACluster") {
         let kernel = null;
