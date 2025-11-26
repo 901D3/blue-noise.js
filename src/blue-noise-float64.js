@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link blue-noise-utils.js
  *
- * v0.2.4
+ * v0.2.4.1
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -17,9 +17,6 @@ const blueNoiseFloat64 = (function () {
 
   let _useAdaptiveSigmaCandidateAlgo = false;
   let _initialSigmaScale = 0.3; // Best value for adaptive candidate algorithm
-
-  let _useTailGaussian = false;
-  let _tailGaussianExp = 1; // Tailing strength. Higher means fall off faster from the center and vice versa
 
   /**
    * VACluster - short for "Void and Cluster"
@@ -656,8 +653,6 @@ const blueNoiseFloat64 = (function () {
   /**
    * Function for getting/generating Gaussian kernel with LUT
    *
-   * Tail Gaussian: Fix for low quality VACluster's low and high ranks when using low sigma Gaussian kernel
-   *
    * @param {float} sigma
    * @returns {array}
    */
@@ -667,37 +662,20 @@ const blueNoiseFloat64 = (function () {
   const _getGaussianKernelLUT = (sigma) => {
     let key = sigma + "," + _gaussianSigmaRadiusMultiplier;
 
-    if (_useTailGaussian) {
-      key = sigma + "," + _tailGaussianExp + "," + _gaussianSigmaRadiusMultiplier;
-    }
-
     if (!gaussianKernelLUT.has(key)) {
       const radius = Math.ceil(_gaussianSigmaRadiusMultiplier * sigma);
       const kernelSize = (radius << 1) + 1;
       const sqSz = kernelSize * kernelSize;
       const kernel = new Float64Array(sqSz);
 
-      if (_useTailGaussian) {
-        for (let y = -radius; y < radius; y++) {
-          const dbY = y * y;
-          const yOffs = (y + radius) * kernelSize;
+      const invSigma2 = 1 / (2 * sigma * sigma);
 
-          for (let x = -radius; x < radius; x++) {
-            kernel[yOffs + (x + radius)] = Math.exp(
-              -((Math.sqrt(x * x + dbY) / (2 * sigma)) ** _tailGaussianExp)
-            );
-          }
-        }
-      } else {
-        const invSigma2 = 1 / (2 * sigma * sigma);
+      for (let y = -radius; y < radius; y++) {
+        const dbY = y * y;
+        const yOffs = (y + radius) * kernelSize;
 
-        for (let y = -radius; y < radius; y++) {
-          const dbY = y * y;
-          const yOffs = (y + radius) * kernelSize;
-
-          for (let x = -radius; x < radius; x++) {
-            kernel[yOffs + (x + radius)] = Math.exp(-(x * x + dbY) * invSigma2);
-          }
+        for (let x = -radius; x < radius; x++) {
+          kernel[yOffs + (x + radius)] = Math.exp(-(x * x + dbY) * invSigma2);
         }
       }
 
@@ -736,25 +714,6 @@ const blueNoiseFloat64 = (function () {
     },
     set initialSigmaScale(value) {
       _initialSigmaScale = value;
-    },
-
-    get useTailGaussian() {
-      return _useTailGaussian;
-    },
-    set useTailGaussian(bool) {
-      if (bool !== true && bool !== false) {
-        console.warn("Boolean only");
-        return;
-      }
-
-      _useTailGaussian = bool;
-    },
-
-    get tailGaussianExp() {
-      return _tailGaussianExp;
-    },
-    set tailGaussianExp(value) {
-      _tailGaussianExp = value;
     },
 
     originalVoidAndCluster: _originalVoidAndCluster,
