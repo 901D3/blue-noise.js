@@ -1,0 +1,69 @@
+/*vertical-align*/
+.vertical-align-top {vertical-align: top !important;}
+.vertical-align-center {vertical-align: center !important;}
+.vertical-align-middle {vertical-align: middle !important;}
+.vertical-align-bottom {vertical-align: bottom !important;}
+
+.vertical-align-top-margin {
+  margin-top: 0px;  margin-bottom: auto !important;
+}
+.vertical-align-center-margin,
+.vertical-align-middle-margin {
+  margin-top: auto;  margin-bottom: auto !important;
+}
+.vertical-align-bottom-margin {
+  margin-top: auto;  margin-bottom: 0px !important;
+}
+
+.vertical-align-top-flex {
+  justify-content: flex-start !important;
+}
+.vertical-align-center-flex {
+  justify-content: center !important;
+}
+.vertical-align-middle-flex {
+  justify-content: middle !important;
+}
+.vertical-align-bottom-flex {
+  justify-content: flex-end !important;
+}
+
+
+/*horizontal-align*/
+.horizontal-align-left {
+  margin-left: 0px;  margin-right: auto !important;
+}
+.horizontal-align-center,
+.horizontal-align-middle {
+  margin-left: auto; margin-right: auto !important;
+}
+.horizontal-align-right {
+  margin-left: auto;  margin-right: 0px !important;
+}
+
+.horizontal-align-left-flex {
+  align-content: flex-start !important;
+}
+.horizontal-align-center-flex {
+  align-content: center !important;
+}
+.horizontal-align-middle-flex {
+  align-content: middle !important;
+}
+.horizontal-align-right-flex {
+  align-content: flex-end !important;
+}
+
+.gap {gap: var(--gap, 10px) !important;}
+
+.margin-0 {margin: 0px !important;}
+.margin-top-0 {margin-top: 0px !important;}
+.margin-bottom-0 {margin-bottom: 0px !important;}
+.margin-left-0 {margin-left: 0px !important;}
+.margin-right-0 {margin-right: 0px !important;}
+
+.padding {padding: var(--padding, 0px) !important;}
+.padding-top {padding-top: var(--padding-top, 0px) !important;}
+.padding-bottom {padding-bottom: var(--padding-bottom, 0px) !important;}
+.padding-left {padding-left: var(--padding-left, 0px) !important;}
+.padding-right {padding-right: var(--padding-right, 0px) !important;}
