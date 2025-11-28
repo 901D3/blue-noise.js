@@ -738,7 +738,7 @@ const blueNoiseFloat64 = (function () {
     georgievFajardoInPlace: _georgievFajardoInPlace,
 
     candidateMethodInPlace: _candidateMethodInPlace,
-    candidateMethodInPlaceAdaptive: _adaptiveCandidateMethodInPlace,
+    adaptiveCandidateMethodInPlace: _adaptiveCandidateMethodInPlace,
 
     getGaussianKernel: _getGaussianKernel,
   };
