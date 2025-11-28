@@ -2,23 +2,23 @@
 ### Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
 
 I went around the internet to find a Void and Cluster JS implementation but there seems to be not many\
-Ethan Shulman did implement Void and Cluster but he didn't put a clear license or legal notice so i can't use his\
-Kinda devastated so i implement Void and Cluster myself with my optimization skills
+Ethan Shulman did implement Void and Cluster but he didn't put a clear license or legal notice so I can't use his\
+Kinda devastated so I implement Void and Cluster myself with my optimization skills
 
 _**Free blue noise texture and raw data is at the bottom of README**_
 
 # _How to use_
-Linking the required scripts in HTML(either float16, float32 or float64), the utils is mandatory
+Linking the required scripts in HTML, the utils is mandatory
 
 ```
 <script src="<path to script>/blue-noise-utils.js"></script>
-<script src="<path to script>/blue-noise-float32.js"></script>
+<script src="<path to script>/blue-noise-float64.js"></script>
 ```
 
 To generate a blue noise texture(32 Bits Float), simply run
 
 ```
-blueNoiseFloat32.extendedVoidAndCluster(
+blueNoiseFloat64.extendedVoidAndCluster(
     width,
     height,
     sigma,
