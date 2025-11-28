@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link this script
  *
- * v0.2.4
+ * v0.2.4.2
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -185,36 +185,32 @@ const blueNoiseUtils = (function () {
    * @param {*} width
    * @param {*} height
    * @param {*} idx
-   * @param {*} sigmaImage
    * @param {*} sigmaSample
+   * @param {*} d
+   * @param {*} kernel
    * @param {*} radiusWidth
    * @param {*} radiusHeight
-   * @param {*} d
    * @returns
    */
 
-  const _computeEnergy = (
+  const _computeEnergyGeorgevFajardo = (
     inArray,
     width,
     height,
     idx,
-    sigmaImage,
     sigmaSample,
+    d,
+    kernel,
     radiusWidth,
-    radiusHeight,
-    d
+    radiusHeight
   ) => {
     const idxY = (idx / width) | 0;
     const idxX = idx - idxY * width;
-    const invSigmaImage2 = 1 / (sigmaImage * sigmaImage);
     const invSigmaSample2 = 1 / (sigmaSample * sigmaSample);
     const dimension = d / 2;
 
-    const halfWidth = width >> 1;
-    const halfHeight = height >> 1;
-
     let total = 0;
-    const ps = inArray[idx];
+    const centerConvolveIdx = inArray[idx];
 
     const halfRadiusWidth = radiusWidth >> 1;
     const halfRadiusHeight = radiusHeight >> 1;
@@ -223,28 +219,26 @@ const blueNoiseUtils = (function () {
     const currentKernelCenteredIdxY = idxY - halfRadiusHeight;
 
     for (let kernelIdxY = 0; kernelIdxY < radiusHeight; kernelIdxY++) {
+      const kernelIdxYOffs = kernelIdxY * radiusWidth;
+
       let convolveIdxY = (kernelIdxY + currentKernelCenteredIdxY) % height;
       if (convolveIdxY < 0) convolveIdxY += height;
 
       const convolveIdxYOffs = convolveIdxY * width;
 
-      let dyWrap = Math.abs(idxY - convolveIdxY);
-      if (dyWrap > halfHeight) dyWrap = height - dyWrap;
-      dyWrap *= dyWrap;
-
       for (let kernelIdxX = 0; kernelIdxX < radiusWidth; kernelIdxX++) {
         let convolveIdxX = (kernelIdxX + currentKernelCenteredIdxX) % width;
         if (convolveIdxX < 0) convolveIdxX += width;
 
-        let dxWrap = Math.abs(idxX - convolveIdxX);
-        if (dxWrap > halfWidth) dxWrap = width - dxWrap;
-
-        total += Math.exp(
-          -(dxWrap * dxWrap + dyWrap) * invSigmaImage2 -
-            (Math.sqrt(Math.abs(ps - inArray[convolveIdxYOffs + convolveIdxX])) *
-              invSigmaSample2) **
-              dimension
-        );
+        total +=
+          kernel[kernelIdxYOffs + kernelIdxX] *
+          Math.exp(
+            -(
+              Math.abs(centerConvolveIdx - inArray[convolveIdxYOffs + convolveIdxX]) **
+                dimension *
+              invSigmaSample2
+            )
+          );
       }
     }
 
@@ -258,6 +252,7 @@ const blueNoiseUtils = (function () {
     convolveDeltaUpdateWrapAroundInPlace: _convolveDeltaUpdateWrapAroundInPlace,
     deltaBlurUpdateInPlace: _convolveDeltaUpdateWrapAroundInPlace,
     getConvolvedAreaWrapAroundInPlace: _getConvolvedAreaWrapAroundInPlace,
-    computeEnergy: _computeEnergy,
+    computeEnergy: _computeEnergyGeorgevFajardo,
+    computeEnergyGeorgevFajardo: _computeEnergyGeorgevFajardo,
   };
 })();
