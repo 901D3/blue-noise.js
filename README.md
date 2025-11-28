@@ -23,8 +23,8 @@ blueNoiseFloat64.extendedVoidAndCluster(
     height,
     sigma,
     candidateMethodSigma,
+    density,
     null, // custom kernel
-    density
 )
 ```
 
