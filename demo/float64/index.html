@@ -24,10 +24,11 @@
       class="settings_container"
       style="background-color: #a4947b; border: 2px solid #ff9d00; padding: 3px; width: 500px">
       <div class="settings_label-select">
-        <span>Algorithm</span>
+        <span>Method</span>
         <select id="blueNoiseAlgo">
           <option value="extendedVACluster">Extended Void and Cluster</option>
-          <option value="georgievFajardo">Georgiev-Fajardo(Relaxation)</option>
+          <option value="georgievFajardo">Georgiev-Fajardo(Simulated annealing)</option>
+          <option value="candidateMethodVACluster">Candidate Method(Void and Cluster)</option>
         </select>
       </div>
       <textarea id="blueNoiseCustomKernel" placeholder="Convolve kernel. 2D array"></textarea>
@@ -80,15 +81,15 @@
     let result;
 
     function findHighest(matrix) {
-      let result = 0;
+      let maxValue = 0;
       const matrixLength = matrix.length;
 
       for (let i = 0; i < matrixLength; i++) {
         const v = matrix[i];
-        if (v > result) result = v;
+        if (v > maxValue) maxValue = v;
       }
 
-      return result;
+      return maxValue;
     }
 
     function blueNoiseWrapper() {
@@ -124,10 +125,16 @@
           blueNoiseHeight,
           Number(document.getElementById("blueNoiseSigmaImage").value),
           Number(document.getElementById("blueNoiseSigmaSample").value),
-          kernel,
-          Number(document.getElementById("blueNoiseDensity").value)
+          Number(document.getElementById("blueNoiseDensity").value),
+          kernel
         );
       } else if (blueNoiseAlgo === "georgievFajardo") {
+        let kernel = null;
+
+        if (document.getElementById("blueNoiseCustomKernel").value) {
+          kernel = JSON.parse(document.getElementById("blueNoiseCustomKernel").value);
+        }
+
         result = new Uint32Array(sqSz);
         for (let i = 0; i < sqSz; i++) result[i] = i;
 
@@ -137,8 +144,52 @@
           blueNoiseHeight,
           Number(document.getElementById("blueNoiseSigmaImage").value),
           Number(document.getElementById("blueNoiseSigmaSample").value),
-          Number(document.getElementById("blueNoiseIterations").value)
+          Number(document.getElementById("blueNoiseIterations").value),
+          1,
+          kernel
         );
+      } else if (blueNoiseAlgo === "candidateMethodVACluster") {
+        let kernel = null;
+
+        if (document.getElementById("blueNoiseCustomKernel").value) {
+          kernel = JSON.parse(document.getElementById("blueNoiseCustomKernel").value);
+        }
+
+        if (
+          Number(document.getElementById("blueNoiseDensity").value) !== 0 &&
+          Number(document.getElementById("blueNoiseDensity").value) !== 1
+        ) {
+          result = new Uint32Array(sqSz);
+
+          for (
+            let i =
+              Math.floor(sqSz * Number(document.getElementById("blueNoiseDensity").value)) - 1;
+            i >= 0;
+            i--
+          ) {
+            result[i] = 1;
+          }
+
+          blueNoiseUtils.shuffle(result);
+
+          if (blueNoiseFloat64.useAdaptiveSigmaCandidateAlgo) {
+            blueNoiseFloat64.adaptiveCandidateMethodInPlace(
+              result,
+              blueNoiseWidth,
+              blueNoiseHeight,
+              blueNoiseFloat64.gaussianSigmaRadiusMultiplier
+            );
+          } else {
+            blueNoiseFloat64.candidateMethodInPlace(
+              result,
+              blueNoiseWidth,
+              blueNoiseHeight,
+              Number(document.getElementById("blueNoiseSigmaSample").value),
+              kernel
+            );
+          }
+        } else if (Number(document.getElementById("blueNoiseDensity").value) === 1)
+          result.fill(1);
       }
 
       generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
