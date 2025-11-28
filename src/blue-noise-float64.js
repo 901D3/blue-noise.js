@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link blue-noise-utils.js
  *
- * v0.2.4.1
+ * v0.2.4.2
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -39,7 +39,7 @@ const blueNoiseFloat64 = (function () {
     if (sigma === 0) throw new Error("Divide by 0");
 
     // Get Gaussian kernel with sigma value
-    const kernel = _getGaussianKernelLUT(sigma);
+    const kernel = _getGaussianKernel(sigma);
 
     // Calculate kernel size
     const kernelSize = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
@@ -233,8 +233,8 @@ const blueNoiseFloat64 = (function () {
     height,
     sigma,
     candidateMethodSigma,
-    customKernel,
-    density = 0.1
+    density = 0.1,
+    customKernel
   ) => {
     // Safety checks
     if (width == null) throw new Error("'width' arguments is mandatory");
@@ -250,10 +250,11 @@ const blueNoiseFloat64 = (function () {
 
     if (sigma === 0) throw new Error("Divide by 0");
 
-    let kernel = _getGaussianKernelLUT(sigma);
+    let kernel = _getGaussianKernel(sigma);
     let kernelWidth = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
     let kernelHeight = kernelWidth;
 
+    // If using custom kernel
     if (kernelCheck) {
       kernelHeight = customKernel.length;
       kernelWidth = customKernel[0].length;
@@ -277,13 +278,13 @@ const blueNoiseFloat64 = (function () {
 
     if (density !== 1 && density !== 0) {
       // Do Ulichney's Candidate Algorithm taken from VACluster
-      // If using custom kernel(overwrite all other options)
-      if (kernelCheck) {
-        _candidateMethodInPlace(binArray, width, height, sigma, customKernel);
-      }
-      // If using adaptive sigma
-      else if (_useAdaptiveSigmaCandidateAlgo) {
+      // If using adaptive sigma (overwrite all other options)
+      if (_useAdaptiveSigmaCandidateAlgo) {
         _adaptiveCandidateMethodInPlace(binArray, width, height, _initialSigmaScale);
+      }
+      // If using custom kernel
+      else if (kernelCheck) {
+        _candidateMethodInPlace(binArray, width, height, sigma, customKernel);
       }
       // If not using custom kernel nor adaptive sigma, use the inputted sigma
       else {
@@ -322,7 +323,6 @@ const blueNoiseFloat64 = (function () {
     for (let rank = filled1 - 1; rank >= 0; rank--) {
       let idx = 0;
 
-      // Since we have already saved all 1s position, there is less loops
       for (let i = 0, value = -Infinity, valueTemp = -Infinity; i < filled1; i++) {
         const dotsIndex = clusterIndexes[i];
 
@@ -334,7 +334,6 @@ const blueNoiseFloat64 = (function () {
             value = blurredValue;
             idx = dotsIndex;
           }
-
           // If the current 0 have the same energy as the previous one, go to this tie-breaker
           else if (blurredValue === value) {
             const blurredTempValue = blurredTemp[dotsIndex];
@@ -371,7 +370,7 @@ const blueNoiseFloat64 = (function () {
       let idx = 0;
 
       for (let i = 0; i < sqSz; i++) {
-        // "Find lowest void"
+        // "Find q_i void"
         if (binArray[i] === 0) {
           const blurredValue = blurredArray[i];
 
@@ -379,7 +378,6 @@ const blueNoiseFloat64 = (function () {
             value = blurredValue;
             idx = i;
           }
-
           // If the current 0 have the same energy as the previous one, go to this tie-breaker
           else if (blurredValue === value) {
             const blurredTempValue = blurredTemp[i];
@@ -424,6 +422,8 @@ const blueNoiseFloat64 = (function () {
    * @param {*} sigmaImage
    * @param {*} sigmaSample
    * @param {*} iterations
+   * @param {*} dimension
+   * @param {*} customKernel
    */
 
   const _georgievFajardoInPlace = (
@@ -432,11 +432,36 @@ const blueNoiseFloat64 = (function () {
     height,
     sigmaImage,
     sigmaSample,
-    iterations
+    iterations,
+    dimension = 1,
+    customKernel
   ) => {
-    const sqSz = width * height;
-    const radius = Math.ceil(_gaussianSigmaRadiusMultiplier * sigmaImage);
+    if (inArray == null) throw new Error("Inputted array is null");
+    if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not ArrayBuffer");
 
+    const sqSz = width * height;
+
+    const kernelCheck = customKernel != null && Array.isArray(customKernel);
+    if (!kernelCheck && sigmaImage == null) {
+      throw new Error(
+        "kernelCheck is " + kernelCheck + ". 'sigmaImage' arguments is mandatory"
+      );
+    }
+
+    if (sigmaImage === 0) throw new Error("Divide by 0");
+
+    let kernel = _getGaussianKernel(sigmaImage);
+    let kernelWidth = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigmaImage) << 1) + 1;
+    let kernelHeight = kernelWidth;
+
+    // If using custom kernel
+    if (kernelCheck) {
+      kernelHeight = customKernel.length;
+      kernelWidth = customKernel[0].length;
+      kernel = new Float64Array(customKernel.flat());
+    }
+
+    // Prepare energy map
     const energy = new Float64Array(sqSz);
     for (let i = 0; i < sqSz; i++) {
       energy[i] = blueNoiseUtils.computeEnergy(
@@ -444,62 +469,59 @@ const blueNoiseFloat64 = (function () {
         width,
         height,
         i,
-        sigmaImage,
         sigmaSample,
-        radius,
-        radius,
-        1
+        dimension,
+        kernel,
+        kernelWidth,
+        kernelHeight
       );
     }
 
-    let currentEnergy = 0;
-    for (let i = 0; i < sqSz; i++) currentEnergy += energy[i];
-
     for (let iter = 0; iter < iterations; iter++) {
+      // Random index
       const p_i = (Math.random() * sqSz) | 0;
-      const lowest = iter % sqSz;
+      // Instead of using another random, q_i is going left to right then up to down because
+      // the index doesn't matter, what matters is the efficiency of the pixel swapping
+      const q_i = iter % sqSz;
 
-      let nextEnergy = currentEnergy - energy[p_i] - energy[lowest];
-
+      // Swap pixels
       const tmp = inArray[p_i];
-      inArray[p_i] = inArray[lowest];
-      inArray[lowest] = tmp;
+      inArray[p_i] = inArray[q_i];
+      inArray[q_i] = tmp;
 
+      // Compute energy for both swapped pixel indexes
       const newEnergy1 = blueNoiseUtils.computeEnergy(
         inArray,
         width,
         height,
         p_i,
-        sigmaImage,
         sigmaSample,
-        radius,
-        radius,
-        1
+        dimension,
+        kernel,
+        kernelWidth,
+        kernelHeight
       );
 
       const newEnergy2 = blueNoiseUtils.computeEnergy(
         inArray,
         width,
         height,
-        lowest,
-        sigmaImage,
+        q_i,
         sigmaSample,
-        radius,
-        radius,
-        1
+        dimension,
+        kernel,
+        kernelWidth,
+        kernelHeight
       );
 
-      nextEnergy += newEnergy1 + newEnergy2;
-
-      if (nextEnergy < currentEnergy) {
+      // If the new swapped pixels energy is bigger than before, accept it
+      if (newEnergy1 + newEnergy2 < energy[p_i] + energy[q_i]) {
         energy[p_i] = newEnergy1;
-        energy[lowest] = newEnergy2;
-
-        currentEnergy = nextEnergy;
+        energy[q_i] = newEnergy2;
       } else {
         const tmp = inArray[p_i];
-        inArray[p_i] = inArray[lowest];
-        inArray[lowest] = tmp;
+        inArray[p_i] = inArray[q_i];
+        inArray[q_i] = tmp;
       }
     }
   };
@@ -552,7 +574,7 @@ const blueNoiseFloat64 = (function () {
       kernelWidth = customKernel[0].length;
       kernel = new Float64Array(customKernel.flat());
     } else {
-      kernel = _getGaussianKernelLUT(sigma);
+      kernel = _getGaussianKernel(sigma);
       kernelHeight = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
       kernelWidth = kernelHeight;
     }
@@ -635,6 +657,9 @@ const blueNoiseFloat64 = (function () {
    */
 
   const _adaptiveCandidateMethodInPlace = (inArray, width, height) => {
+    if (inArray == null) throw new Error("Inputted array is null");
+    if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not ArrayBuffer");
+
     const sqSz = width * height;
     let filled1 = 0;
     for (let i = 0; i < sqSz; i++) {
@@ -657,36 +682,28 @@ const blueNoiseFloat64 = (function () {
    * @returns {array}
    */
 
-  const gaussianKernelLUT = new Map();
+  const _getGaussianKernel = (sigma) => {
+    const radius = Math.ceil(_gaussianSigmaRadiusMultiplier * sigma);
+    const kernelSize = (radius << 1) + 1;
+    const sqSz = kernelSize * kernelSize;
+    const kernel = new Float64Array(sqSz);
 
-  const _getGaussianKernelLUT = (sigma) => {
-    let key = sigma + "," + _gaussianSigmaRadiusMultiplier;
+    const invSigma2 = 1 / (2 * sigma * sigma);
 
-    if (!gaussianKernelLUT.has(key)) {
-      const radius = Math.ceil(_gaussianSigmaRadiusMultiplier * sigma);
-      const kernelSize = (radius << 1) + 1;
-      const sqSz = kernelSize * kernelSize;
-      const kernel = new Float64Array(sqSz);
+    for (let y = -radius; y < radius; y++) {
+      const dbY = y * y;
+      const yOffs = (y + radius) * kernelSize;
 
-      const invSigma2 = 1 / (2 * sigma * sigma);
-
-      for (let y = -radius; y < radius; y++) {
-        const dbY = y * y;
-        const yOffs = (y + radius) * kernelSize;
-
-        for (let x = -radius; x < radius; x++) {
-          kernel[yOffs + (x + radius)] = Math.exp(-(x * x + dbY) * invSigma2);
-        }
+      for (let x = -radius; x < radius; x++) {
+        kernel[yOffs + (x + radius)] = Math.exp(-(x * x + dbY) * invSigma2);
       }
-
-      let sum = 0;
-      for (let i = 0; i < sqSz; i++) sum += kernel[i];
-      for (let i = 0; i < sqSz; i++) kernel[i] /= sum;
-
-      gaussianKernelLUT.set(key, kernel);
     }
 
-    return gaussianKernelLUT.get(key);
+    let sum = 0;
+    for (let i = 0; i < sqSz; i++) sum += kernel[i];
+    for (let i = 0; i < sqSz; i++) kernel[i] /= sum;
+
+    return kernel;
   };
 
   return {
@@ -723,6 +740,6 @@ const blueNoiseFloat64 = (function () {
     candidateMethodInPlace: _candidateMethodInPlace,
     candidateMethodInPlaceAdaptive: _adaptiveCandidateMethodInPlace,
 
-    getGaussianKernelLUT: _getGaussianKernelLUT,
+    getGaussianKernel: _getGaussianKernel,
   };
 })();
