@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link this script
  *
- * v0.2.4.2
+ * v0.2.4.5
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -185,6 +185,52 @@ const blueNoiseUtils = (function () {
    * @param {*} width
    * @param {*} height
    * @param {*} idx
+   * @param {*} outArray
+   * @param {*} radiusWidth
+   * @param {*} radiusHeight
+   */
+
+  const _setConvolvedAreaWrapAroundInPlace = (
+    inArray,
+    width,
+    height,
+    idx,
+    outArray,
+    radiusWidth,
+    radiusHeight
+  ) => {
+    const idxY = (idx / width) | 0;
+    const idxX = idx - idxY * width;
+
+    const halfRadiusWidth = radiusWidth >> 1;
+    const halfRadiusHeight = radiusHeight >> 1;
+
+    const currentKernelCenteredIdxX = idxX - halfRadiusWidth;
+    const currentKernelCenteredIdxY = idxY - halfRadiusHeight;
+
+    for (let kernelIdxY = 0; kernelIdxY < radiusHeight; kernelIdxY++) {
+      const kernelIdxYOffs = kernelIdxY * radiusWidth;
+
+      let convolveIdxY = (kernelIdxY + currentKernelCenteredIdxY) % height;
+      if (convolveIdxY < 0) convolveIdxY += height;
+
+      const convolveIdxYOffs = convolveIdxY * width;
+
+      for (let kernelIdxX = 0; kernelIdxX < radiusWidth; kernelIdxX++) {
+        let convolveIdxX = (kernelIdxX + currentKernelCenteredIdxX) % width;
+        if (convolveIdxX < 0) convolveIdxX += width;
+
+        inArray[convolveIdxYOffs + convolveIdxX] = outArray[kernelIdxYOffs + kernelIdxX];
+      }
+    }
+  };
+
+  /**
+   *
+   * @param {*} inArray
+   * @param {*} width
+   * @param {*} height
+   * @param {*} idx
    * @param {*} sigmaSample
    * @param {*} d
    * @param {*} kernel
@@ -248,11 +294,9 @@ const blueNoiseUtils = (function () {
   return {
     shuffle: _shuffle,
     convolveWrapAroundInPlace: _convolveWrapAroundInPlace,
-    blurWrapInPlace: _convolveWrapAroundInPlace,
     convolveDeltaUpdateWrapAroundInPlace: _convolveDeltaUpdateWrapAroundInPlace,
-    deltaBlurUpdateInPlace: _convolveDeltaUpdateWrapAroundInPlace,
     getConvolvedAreaWrapAroundInPlace: _getConvolvedAreaWrapAroundInPlace,
-    computeEnergy: _computeEnergyGeorgevFajardo,
+    setConvolvedAreaWrapAroundInPlace: _setConvolvedAreaWrapAroundInPlace,
     computeEnergyGeorgevFajardo: _computeEnergyGeorgevFajardo,
   };
 })();
