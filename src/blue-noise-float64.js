@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link blue-noise-utils.js
  *
- * v0.2.4.5
+ * v0.2.4.6
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -532,6 +532,8 @@ const blueNoiseFloat64 = (function () {
    * FM screen design using DBS algorithm
    * 
    * https://ieeexplore.ieee.org/document/559555
+   * 
+   * No toroidal version
    *
    * @param {*} inArray
    * @param {*} ditheredArray
@@ -590,7 +592,7 @@ const blueNoiseFloat64 = (function () {
     const blurredArray = new Float64Array(sqSz);
     const localWindowArray = new Float64Array(kernelSqSz);
 
-    blueNoiseUtils.convolveWrapAroundInPlace(
+    blueNoiseUtils.convolveInPlace(
       errorArray,
       width,
       height,
@@ -612,7 +614,7 @@ const blueNoiseFloat64 = (function () {
       for (let i = 0; i < sqSz; i++) {
         const idx = indices[i];
         // Get local energy before flip
-        blueNoiseUtils.getConvolvedAreaWrapAroundInPlace(
+        blueNoiseUtils.getConvolvedAreaInPlace(
           blurredArray,
           width,
           height,
@@ -632,7 +634,7 @@ const blueNoiseFloat64 = (function () {
         ditheredArray[idx] ^= 1;
         const deltaError = oldPixel - ditheredArray[idx];
 
-        blueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
+        blueNoiseUtils.convolveDeltaUpdateInPlace(
           width,
           height,
           idx,
@@ -644,7 +646,7 @@ const blueNoiseFloat64 = (function () {
         );
 
         // Get local energy after flip
-        blueNoiseUtils.getConvolvedAreaWrapAroundInPlace(
+        blueNoiseUtils.getConvolvedAreaInPlace(
           blurredArray,
           width,
           height,
@@ -662,7 +664,7 @@ const blueNoiseFloat64 = (function () {
           // Revert
           ditheredArray[idx] = oldPixel;
 
-          blueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
+          blueNoiseUtils.convolveDeltaUpdateInPlace(
             width,
             height,
             idx,
