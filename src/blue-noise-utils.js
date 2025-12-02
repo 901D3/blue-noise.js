@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link this script
  *
- * v0.2.4.5
+ * v0.2.4.6
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -12,8 +12,6 @@
 "use strict";
 
 const blueNoiseUtils = (function () {
-  //Helpers
-
   /**
    *
    * @param {*} inArray
@@ -225,6 +223,179 @@ const blueNoiseUtils = (function () {
     }
   };
 
+  const _convolveInPlace = (
+    inArray,
+    width,
+    height,
+    blurred,
+    kernel,
+    radiusWidth,
+    radiusHeight
+  ) => {
+    const halfRadiusWidth = radiusWidth >> 1;
+    const halfRadiusHeight = radiusHeight >> 1;
+
+    for (let idxY = 0; idxY < height; idxY++) {
+      const yOffs = idxY * width;
+      const currentKernelCenteredIdxY = idxY - halfRadiusHeight;
+
+      for (let idxX = 0; idxX < width; idxX++) {
+        const currentKernelCenteredIdxX = idxX - halfRadiusWidth;
+        let sum = 0;
+
+        for (let kernelIdxY = 0; kernelIdxY < radiusHeight; kernelIdxY++) {
+          const kernelIdxYOffs = kernelIdxY * radiusWidth;
+
+          let convolveIdxY = kernelIdxY + currentKernelCenteredIdxY;
+
+          const convolveIdxYOffs = convolveIdxY * width;
+
+          for (let kernelIdxX = 0; kernelIdxX < radiusWidth; kernelIdxX++) {
+            let convolveIdxX = kernelIdxX + currentKernelCenteredIdxX;
+
+            if (
+              convolveIdxX < 0 ||
+              convolveIdxX >= width ||
+              convolveIdxY < 0 ||
+              convolveIdxY >= height
+            )
+              continue;
+
+            sum +=
+              inArray[convolveIdxYOffs + convolveIdxX] * kernel[kernelIdxYOffs + kernelIdxX];
+          }
+        }
+
+        blurred[yOffs + idxX] = sum;
+      }
+    }
+  };
+
+  const _convolveDeltaUpdateInPlace = (
+    width,
+    height,
+    idx,
+    amount,
+    blurred,
+    kernel,
+    radiusWidth,
+    radiusHeight
+  ) => {
+    const idxY = (idx / width) | 0;
+    const idxX = idx - idxY * width;
+
+    const halfRadiusWidth = radiusWidth >> 1;
+    const halfRadiusHeight = radiusHeight >> 1;
+
+    const currentKernelCenteredIdxX = idxX - halfRadiusWidth;
+    const currentKernelCenteredIdxY = idxY - halfRadiusHeight;
+
+    for (let kernelIdxY = 0; kernelIdxY < radiusHeight; kernelIdxY++) {
+      const kernelIdxYOffs = kernelIdxY * radiusWidth;
+
+      let convolveIdxY = kernelIdxY + currentKernelCenteredIdxY;
+
+      const convolveIdxYOffs = convolveIdxY * width;
+
+      for (let kernelIdxX = 0; kernelIdxX < radiusWidth; kernelIdxX++) {
+        let convolveIdxX = kernelIdxX + currentKernelCenteredIdxX;
+
+        if (
+          convolveIdxX < 0 ||
+          convolveIdxX >= width ||
+          convolveIdxY < 0 ||
+          convolveIdxY >= height
+        )
+          continue;
+
+        blurred[convolveIdxYOffs + convolveIdxX] +=
+          kernel[kernelIdxYOffs + kernelIdxX] * amount;
+      }
+    }
+  };
+
+  const _getConvolvedAreaInPlace = (
+    inArray,
+    width,
+    height,
+    idx,
+    outArray,
+    radiusWidth,
+    radiusHeight
+  ) => {
+    const idxY = (idx / width) | 0;
+    const idxX = idx - idxY * width;
+
+    const halfRadiusWidth = radiusWidth >> 1;
+    const halfRadiusHeight = radiusHeight >> 1;
+
+    const currentKernelCenteredIdxX = idxX - halfRadiusWidth;
+    const currentKernelCenteredIdxY = idxY - halfRadiusHeight;
+
+    for (let kernelIdxY = 0; kernelIdxY < radiusHeight; kernelIdxY++) {
+      const kernelIdxYOffs = kernelIdxY * radiusWidth;
+
+      let convolveIdxY = kernelIdxY + currentKernelCenteredIdxY;
+
+      const convolveIdxYOffs = convolveIdxY * width;
+
+      for (let kernelIdxX = 0; kernelIdxX < radiusWidth; kernelIdxX++) {
+        let convolveIdxX = kernelIdxX + currentKernelCenteredIdxX;
+
+        if (
+          convolveIdxX < 0 ||
+          convolveIdxX >= width ||
+          convolveIdxY < 0 ||
+          convolveIdxY >= height
+        )
+          continue;
+
+        outArray[kernelIdxYOffs + kernelIdxX] = inArray[convolveIdxYOffs + convolveIdxX];
+      }
+    }
+  };
+
+  const _setConvolvedAreaInPlace = (
+    inArray,
+    width,
+    height,
+    idx,
+    outArray,
+    radiusWidth,
+    radiusHeight
+  ) => {
+    const idxY = (idx / width) | 0;
+    const idxX = idx - idxY * width;
+
+    const halfRadiusWidth = radiusWidth >> 1;
+    const halfRadiusHeight = radiusHeight >> 1;
+
+    const currentKernelCenteredIdxX = idxX - halfRadiusWidth;
+    const currentKernelCenteredIdxY = idxY - halfRadiusHeight;
+
+    for (let kernelIdxY = 0; kernelIdxY < radiusHeight; kernelIdxY++) {
+      const kernelIdxYOffs = kernelIdxY * radiusWidth;
+
+      let convolveIdxY = kernelIdxY + currentKernelCenteredIdxY;
+
+      const convolveIdxYOffs = convolveIdxY * width;
+
+      for (let kernelIdxX = 0; kernelIdxX < radiusWidth; kernelIdxX++) {
+        let convolveIdxX = kernelIdxX + currentKernelCenteredIdxX;
+
+        if (
+          convolveIdxX < 0 ||
+          convolveIdxX >= width ||
+          convolveIdxY < 0 ||
+          convolveIdxY >= height
+        )
+          continue;
+
+        inArray[convolveIdxYOffs + convolveIdxX] = outArray[kernelIdxYOffs + kernelIdxX];
+      }
+    }
+  };
+
   /**
    *
    * @param {*} inArray
@@ -293,10 +464,17 @@ const blueNoiseUtils = (function () {
 
   return {
     shuffle: _shuffle,
+
     convolveWrapAroundInPlace: _convolveWrapAroundInPlace,
     convolveDeltaUpdateWrapAroundInPlace: _convolveDeltaUpdateWrapAroundInPlace,
     getConvolvedAreaWrapAroundInPlace: _getConvolvedAreaWrapAroundInPlace,
     setConvolvedAreaWrapAroundInPlace: _setConvolvedAreaWrapAroundInPlace,
+
+    convolveInPlace: _convolveInPlace,
+    convolveDeltaUpdateInPlace: _convolveDeltaUpdateInPlace,
+    getConvolvedAreaInPlace: _getConvolvedAreaInPlace,
+    setConvolvedAreaInPlace: _setConvolvedAreaInPlace,
+
     computeEnergyGeorgevFajardo: _computeEnergyGeorgevFajardo,
   };
 })();
