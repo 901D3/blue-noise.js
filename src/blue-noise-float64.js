@@ -466,7 +466,7 @@ const blueNoiseFloat64 = (function () {
     // Prepare energy map
     const energy = new Float64Array(sqSz);
     for (let i = 0; i < sqSz; i++) {
-      energy[i] = blueNoiseUtils.computeEnergy(
+      energy[i] = blueNoiseUtils.computeEnergyGeorgevFajardo(
         inArray,
         width,
         height,
@@ -492,7 +492,7 @@ const blueNoiseFloat64 = (function () {
       inArray[q_i] = tmp;
 
       // Compute energy for both swapped pixel indexes
-      const newEnergy1 = blueNoiseUtils.computeEnergy(
+      const newEnergy1 = blueNoiseUtils.computeEnergyGeorgevFajardo(
         inArray,
         width,
         height,
@@ -504,7 +504,7 @@ const blueNoiseFloat64 = (function () {
         kernelHeight
       );
 
-      const newEnergy2 = blueNoiseUtils.computeEnergy(
+      const newEnergy2 = blueNoiseUtils.computeEnergyGeorgevFajardo(
         inArray,
         width,
         height,
