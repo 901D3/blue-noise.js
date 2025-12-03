@@ -3,20 +3,17 @@
 @font-face {
   font-family: "Trebuchet-MS";
   src: url("https://raw.githubusercontent.com/901D3/901D3.github.io/branchcuahuy/assets/font/Trebuchet MS/trebuc.ttf");
-  src: url("https://raw.githubusercontent.com/901D3/901D3.github.io/branchcuahuy/assets/font/Trebuchet MS/trebuc.ttf")
-    format("woff2");
+  src: url("https://raw.githubusercontent.com/901D3/901D3.github.io/branchcuahuy/assets/font/Trebuchet MS/trebuc.ttf") format("woff2");
 }
 @font-face {
   font-family: "Classwiz-X";
   src: url("https://raw.githubusercontent.com/901D3/901D3.github.io/branchcuahuy/assets/font/Calculator font/Casio/Classwiz X/ClassWizXDisplay-Regular.woff2");
-  src: url("https://raw.githubusercontent.com/901D3/901D3.github.io/branchcuahuy/assets/font/Calculator font/Casio/Classwiz X/ClassWizXDisplay-Regular.woff2")
-    format("woff2");
+  src: url("https://raw.githubusercontent.com/901D3/901D3.github.io/branchcuahuy/assets/font/Calculator font/Casio/Classwiz X/ClassWizXDisplay-Regular.woff2") format("woff2");
 }
 @font-face {
   font-family: "Classwiz-CW";
   src: url("https://raw.githubusercontent.com/901D3/901D3.github.io/branchcuahuy/assets/font/Calculator%20font/Casio/Classwiz%20CW/cwcwd.woff2");
-  src: url("https://raw.githubusercontent.com/901D3/901D3.github.io/branchcuahuy/assets/font/Calculator%20font/Casio/Classwiz%20CW/cwcwd.woff2")
-    format("woff2");
+  src: url("https://raw.githubusercontent.com/901D3/901D3.github.io/branchcuahuy/assets/font/Calculator%20font/Casio/Classwiz%20CW/cwcwd.woff2") format("woff2");
 }
 
 ::-webkit-scrollbar {
@@ -34,22 +31,25 @@
   border-top-left-radius: 50%;
 }
 
-::-webkit-range-thumb {
+::-webkit-slider-thumb {
+  -webkit-appearance: none;
   width: 4px;
-  height: 100%;
+  height: 16px;
   border-radius: 0px;
-  background: #111;
   background-color: #ea7010;
   border: none;
+  margin: 0px;
+  padding: 0px;
 }
 
 ::-moz-range-thumb {
   width: 4px;
-  height: 100%;
+  height: 16px;
   border-radius: 0px;
-  background: #111;
   background-color: #ea7010;
   border: none;
+  margin: 0px;
+  padding: 0px;
 }
 
 input[type="number"]::-webkit-outer-spin-button,
@@ -96,6 +96,8 @@ p {
 }
 
 label {
+  -webkit-appearance: none;
+  appearance: none;
   margin: 0px;
   font-family: Ubuntu;
   color: #ffffff;
@@ -105,6 +107,7 @@ label {
 }
 
 input {
+  width: fit-content;
   background-color: #000;
   color: #e0e0e0;
   border: 2px solid #ea7010;
@@ -113,7 +116,7 @@ input {
   font-size: 16px;
   vertical-align: middle;
   line-height: normal;
-  display: inline-block;
+  min-width: 20px;
 }
 
 input:disabled {
@@ -124,6 +127,8 @@ input:disabled {
 }
 
 select {
+  width: 100%;
+  height: fit-content;
   background-color: #000;
   color: #e0e0e0;
   border: 2px solid #ea7010;
@@ -142,6 +147,7 @@ select:disabled {
 }
 
 textarea {
+  align-self: left;
   background-color: #000;
   color: #e0e0e0;
   border: 2px solid #ea7010;
@@ -154,9 +160,8 @@ textarea {
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
-  display: inline-block;
   width: 200px;
-  height: 18px;
+  height: 17px;
 }
 
 input[type="range"]:hover {
@@ -171,15 +176,17 @@ input[type="range"]:disabled {
 }
 
 input[type="checkbox"] {
+  align-self: left;
   display: inline-flex;
   justify-content: center;
   position: relative;
-  width: 15px;
-  height: 15px;
+  width: 17px;
+  height: 17px;
   cursor: pointer;
 }
 
 input[type="file"] {
+  align-self: left;
   padding: 3px;
   cursor: pointer;
   width: max-content;
@@ -188,6 +195,7 @@ input[type="file"] {
 button {
   width: max-content;
   height: max-content;
+  align-self: left;
   background-color: #000;
   color: #e0e0e0;
   border: 2px solid #ea7010;
@@ -221,7 +229,7 @@ video {
 }
 
 canvas {
-  aspect-ratio: inherit;
+  align-self: center;
   image-rendering: pixelated;
   margin: 0px;
   padding: 0px;
@@ -283,7 +291,6 @@ select {
   background-color: #e14f00;
   border: 8px solid #1b1b1b;
   padding: 10px;
-  max-width: max-content;
 }
 
 a {
@@ -292,6 +299,12 @@ a {
 
 span {
   font-size: 16px;
+  margin: 0px;
+  padding: 0px;
+}
+
+audio {
+  width: 100%;
   margin: 0px;
   padding: 0px;
 }
@@ -480,7 +493,7 @@ span {
 }
 
 .settings_label-slider-input input[type="range"] {
-  width: 100%;
+  width: 80%;
   margin-top: auto;
   margin-bottom: auto;
   margin-left: auto;
@@ -488,7 +501,7 @@ span {
 }
 
 .settings_label-slider-input input {
-  width: 120px;
+  width: 100%;
   margin-top: auto;
   margin-bottom: auto;
   margin-left: auto;
@@ -498,26 +511,21 @@ span {
 .settings_checkbox-label {
   display: flex;
   flex-direction: row;
-  width: fit-content;
-  height: fit-content;
-  margin-top: 2px;
-  margin-bottom: 2px;
+  align-items: center;
+  margin: 2px 0;
+  cursor: pointer;
 }
 
 .settings_checkbox-label input[type="checkbox"] {
-  margin-top: auto;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: auto;
+  margin: 0;
+  flex-shrink: 0;
 }
 
-.settings_checkbox-label span {
-  width: 100%;
-  margin-top: auto;
+.settings_checkbox-label label {
   margin-left: 5px;
-  margin-right: auto;
-  margin-bottom: auto;
-  text-wrap: nowrap;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
 }
 
 .settings_button-label {
@@ -557,9 +565,9 @@ span {
 }
 
 .settings_checkbox-label-select {
+  width: 100%;
   display: flex;
   flex-direction: row;
-  width: 100%;
   height: fit-content;
 }
 
@@ -570,7 +578,7 @@ span {
   margin-bottom: auto;
 }
 
-.settings_checkbox-label-select span {
+.settings_checkbox-label-select label {
   width: 100%;
   height: fit-content;
   margin-top: auto;
@@ -581,17 +589,11 @@ span {
 }
 
 .settings_checkbox-label-select select {
+  width: 100%;
   margin-top: auto;
   margin-bottom: auto;
   margin-left: auto;
   margin-right: 0px;
-}
-
-.settings_label-select {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  height: fit-content;
 }
 
 .settings_checkbox-label-input {
@@ -608,7 +610,7 @@ span {
   margin-bottom: auto;
 }
 
-.settings_checkbox-label-input span {
+.settings_checkbox-label-input label {
   width: 100%;
   height: fit-content;
   margin-top: auto;
@@ -626,9 +628,9 @@ span {
 }
 
 .settings_label-select {
+  width: 100%;
   display: flex;
   flex-direction: row;
-  width: 100%;
   height: fit-content;
 }
 
@@ -644,6 +646,7 @@ span {
 }
 
 .settings_label-select select {
+  width: min-content;
   margin-top: auto;
   margin-bottom: auto;
   margin-left: auto;
