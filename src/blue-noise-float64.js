@@ -372,7 +372,7 @@ const blueNoiseFloat64 = (function () {
       let idx = 0;
 
       for (let i = 0; i < sqSz; i++) {
-        // "Find q_i void"
+        // "Find voidest void"
         if (binArray[i] === 0) {
           const blurredValue = blurredArray[i];
 
@@ -1040,3 +1040,4 @@ const blueNoiseFloat64 = (function () {
     getGaussianKernel: _getGaussianKernel,
   };
 })();
+
