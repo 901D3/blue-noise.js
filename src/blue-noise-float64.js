@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link blue-noise-utils.js
  *
- * v0.2.4.6
+ * v0.2.5
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -11,7 +11,7 @@
 
 "use strict";
 
-const blueNoiseFloat64 = (function () {
+const BlueNoiseFloat64 = (function () {
   // It was a big failure to use 3*sigma
   let _gaussianSigmaRadiusMultiplier = 4;
 
@@ -55,18 +55,18 @@ const blueNoiseFloat64 = (function () {
     const blurredArray = new Float64Array(sqSz);
 
     // Less accurate
-    const filled1 = Math.floor(sqSz * density);
+    const filled1 = (sqSz * density) | 0;
     // Fill binArray from 0 to filled1 with 1, but it is yet to be shuffled
     for (let i = 0; i < filled1; i++) binArray[i] = 1;
 
     // Now shuffle it, this act like seeding
-    blueNoiseUtils.shuffle(binArray);
+    BlueNoiseUtils.shuffle(binArray);
 
     _candidateMethodInPlace(binArray, width, height, sigma);
 
     // Phase 1
     // blur binArray
-    blueNoiseUtils.convolveWrapAroundInPlace(
+    BlueNoiseUtils.convolveWrapAroundInPlace(
       binArray,
       width,
       height,
@@ -104,7 +104,7 @@ const blueNoiseFloat64 = (function () {
       rankArray[idx] = rank;
 
       // And remove blurred "1" from blurredArray
-      blueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
+      BlueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
         width,
         height,
         idx,
@@ -118,7 +118,7 @@ const blueNoiseFloat64 = (function () {
     // End of Phase 1
 
     // Phase 2
-    blueNoiseUtils.convolveWrapAroundInPlace(
+    BlueNoiseUtils.convolveWrapAroundInPlace(
       binArray,
       width,
       height,
@@ -150,7 +150,7 @@ const blueNoiseFloat64 = (function () {
       binArray[idx] = 1;
       rankArray[idx] = rank;
 
-      blueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
+      BlueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
         width,
         height,
         idx,
@@ -168,7 +168,7 @@ const blueNoiseFloat64 = (function () {
     for (let i = 0; i < sqSz; i++) temp[i] = 1 - binArray[i];
 
     // Blur the inverted array
-    blueNoiseUtils.convolveWrapAroundInPlace(
+    BlueNoiseUtils.convolveWrapAroundInPlace(
       temp,
       width,
       height,
@@ -198,7 +198,7 @@ const blueNoiseFloat64 = (function () {
       binArray[idx] = 1;
       rankArray[idx] = rank;
 
-      blueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
+      BlueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
         width,
         height,
         idx,
@@ -216,7 +216,6 @@ const blueNoiseFloat64 = (function () {
 
   /**
    * Extended version of VACluster
-   *
    * https://cv.ulichney.com/papers/1993-void-cluster.pdf
    *
    * @param {*} width
@@ -233,7 +232,7 @@ const blueNoiseFloat64 = (function () {
     height,
     sigma,
     candidateMethodSigma,
-    density = 0.1,
+    density,
     customKernel
   ) => {
     // Safety checks
@@ -268,12 +267,14 @@ const blueNoiseFloat64 = (function () {
     const rankArray = new Uint32Array(sqSz);
     const blurredArray = new Float64Array(sqSz);
 
+    const filled1 = (sqSz * density) | 0;
+
     if (density !== 0 && density !== 1) {
-      for (let i = Math.floor(sqSz * density) - 1; i >= 0; i--) {
+      for (let i = 0; i < filled1 + 1; i++) {
         binArray[i] = 1;
       }
 
-      blueNoiseUtils.shuffle(binArray);
+      BlueNoiseUtils.shuffle(binArray);
     } else if (density === 1) binArray.fill(1);
 
     if (density !== 1 && density !== 0) {
@@ -284,7 +285,7 @@ const blueNoiseFloat64 = (function () {
       }
       // If using custom kernel
       else if (kernelCheck) {
-        _candidateMethodInPlace(binArray, width, height, sigma, customKernel);
+        _candidateMethodInPlace(binArray, width, height, null, customKernel);
       }
       // If not using custom kernel nor adaptive sigma, use the inputted sigma
       else {
@@ -292,22 +293,17 @@ const blueNoiseFloat64 = (function () {
       }
     }
 
-    const temp = new Uint8Array(binArray);
-
     // Cluster indexes LUT, we save all the 1s in temp array once so phase 1 have less loops
-    const clusterIndexes = [];
+    const clusterIndexes = new Uint32Array(filled1);
 
     // Go through temp array and collect all 1s
-    for (let i = 0; i < sqSz; i++) {
-      if (temp[i] === 1) clusterIndexes.push(i);
+    for (let i = 0, idx = 0; i < sqSz; i++) {
+      if (binArray[i] === 1) clusterIndexes[idx++] = i;
     }
-
-    // The number of 1s in temp is the length of cluster indexes array
-    const filled1 = clusterIndexes.length;
 
     // Phase 1
     // Blur once
-    blueNoiseUtils.convolveWrapAroundInPlace(
+    BlueNoiseUtils.convolveWrapAroundInPlace(
       binArray,
       width,
       height,
@@ -317,8 +313,9 @@ const blueNoiseFloat64 = (function () {
       kernelHeight
     );
 
-    // Evenly disttributed dots blurred, for phase 2 tie-breaker
+    // Evenly distributed dots blurred, for phase 2 tie-breaker
     const blurredTemp = blurredArray.slice();
+    const temp = binArray.slice();
 
     for (let rank = filled1 - 1; rank >= 0; rank--) {
       let idx = 0;
@@ -327,23 +324,22 @@ const blueNoiseFloat64 = (function () {
 
       for (let i = 0; i < filled1; i++) {
         const dotsIndex = clusterIndexes[i];
+        if (temp[dotsIndex] === 1) continue;
 
         // "Find tightest cluster"
-        if (temp[dotsIndex] === 1) {
-          const blurredValue = blurredArray[dotsIndex];
+        const blurredValue = blurredArray[dotsIndex];
 
-          if (blurredValue > value) {
-            value = blurredValue;
+        if (blurredValue > value) {
+          value = blurredValue;
+          idx = dotsIndex;
+        }
+        // If the current 1 have the same energy as the previous one, go to this tie-breaker
+        else if (blurredValue === value) {
+          const blurredTempValue = blurredTemp[dotsIndex];
+
+          if (blurredTempValue > valueTemp) {
+            valueTemp = blurredTempValue;
             idx = dotsIndex;
-          }
-          // If the current 1 have the same energy as the previous one, go to this tie-breaker
-          else if (blurredValue === value) {
-            const blurredTempValue = blurredTemp[dotsIndex];
-
-            if (blurredTempValue > valueTemp) {
-              valueTemp = blurredTempValue;
-              idx = dotsIndex;
-            }
           }
         }
       }
@@ -351,7 +347,7 @@ const blueNoiseFloat64 = (function () {
       temp[idx] = 0;
       rankArray[idx] = rank;
 
-      blueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
+      BlueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
         width,
         height,
         idx,
@@ -372,22 +368,22 @@ const blueNoiseFloat64 = (function () {
       let idx = 0;
 
       for (let i = 0; i < sqSz; i++) {
+        if (binArray[i] !== 0) continue;
+
         // "Find voidest void"
-        if (binArray[i] === 0) {
-          const blurredValue = blurredArray[i];
+        const blurredValue = blurredArray[i];
 
-          if (blurredValue < value) {
-            value = blurredValue;
+        if (blurredValue < value) {
+          value = blurredValue;
+          idx = i;
+        }
+        // If the current 0 have the same energy as the previous one, go to this tie-breaker
+        else if (blurredValue === value) {
+          const blurredTempValue = blurredTemp[i];
+
+          if (blurredTempValue < valueTemp) {
+            valueTemp = blurredTempValue;
             idx = i;
-          }
-          // If the current 0 have the same energy as the previous one, go to this tie-breaker
-          else if (blurredValue === value) {
-            const blurredTempValue = blurredTemp[i];
-
-            if (blurredTempValue < valueTemp) {
-              valueTemp = blurredTempValue;
-              idx = i;
-            }
           }
         }
       }
@@ -395,7 +391,7 @@ const blueNoiseFloat64 = (function () {
       binArray[idx] = 1;
       rankArray[idx] = rank;
 
-      blueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
+      BlueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
         width,
         height,
         idx,
@@ -406,7 +402,6 @@ const blueNoiseFloat64 = (function () {
         kernelHeight
       );
     }
-
     // End of Phase 2
     // Rank array now contains the blue noise
 
@@ -439,7 +434,7 @@ const blueNoiseFloat64 = (function () {
     customKernel
   ) => {
     if (inArray == null) throw new Error("Inputted array is null");
-    if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not ArrayBuffer");
+    if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not an ArrayBuffer");
 
     const sqSz = width * height;
 
@@ -466,7 +461,7 @@ const blueNoiseFloat64 = (function () {
     // Prepare energy map
     const energy = new Float64Array(sqSz);
     for (let i = 0; i < sqSz; i++) {
-      energy[i] = blueNoiseUtils.computeEnergyGeorgevFajardo(
+      energy[i] = BlueNoiseUtils.computeEnergyGeorgevFajardoWrapAround(
         inArray,
         width,
         height,
@@ -492,7 +487,7 @@ const blueNoiseFloat64 = (function () {
       inArray[q_i] = tmp;
 
       // Compute energy for both swapped pixel indexes
-      const newEnergy1 = blueNoiseUtils.computeEnergyGeorgevFajardo(
+      const newEnergy1 = BlueNoiseUtils.computeEnergyGeorgevFajardoWrapAround(
         inArray,
         width,
         height,
@@ -504,7 +499,7 @@ const blueNoiseFloat64 = (function () {
         kernelHeight
       );
 
-      const newEnergy2 = blueNoiseUtils.computeEnergyGeorgevFajardo(
+      const newEnergy2 = BlueNoiseUtils.computeEnergyGeorgevFajardoWrapAround(
         inArray,
         width,
         height,
@@ -530,13 +525,13 @@ const blueNoiseFloat64 = (function () {
 
   /**
    * FM screen design using DBS algorithm
-   * 
    * https://ieeexplore.ieee.org/document/559555
-   * 
+   *
    * No toroidal version
    *
    * @param {*} inArray
    * @param {*} ditheredArray
+   * @param {*} customIndexesArray
    * @param {*} width
    * @param {*} height
    * @param {*} sigma
@@ -547,6 +542,7 @@ const blueNoiseFloat64 = (function () {
   const _directBinarySearch = (
     inArray,
     ditheredArray,
+    customIndexesArray,
     width,
     height,
     sigma,
@@ -555,9 +551,9 @@ const blueNoiseFloat64 = (function () {
   ) => {
     if (inArray == null) throw new Error("Inputted array is null");
     if (ditheredArray == null) throw new Error("Inputted dithered array is null");
-    if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not ArrayBuffer");
+    if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not an ArrayBuffer");
     if (!ArrayBuffer.isView(ditheredArray))
-      throw new Error("Inputted dithered array is not ArrayBuffer");
+      throw new Error("Inputted dithered array is not an ArrayBuffer");
 
     const sqSz = width * height;
 
@@ -568,18 +564,18 @@ const blueNoiseFloat64 = (function () {
 
     if (sigma === 0) throw new Error("Divide by 0");
 
-    let kernel;
-    let kernelWidth;
-    let kernelHeight;
+    if (!ArrayBuffer.isView(customIndexesArray)) {
+      throw new Error("Indexes array is not an ArrayBuffer");
+    }
+
+    let kernel = _getGaussianKernel(sigma);
+    let kernelWidth = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
+    let kernelHeight = kernelWidth;
 
     if (kernelCheck) {
       kernelHeight = customKernel.length;
       kernelWidth = customKernel[0].length;
       kernel = new Float64Array(customKernel.flat());
-    } else {
-      kernel = _getGaussianKernel(sigma);
-      kernelHeight = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
-      kernelWidth = kernelHeight;
     }
 
     const kernelSqSz = kernelWidth * kernelHeight;
@@ -592,7 +588,7 @@ const blueNoiseFloat64 = (function () {
     const blurredArray = new Float64Array(sqSz);
     const localWindowArray = new Float64Array(kernelSqSz);
 
-    blueNoiseUtils.convolveInPlace(
+    BlueNoiseUtils.convolveInPlace(
       errorArray,
       width,
       height,
@@ -605,16 +601,11 @@ const blueNoiseFloat64 = (function () {
     let currentEnergy = 0;
     for (let i = 0; i < sqSz; i++) currentEnergy += blurredArray[i];
 
-    const indices = new Uint32Array(sqSz);
-    for (let i = 0; i < sqSz; i++) indices[i] = i;
-
-    blueNoiseUtils.shuffle(indices);
-
     for (let iter = 0; iter < iterations; iter++) {
       for (let i = 0; i < sqSz; i++) {
-        const idx = indices[i];
+        const idx = customIndexesArray[i];
         // Get local energy before flip
-        blueNoiseUtils.getConvolvedAreaInPlace(
+        BlueNoiseUtils.getConvolvedAreaInPlace(
           blurredArray,
           width,
           height,
@@ -634,7 +625,7 @@ const blueNoiseFloat64 = (function () {
         ditheredArray[idx] ^= 1;
         const deltaError = oldPixel - ditheredArray[idx];
 
-        blueNoiseUtils.convolveDeltaUpdateInPlace(
+        BlueNoiseUtils.convolveDeltaUpdateInPlace(
           width,
           height,
           idx,
@@ -646,7 +637,7 @@ const blueNoiseFloat64 = (function () {
         );
 
         // Get local energy after flip
-        blueNoiseUtils.getConvolvedAreaInPlace(
+        BlueNoiseUtils.getConvolvedAreaInPlace(
           blurredArray,
           width,
           height,
@@ -664,7 +655,7 @@ const blueNoiseFloat64 = (function () {
           // Revert
           ditheredArray[idx] = oldPixel;
 
-          blueNoiseUtils.convolveDeltaUpdateInPlace(
+          BlueNoiseUtils.convolveDeltaUpdateInPlace(
             width,
             height,
             idx,
@@ -691,22 +682,9 @@ const blueNoiseFloat64 = (function () {
 
   const _candidateMethodInPlace = (inArray, width, height, sigma, customKernel) => {
     if (inArray == null) throw new Error("Inputted array is null");
-    if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not ArrayBuffer");
-
-    const sqSz = width * height;
-    let filled1 = 0;
-
-    for (let i = 0; i < sqSz; i++) {
-      if (inArray[i] === 1) filled1 += 1;
-    }
-
-    if (filled1 === 0) {
-      console.warn("Inputted array have no dot");
-      return;
-    }
-    if (filled1 === sqSz) {
-      console.warn("Inputted array is full of dots");
-      return;
+    if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not an ArrayBuffer");
+    if (!Number.isInteger(width) || !Number.isInteger(height)) {
+      throw new Error("'width' and 'height' must be integers");
     }
 
     const kernelCheck = customKernel != null && Array.isArray(customKernel);
@@ -716,23 +694,38 @@ const blueNoiseFloat64 = (function () {
 
     if (sigma === 0) throw new Error("Divide by 0");
 
+    const sqSz = width * height;
+    let filled1 = 0;
+
+    const tmp = new Uint32Array(sqSz);
+
+    for (let i = 0; i < sqSz; i++) {
+      if (inArray[i] === 1) tmp[filled1++] = i;
+    }
+
+    if (filled1 === 0) {
+      console.warn("Inputted array have no dot");
+      return;
+    } else if (filled1 === sqSz) {
+      console.warn("Inputted array is full of dots");
+      return;
+    }
+
+    const clusterIndexes = tmp.subarray(0, filled1);
+
     const blurredArray = new Float64Array(sqSz);
 
-    let kernel;
-    let kernelWidth;
-    let kernelHeight;
+    let kernel = _getGaussianKernel(sigma);
+    let kernelWidth = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
+    let kernelHeight = kernelWidth;
 
     if (kernelCheck) {
       kernelHeight = customKernel.length;
       kernelWidth = customKernel[0].length;
       kernel = new Float64Array(customKernel.flat());
-    } else {
-      kernel = _getGaussianKernel(sigma);
-      kernelHeight = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
-      kernelWidth = kernelHeight;
     }
 
-    blueNoiseUtils.convolveWrapAroundInPlace(
+    BlueNoiseUtils.convolveWrapAroundInPlace(
       inArray,
       width,
       height,
@@ -743,24 +736,26 @@ const blueNoiseFloat64 = (function () {
     );
 
     while (true) {
-      let value = -Infinity;
+      let clusterValue = -Infinity;
+      let voidValue = Infinity;
       let clusterIdx;
       let voidIdx;
+      let clusterIndexesIdx;
 
-      for (let i = 0; i < sqSz; i++) {
-        if (inArray[i] === 1) {
-          const blurredValue = blurredArray[i];
+      for (let i = 0; i < filled1; i++) {
+        const idx = clusterIndexes[i];
+        const blurredValue = blurredArray[idx];
 
-          if (blurredValue > value) {
-            value = blurredValue;
-            clusterIdx = i;
-          }
+        if (blurredValue > clusterValue) {
+          clusterValue = blurredValue;
+          clusterIdx = idx;
+          clusterIndexesIdx = i;
         }
       }
 
       inArray[clusterIdx] = 0;
 
-      blueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
+      BlueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
         width,
         height,
         clusterIdx,
@@ -771,14 +766,12 @@ const blueNoiseFloat64 = (function () {
         kernelHeight
       );
 
-      value = Infinity;
-
       for (let i = 0; i < sqSz; i++) {
         if (inArray[i] === 0) {
           const blurredValue = blurredArray[i];
 
-          if (blurredValue < value) {
-            value = blurredValue;
+          if (blurredValue < voidValue) {
+            voidValue = blurredValue;
             voidIdx = i;
           }
         }
@@ -787,8 +780,9 @@ const blueNoiseFloat64 = (function () {
       if (clusterIdx === voidIdx) break;
 
       inArray[voidIdx] = 1;
+      clusterIndexes[clusterIndexesIdx] = voidIdx;
 
-      blueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
+      BlueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
         width,
         height,
         voidIdx,
@@ -811,12 +805,12 @@ const blueNoiseFloat64 = (function () {
 
   const _adaptiveCandidateMethodInPlace = (inArray, width, height) => {
     if (inArray == null) throw new Error("Inputted array is null");
-    if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not ArrayBuffer");
+    if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not an ArrayBuffer");
 
     const sqSz = width * height;
     let filled1 = 0;
     for (let i = 0; i < sqSz; i++) {
-      if (inArray[i] === 1) filled1 += 1;
+      if (inArray[i] === 1) filled1++;
     }
 
     _candidateMethodInPlace(
@@ -846,21 +840,17 @@ const blueNoiseFloat64 = (function () {
     binArray[idx] = 1;
     const blurredArray = new Float64Array(sqSz);
 
-    let kernel;
-    let kernelWidth;
-    let kernelHeight;
+    let kernel = _getGaussianKernel(sigma);
+    let kernelWidth = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
+    let kernelHeight = kernelWidth;
 
     if (kernelCheck) {
       kernelHeight = customKernel.length;
       kernelWidth = customKernel[0].length;
       kernel = new Float64Array(customKernel.flat());
-    } else {
-      kernel = _getGaussianKernel(sigma);
-      kernelHeight = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
-      kernelWidth = kernelHeight;
     }
 
-    blueNoiseUtils.convolveWrapAroundInPlace(
+    BlueNoiseUtils.convolveWrapAroundInPlace(
       binArray,
       width,
       height,
@@ -887,7 +877,7 @@ const blueNoiseFloat64 = (function () {
 
       binArray[idx] = 1;
 
-      blueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
+      BlueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
         width,
         height,
         idx,
@@ -904,7 +894,6 @@ const blueNoiseFloat64 = (function () {
 
   /**
    * Mitchell's Best Candidate Algorithm
-   *
    * https://dl.acm.org/doi/10.1145/127719.122736
    *
    * @param {*} width
@@ -923,7 +912,7 @@ const blueNoiseFloat64 = (function () {
     const flattenedSamples = new Uint32Array(samples);
 
     for (let sample = 0; sample < samples; sample++) {
-      let bestDistance = 0;
+      let bestDistance = -Infinity;
       let bestIdxX = 0;
       let bestIdxY = 0;
 
@@ -950,7 +939,6 @@ const blueNoiseFloat64 = (function () {
           if (distanceY > halfHeight) distanceY = height - distanceY;
 
           const distance = distanceX ** 2 + distanceY ** 2;
-
           if (distance < minDistance) minDistance = distance;
         }
 
@@ -966,6 +954,73 @@ const blueNoiseFloat64 = (function () {
     }
 
     return flattenedSamples;
+  };
+
+  /**
+   * Lloyd's Relaxation
+   * 
+   * https://en.wikipedia.org/wiki/Lloyd's_algorithm
+   * 
+   * @param {*} inArray 
+   * @param {*} width 
+   * @param {*} height 
+   */
+
+  const _relaxation = (inArray, width, height) => {
+    const sqSz = width * height;
+    const halfWidth = width >> 1;
+    const halfHeight = height >> 1;
+    const unflattenedSites = [];
+    const filled1 = inArray.length;
+
+    for (let i = 0; i < filled1; i++) {
+      const idx = inArray[i];
+      const idxY = (idx / width) | 0;
+
+      unflattenedSites.push({
+        idxY,
+        idxX: idx - idxY * width,
+      });
+    }
+
+    const siteZoneGrid = [];
+
+    for (let i = 0; i < sqSz; i++) {
+      const idxY = (i / width) | 0;
+      const idxX = i - idxY * width;
+
+      let minDistance = Infinity;
+      let nearestIdx = 0;
+
+      for (let site = 0; site < filled1; site++) {
+        const currentSite = unflattenedSites[site];
+
+        let distanceX = Math.abs(idxX - currentSite.idxX);
+        let distanceY = Math.abs(idxY - currentSite.idxY);
+
+        if (distanceX > halfWidth) distanceX = width - distanceX;
+        if (distanceY > halfHeight) distanceY = height - distanceY;
+
+        const distance = distanceX ** 2 + distanceY ** 2;
+
+        if (distance < minDistance) {
+          minDistance = distance;
+          nearestIdx = site;
+        }
+      }
+
+      if (!siteZoneGrid[nearestIdx]) siteZoneGrid[nearestIdx] = [];
+      siteZoneGrid[nearestIdx].push(i);
+    }
+
+    for (let i = 0; i < filled1; i++) {
+      const zoneGrid = siteZoneGrid[i];
+      if (!zoneGrid) continue;
+
+      const centroid = BlueNoiseUtils.computeCentroidWrapAround(siteZoneGrid[i], width, height);
+
+      inArray[i] = (centroid.idxY | 0) * width + (centroid.idxX | 0);
+    }
   };
 
   /**
@@ -1036,8 +1091,8 @@ const blueNoiseFloat64 = (function () {
     adaptiveCandidateMethodInPlace: _adaptiveCandidateMethodInPlace,
     wronskiCandidateMethod: _wronskiCandidateMethod,
     bestCandidate: _bestCandidate,
+    relaxation: _relaxation,
 
     getGaussianKernel: _getGaussianKernel,
   };
 })();
-
