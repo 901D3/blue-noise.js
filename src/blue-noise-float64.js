@@ -324,7 +324,7 @@ const BlueNoiseFloat64 = (function () {
 
       for (let i = 0; i < filled1; i++) {
         const dotsIndex = clusterIndexes[i];
-        if (temp[dotsIndex] === 1) continue;
+        if (temp[dotsIndex] !== 1) continue;
 
         // "Find tightest cluster"
         const blurredValue = blurredArray[dotsIndex];
