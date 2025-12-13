@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link blue-noise-utils.js
  *
- * v0.2.5
+ * v0.2.5.1
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -262,7 +262,6 @@ const BlueNoiseFloat64 = (function () {
 
     const sqSz = width * height;
 
-    // Setup arrays
     const binArray = new Uint8Array(sqSz);
     const rankArray = new Uint32Array(sqSz);
     const blurredArray = new Float64Array(sqSz);
@@ -270,9 +269,7 @@ const BlueNoiseFloat64 = (function () {
     const filled1 = (sqSz * density) | 0;
 
     if (density !== 0 && density !== 1) {
-      for (let i = 0; i < filled1 + 1; i++) {
-        binArray[i] = 1;
-      }
+      for (let i = 0; i < filled1 + 1; i++) binArray[i] = 1;
 
       BlueNoiseUtils.shuffle(binArray);
     } else if (density === 1) binArray.fill(1);
@@ -293,12 +290,12 @@ const BlueNoiseFloat64 = (function () {
       }
     }
 
-    // Cluster indexes LUT, we save all the 1s in temp array once so phase 1 have less loops
-    const clusterIndexes = new Uint32Array(filled1);
+    // Sample indexes
+    const sampleIndexes = new Uint32Array(filled1);
 
     // Go through temp array and collect all 1s
     for (let i = 0, idx = 0; i < sqSz; i++) {
-      if (binArray[i] === 1) clusterIndexes[idx++] = i;
+      if (binArray[i] === 1) sampleIndexes[idx++] = i;
     }
 
     // Phase 1
@@ -315,16 +312,15 @@ const BlueNoiseFloat64 = (function () {
 
     // Evenly distributed dots blurred, for phase 2 tie-breaker
     const blurredTemp = blurredArray.slice();
-    const temp = binArray.slice();
 
     for (let rank = filled1 - 1; rank >= 0; rank--) {
       let idx = 0;
       let value = -Infinity;
-      let valueTemp = -Infinity;
+      //let valueTemp = -Infinity;
 
       for (let i = 0; i < filled1; i++) {
-        const dotsIndex = clusterIndexes[i];
-        if (temp[dotsIndex] !== 1) continue;
+        const dotsIndex = sampleIndexes[i];
+        if (binArray[dotsIndex] !== 1) continue;
 
         // "Find tightest cluster"
         const blurredValue = blurredArray[dotsIndex];
@@ -333,6 +329,8 @@ const BlueNoiseFloat64 = (function () {
           value = blurredValue;
           idx = dotsIndex;
         }
+
+        /*
         // If the current 1 have the same energy as the previous one, go to this tie-breaker
         else if (blurredValue === value) {
           const blurredTempValue = blurredTemp[dotsIndex];
@@ -342,9 +340,10 @@ const BlueNoiseFloat64 = (function () {
             idx = dotsIndex;
           }
         }
+        */
       }
 
-      temp[idx] = 0;
+      binArray[idx] = 0;
       rankArray[idx] = rank;
 
       BlueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
@@ -362,10 +361,12 @@ const BlueNoiseFloat64 = (function () {
 
     // Phase 2
     blurredArray.set(blurredTemp);
+    for (let i = 0; i < filled1; i++) binArray[sampleIndexes[i]] = 1;
+
     for (let rank = filled1; rank < sqSz; rank++) {
-      let value = Infinity;
-      let valueTemp = Infinity;
       let idx = 0;
+      let value = Infinity;
+      //let valueTemp = Infinity;
 
       for (let i = 0; i < sqSz; i++) {
         if (binArray[i] !== 0) continue;
@@ -377,6 +378,8 @@ const BlueNoiseFloat64 = (function () {
           value = blurredValue;
           idx = i;
         }
+
+        /*
         // If the current 0 have the same energy as the previous one, go to this tie-breaker
         else if (blurredValue === value) {
           const blurredTempValue = blurredTemp[i];
@@ -386,6 +389,7 @@ const BlueNoiseFloat64 = (function () {
             idx = i;
           }
         }
+        */
       }
 
       binArray[idx] = 1;
@@ -711,7 +715,7 @@ const BlueNoiseFloat64 = (function () {
       return;
     }
 
-    const clusterIndexes = tmp.subarray(0, filled1);
+    const sampleIndexes = tmp.subarray(0, filled1);
 
     const blurredArray = new Float64Array(sqSz);
 
@@ -743,7 +747,7 @@ const BlueNoiseFloat64 = (function () {
       let clusterIndexesIdx;
 
       for (let i = 0; i < filled1; i++) {
-        const idx = clusterIndexes[i];
+        const idx = sampleIndexes[i];
         const blurredValue = blurredArray[idx];
 
         if (blurredValue > clusterValue) {
@@ -780,7 +784,7 @@ const BlueNoiseFloat64 = (function () {
       if (clusterIdx === voidIdx) break;
 
       inArray[voidIdx] = 1;
-      clusterIndexes[clusterIndexesIdx] = voidIdx;
+      sampleIndexes[clusterIndexesIdx] = voidIdx;
 
       BlueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
         width,
@@ -905,10 +909,13 @@ const BlueNoiseFloat64 = (function () {
 
   const _bestCandidate = (width, height, samples, candidates) => {
     const sqSz = width * height;
+
     const halfWidth = width >> 1;
     const halfHeight = height >> 1;
 
-    const samplesPos = [];
+    const samplesIdxX = new Uint32Array(samples);
+    const samplesIdxY = new Uint32Array(samples);
+
     const flattenedSamples = new Uint32Array(samples);
 
     for (let sample = 0; sample < samples; sample++) {
@@ -918,10 +925,10 @@ const BlueNoiseFloat64 = (function () {
 
       for (let candidate = 0; candidate < candidates; candidate++) {
         const randomIdx = (Math.random() * sqSz) | 0;
+        const randomIdxX = randomIdx % width;
         const randomIdxY = (randomIdx / width) | 0;
-        const randomIdxX = randomIdx - randomIdxY * width;
 
-        if (samplesPos.length === 0) {
+        if (sample === 0) {
           bestIdxX = randomIdxX;
           bestIdxY = randomIdxY;
           break;
@@ -929,11 +936,9 @@ const BlueNoiseFloat64 = (function () {
 
         let minDistance = Infinity;
 
-        for (let j = samplesPos.length - 1; j >= 0; j--) {
-          const currentSamplePoint = samplesPos[j];
-
-          let distanceX = Math.abs(randomIdxX - currentSamplePoint.bestIdxX);
-          let distanceY = Math.abs(randomIdxY - currentSamplePoint.bestIdxY);
+        for (let i = 0; i < samples; i++) {
+          let distanceX = Math.abs(randomIdxX - samplesIdxX[i]);
+          let distanceY = Math.abs(randomIdxY - samplesIdxY[i]);
 
           if (distanceX > halfWidth) distanceX = width - distanceX;
           if (distanceY > halfHeight) distanceY = height - distanceY;
@@ -949,7 +954,9 @@ const BlueNoiseFloat64 = (function () {
         }
       }
 
-      samplesPos.push({bestIdxX, bestIdxY});
+      samplesIdxX[sample] = bestIdxX;
+      samplesIdxY[sample] = bestIdxY;
+
       flattenedSamples[sample] = bestIdxY * width + bestIdxX;
     }
 
@@ -958,68 +965,84 @@ const BlueNoiseFloat64 = (function () {
 
   /**
    * Lloyd's Relaxation
-   * 
+   *
    * https://en.wikipedia.org/wiki/Lloyd's_algorithm
-   * 
-   * @param {*} inArray 
-   * @param {*} width 
-   * @param {*} height 
+   *
+   * @param {*} inArray
+   * @param {*} width
+   * @param {*} height
    */
 
   const _relaxation = (inArray, width, height) => {
     const sqSz = width * height;
+
     const halfWidth = width >> 1;
     const halfHeight = height >> 1;
-    const unflattenedSites = [];
+
     const filled1 = inArray.length;
+
+    const unflattenedSamplesIdxX = new Uint32Array(filled1);
+    const unflattenedSamplesIdxY = new Uint32Array(filled1);
+
+    const samplesSumX = new Int32Array(filled1);
+    const samplesSumY = new Int32Array(filled1);
+    const samplesCount = new Uint32Array(filled1);
 
     for (let i = 0; i < filled1; i++) {
       const idx = inArray[i];
-      const idxY = (idx / width) | 0;
 
-      unflattenedSites.push({
-        idxY,
-        idxX: idx - idxY * width,
-      });
+      unflattenedSamplesIdxX[i] = idx % width;
+      unflattenedSamplesIdxY[i] = (idx / width) | 0;
     }
 
-    const siteZoneGrid = [];
-
     for (let i = 0; i < sqSz; i++) {
-      const idxY = (i / width) | 0;
-      const idxX = i - idxY * width;
+      let idxX = i % width;
+      let idxY = (i / width) | 0;
 
       let minDistance = Infinity;
-      let nearestIdx = 0;
+      let nearestSampleIdx = 0;
 
-      for (let site = 0; site < filled1; site++) {
-        const currentSite = unflattenedSites[site];
-
-        let distanceX = Math.abs(idxX - currentSite.idxX);
-        let distanceY = Math.abs(idxY - currentSite.idxY);
+      for (let sample = 0; sample < filled1; sample++) {
+        let distanceX = Math.abs(idxX - unflattenedSamplesIdxX[sample]);
+        let distanceY = Math.abs(idxY - unflattenedSamplesIdxY[sample]);
 
         if (distanceX > halfWidth) distanceX = width - distanceX;
         if (distanceY > halfHeight) distanceY = height - distanceY;
 
-        const distance = distanceX ** 2 + distanceY ** 2;
+        const distance = distanceX * distanceX + distanceY * distanceY;
 
         if (distance < minDistance) {
           minDistance = distance;
-          nearestIdx = site;
+          nearestSampleIdx = sample;
         }
       }
 
-      if (!siteZoneGrid[nearestIdx]) siteZoneGrid[nearestIdx] = [];
-      siteZoneGrid[nearestIdx].push(i);
+      idxX -= unflattenedSamplesIdxX[nearestSampleIdx];
+      idxY -= unflattenedSamplesIdxY[nearestSampleIdx];
+
+      if (idxX > halfWidth) idxX -= width;
+      else if (idxX < -halfWidth) idxX += width;
+
+      if (idxY > halfHeight) idxY -= height;
+      else if (idxY < -halfHeight) idxY += height;
+
+      samplesSumX[nearestSampleIdx] += idxX;
+      samplesSumY[nearestSampleIdx] += idxY;
+      samplesCount[nearestSampleIdx]++;
     }
 
     for (let i = 0; i < filled1; i++) {
-      const zoneGrid = siteZoneGrid[i];
-      if (!zoneGrid) continue;
+      const currentSampleZoneGridCount = samplesCount[i];
+      if (currentSampleZoneGridCount === 0) continue;
 
-      const centroid = BlueNoiseUtils.computeCentroidWrapAround(siteZoneGrid[i], width, height);
-
-      inArray[i] = (centroid.idxY | 0) * width + (centroid.idxX | 0);
+      inArray[i] =
+        ((((samplesSumX[i] / currentSampleZoneGridCount + unflattenedSamplesIdxX[i]) % width) +
+          0.5) |
+          0) *
+          width +
+        ((((samplesSumY[i] / currentSampleZoneGridCount + unflattenedSamplesIdxY[i]) % height) +
+          0.5) |
+          0);
     }
   };
 
