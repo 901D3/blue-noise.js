@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link this script
  *
- * v0.2.5
+ * v0.2.5.1
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -481,63 +481,6 @@ const BlueNoiseUtils = (function () {
     return total;
   };
 
-  /**
-   *
-   * @param {*} inArray
-   * @param {*} width
-   * @param {*} height
-   * @param {*} color
-   * @param {*} referenceIdx
-   * @returns
-   */
-
-  const _computeCentroidWrapAround = (inArray, width, height) => {
-    const count = inArray.length;
-
-    const referenceIdx = inArray[0];
-    const referenceIdxY = (referenceIdx / width) | 0;
-    const referenceIdxX = referenceIdx - width * referenceIdxY;
-
-    if (count === 0) {
-      return {
-        idxX: referenceIdxX,
-        idxY: referenceIdxY,
-      };
-    }
-
-    const halfWidth = width >> 1;
-    const halfHeight = height >> 1;
-
-    let sumX = 0;
-    let sumY = 0;
-
-    for (let i = 0; i < count; i++) {
-      const idx = inArray[i];
-      let idxX = (idx % width) - referenceIdxX;
-      let idxY = ((idx / width) | 0) - referenceIdxY;
-
-      if (idxX > halfWidth) idxX -= width;
-      else if (idxX < -halfWidth) idxX += width;
-
-      if (idxY > halfHeight) idxY -= height;
-      else if (idxY < -halfHeight) idxY += height;
-
-      sumX += idxX;
-      sumY += idxY;
-    }
-
-    let idxX = (referenceIdxX + sumX / count) % width;
-    let idxY = (referenceIdxY + sumY / count) % height;
-
-    if (idxX < 0) idxX += width;
-    if (idxY < 0) idxY += height;
-
-    return {
-      idxX,
-      idxY,
-    };
-  };
-
   return {
     shuffle: _shuffle,
 
@@ -552,7 +495,5 @@ const BlueNoiseUtils = (function () {
     setConvolvedAreaInPlace: _setConvolvedAreaInPlace,
 
     computeEnergyGeorgevFajardoWrapAround: _computeEnergyGeorgevFajardoWrapAround,
-
-    computeCentroidWrapAround: _computeCentroidWrapAround,
   };
 })();
