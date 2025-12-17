@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link blue-noise-utils.js
  *
- * v0.2.5.1
+ * v0.2.6
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -13,10 +13,10 @@
 
 const BlueNoiseFloat64 = (function () {
   // It was a big failure to use 3*sigma
-  let _gaussianSigmaRadiusMultiplier = 4;
+  let _gaussianSigmaRadiusMultiplier = 10;
 
   let _useAdaptiveSigmaCandidateAlgo = false;
-  let _initialSigmaScale = 0.3; // Best value for adaptive candidate algorithm
+  let _initialSigmaScale = 0.5; // Best value for adaptive candidate algorithm
 
   /**
    * VACluster - short for "Void and Cluster"
@@ -25,7 +25,7 @@ const BlueNoiseFloat64 = (function () {
    * @typedef {Array} binary[] - an integer array in the range of 0 - 1
    */
 
-  // _originalVoidAndCluster is just a simplified version of _extendedVoidAndCluster.
+  // _originalVoidAndCluster is just a simplified version of _extendedVoidAndClusterWrapAround.
   // It is there only for explanatory purpose and faithfulness reason, it may give wrong results after running.
   const _originalVoidAndCluster = (width, height, sigma, density = 0.1) => {
     throw new Error(
@@ -39,7 +39,7 @@ const BlueNoiseFloat64 = (function () {
     if (sigma === 0) throw new Error("Divide by 0");
 
     // Get Gaussian kernel with sigma value
-    const kernel = _getGaussianKernel(sigma);
+    const kernelArray = _getGaussianKernel(sigma);
 
     // Calculate kernel size
     const kernelSize = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
@@ -62,7 +62,7 @@ const BlueNoiseFloat64 = (function () {
     // Now shuffle it, this act like seeding
     BlueNoiseUtils.shuffle(binArray);
 
-    _candidateMethodInPlace(binArray, width, height, sigma);
+    _candidateMethodWrapAroundInPlace(binArray, width, height, sigma);
 
     // Phase 1
     // blur binArray
@@ -71,7 +71,7 @@ const BlueNoiseFloat64 = (function () {
       width,
       height,
       blurredArray,
-      kernel,
+      kernelArray,
       kernelSize,
       kernelSize
     );
@@ -110,7 +110,7 @@ const BlueNoiseFloat64 = (function () {
         idx,
         -1,
         blurredTempArray,
-        kernel,
+        kernelArray,
         kernelSize,
         kernelSize
       );
@@ -123,7 +123,7 @@ const BlueNoiseFloat64 = (function () {
       width,
       height,
       blurredArray,
-      kernel,
+      kernelArray,
       kernelSize,
       kernelSize
     );
@@ -156,7 +156,7 @@ const BlueNoiseFloat64 = (function () {
         idx,
         1,
         blurredArray,
-        kernel,
+        kernelArray,
         kernelSize,
         kernelSize
       );
@@ -173,7 +173,7 @@ const BlueNoiseFloat64 = (function () {
       width,
       height,
       blurredArray,
-      kernel,
+      kernelArray,
       kernelSize,
       kernelSize
     );
@@ -204,7 +204,7 @@ const BlueNoiseFloat64 = (function () {
         idx,
         -1,
         blurredArray,
-        kernel,
+        kernelArray,
         kernelSize,
         kernelSize
       );
@@ -227,7 +227,7 @@ const BlueNoiseFloat64 = (function () {
    * @returns
    */
 
-  const _extendedVoidAndCluster = (
+  const _extendedVoidAndClusterWrapAround = (
     width,
     height,
     sigma,
@@ -249,7 +249,7 @@ const BlueNoiseFloat64 = (function () {
 
     if (sigma === 0) throw new Error("Divide by 0");
 
-    let kernel = _getGaussianKernel(sigma);
+    let kernelArray = _getGaussianKernel(sigma);
     let kernelWidth = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
     let kernelHeight = kernelWidth;
 
@@ -257,7 +257,7 @@ const BlueNoiseFloat64 = (function () {
     if (kernelCheck) {
       kernelHeight = customKernel.length;
       kernelWidth = customKernel[0].length;
-      kernel = new Float64Array(customKernel.flat());
+      kernelArray = new Float64Array(customKernel.flat());
     }
 
     const sqSz = width * height;
@@ -269,7 +269,7 @@ const BlueNoiseFloat64 = (function () {
     const filled1 = (sqSz * density) | 0;
 
     if (density !== 0 && density !== 1) {
-      for (let i = 0; i < filled1 + 1; i++) binArray[i] = 1;
+      for (let i = 0; i < filled1; i++) binArray[i] = 1;
 
       BlueNoiseUtils.shuffle(binArray);
     } else if (density === 1) binArray.fill(1);
@@ -278,15 +278,15 @@ const BlueNoiseFloat64 = (function () {
       // Do Ulichney's Candidate Algorithm taken from VACluster
       // If using adaptive sigma (overwrite all other options)
       if (_useAdaptiveSigmaCandidateAlgo) {
-        _adaptiveCandidateMethodInPlace(binArray, width, height, _initialSigmaScale);
+        _adaptiveCandidateMethodWrapAroundInPlace(binArray, width, height, _initialSigmaScale);
       }
       // If using custom kernel
       else if (kernelCheck) {
-        _candidateMethodInPlace(binArray, width, height, null, customKernel);
+        _candidateMethodWrapAroundInPlace(binArray, width, height, null, customKernel);
       }
       // If not using custom kernel nor adaptive sigma, use the inputted sigma
       else {
-        _candidateMethodInPlace(binArray, width, height, candidateMethodSigma);
+        _candidateMethodWrapAroundInPlace(binArray, width, height, candidateMethodSigma);
       }
     }
 
@@ -305,12 +305,12 @@ const BlueNoiseFloat64 = (function () {
       width,
       height,
       blurredArray,
-      kernel,
+      kernelArray,
       kernelWidth,
       kernelHeight
     );
 
-    // Evenly distributed dots blurred, for phase 2 tie-breaker
+    // Evenly distributed dots blurred, ~for phase 2 tie-breaker~
     const blurredTemp = blurredArray.slice();
 
     for (let rank = filled1 - 1; rank >= 0; rank--) {
@@ -352,7 +352,7 @@ const BlueNoiseFloat64 = (function () {
         idx,
         -1,
         blurredArray,
-        kernel,
+        kernelArray,
         kernelWidth,
         kernelHeight
       );
@@ -401,7 +401,7 @@ const BlueNoiseFloat64 = (function () {
         idx,
         1,
         blurredArray,
-        kernel,
+        kernelArray,
         kernelWidth,
         kernelHeight
       );
@@ -423,18 +423,18 @@ const BlueNoiseFloat64 = (function () {
    * @param {*} sigmaImage
    * @param {*} sigmaSample
    * @param {*} iterations
-   * @param {*} dimension
+   * @param {*} pNorm
    * @param {*} customKernel
    */
 
-  const _georgievFajardoInPlace = (
+  const _georgievFajardoWrapAroundInPlace = (
     inArray,
     width,
     height,
     sigmaImage,
     sigmaSample,
     iterations,
-    dimension = 1,
+    pNorm,
     customKernel
   ) => {
     if (inArray == null) throw new Error("Inputted array is null");
@@ -451,7 +451,7 @@ const BlueNoiseFloat64 = (function () {
 
     if (sigmaImage === 0) throw new Error("Divide by 0");
 
-    let kernel = _getGaussianKernel(sigmaImage);
+    let kernelArray = _getGaussianKernel(sigmaImage);
     let kernelWidth = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigmaImage) << 1) + 1;
     let kernelHeight = kernelWidth;
 
@@ -459,7 +459,7 @@ const BlueNoiseFloat64 = (function () {
     if (kernelCheck) {
       kernelHeight = customKernel.length;
       kernelWidth = customKernel[0].length;
-      kernel = new Float64Array(customKernel.flat());
+      kernelArray = new Float64Array(customKernel.flat());
     }
 
     // Prepare energy map
@@ -471,24 +471,22 @@ const BlueNoiseFloat64 = (function () {
         height,
         i,
         sigmaSample,
-        dimension,
-        kernel,
+        pNorm,
+        kernelArray,
         kernelWidth,
         kernelHeight
       );
     }
 
-    for (let iter = 0; iter < iterations; iter++) {
+    for (let iter = 0, skipped = 0; iter < iterations; iter++) {
       // Random index
       const p_i = (Math.random() * sqSz) | 0;
-      // Instead of using another random, q_i is going left to right then up to down because
-      // the index doesn't matter, what matters is the efficiency of the pixel swapping
-      const q_i = iter % sqSz;
+      // q_i = 0
 
       // Swap pixels
       const tmp = inArray[p_i];
-      inArray[p_i] = inArray[q_i];
-      inArray[q_i] = tmp;
+      inArray[p_i] = inArray[0];
+      inArray[0] = tmp;
 
       // Compute energy for both swapped pixel indexes
       const newEnergy1 = BlueNoiseUtils.computeEnergyGeorgevFajardoWrapAround(
@@ -497,8 +495,8 @@ const BlueNoiseFloat64 = (function () {
         height,
         p_i,
         sigmaSample,
-        dimension,
-        kernel,
+        pNorm,
+        kernelArray,
         kernelWidth,
         kernelHeight
       );
@@ -507,43 +505,27 @@ const BlueNoiseFloat64 = (function () {
         inArray,
         width,
         height,
-        q_i,
+        0,
         sigmaSample,
-        dimension,
-        kernel,
+        pNorm,
+        kernelArray,
         kernelWidth,
         kernelHeight
       );
 
       // If the new swapped pixels energy is bigger than before, accept it
-      if (newEnergy1 + newEnergy2 < energy[p_i] + energy[q_i]) {
+      if (newEnergy1 + newEnergy2 < energy[p_i] + energy[0]) {
         energy[p_i] = newEnergy1;
-        energy[q_i] = newEnergy2;
+        energy[0] = newEnergy2;
       } else {
         const tmp = inArray[p_i];
-        inArray[p_i] = inArray[q_i];
-        inArray[q_i] = tmp;
+        inArray[p_i] = inArray[0];
+        inArray[0] = tmp;
       }
     }
   };
 
-  /**
-   * FM screen design using DBS algorithm
-   * https://ieeexplore.ieee.org/document/559555
-   *
-   * No toroidal version
-   *
-   * @param {*} inArray
-   * @param {*} ditheredArray
-   * @param {*} customIndexesArray
-   * @param {*} width
-   * @param {*} height
-   * @param {*} sigma
-   * @param {*} iterations
-   * @param {*} customKernel
-   */
-
-  const _directBinarySearch = (
+  const _directBinarySearchSimple = (
     inArray,
     ditheredArray,
     customIndexesArray,
@@ -553,6 +535,10 @@ const BlueNoiseFloat64 = (function () {
     iterations,
     customKernel
   ) => {
+    throw new Error(
+      "This DBS function is for educational purposes only, you can run it anyway but it is very slow. Consider using the optimized version.\n" +
+        "This DBS function will not be removed."
+    );
     if (inArray == null) throw new Error("Inputted array is null");
     if (ditheredArray == null) throw new Error("Inputted dithered array is null");
     if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not an ArrayBuffer");
@@ -675,6 +661,120 @@ const BlueNoiseFloat64 = (function () {
   };
 
   /**
+   * FM screen design using DBS algorithm
+   * https://ieeexplore.ieee.org/document/559555
+   *
+   * No toroidal version
+   *
+   * @param {*} inArray
+   * @param {*} ditheredArray
+   * @param {*} customIndexesArray
+   * @param {*} width
+   * @param {*} height
+   * @param {*} sigma
+   * @param {*} iterations
+   * @param {*} customKernel
+   */
+
+  const _directBinarySearchInPlace = (
+    inArray,
+    ditheredArray,
+    customIndexesArray,
+    width,
+    height,
+    sigma,
+    customKernel
+  ) => {
+    if (inArray == null) throw new Error("Inputted array is null");
+    if (ditheredArray == null) throw new Error("Inputted dithered array is null");
+    if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not an ArrayBuffer");
+    if (!ArrayBuffer.isView(ditheredArray))
+      throw new Error("Inputted dithered array is not an ArrayBuffer");
+
+    const sqSz = width * height;
+
+    const kernelCheck = customKernel != null && Array.isArray(customKernel);
+    if (!kernelCheck && sigma == null) {
+      throw new Error("kernelCheck is " + kernelCheck + ". 'sigma' arguments is mandatory");
+    }
+
+    if (sigma === 0) throw new Error("Divide by 0");
+
+    if (!ArrayBuffer.isView(customIndexesArray)) {
+      throw new Error("Indexes array is not an ArrayBuffer");
+    }
+
+    let kernelArray = _getGaussianKernel(sigma);
+    let kernelWidth = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
+    let kernelHeight = kernelWidth;
+
+    if (kernelCheck) {
+      kernelHeight = customKernel.length;
+      kernelWidth = customKernel[0].length;
+      kernelArray = new Float64Array(customKernel.flat());
+    }
+
+    const kernelSqSz = kernelWidth * kernelHeight;
+
+    let kernelEnergy = 0;
+    for (let i = 0; i < kernelSqSz; i++) kernelEnergy += kernelArray[i] ** 2;
+
+    const errorArray = new Float64Array(sqSz);
+    for (let i = 0; i < sqSz; i++) {
+      errorArray[i] = inArray[i] / 255 - ditheredArray[i];
+    }
+
+    const blurredArray = new Float64Array(sqSz);
+
+    BlueNoiseUtils.convolveInPlace(
+      errorArray,
+      width,
+      height,
+      blurredArray,
+      kernelArray,
+      kernelWidth,
+      kernelHeight
+    );
+
+    for (let i = 0; i < sqSz; i++) {
+      const idx = customIndexesArray[i];
+
+      // Do the flip
+      const oldPixel = ditheredArray[idx];
+      const newPixel = oldPixel ^ 1;
+      const deltaError = oldPixel - newPixel;
+
+      const dotProduct = BlueNoiseUtils.getConvolvedAreaDotProductInPlace(
+        blurredArray,
+        width,
+        height,
+        idx,
+        kernelArray,
+        kernelWidth,
+        kernelHeight
+      );
+
+      const deltaEnergy = 2 * deltaError * dotProduct + deltaError * deltaError * kernelEnergy;
+
+      if (deltaEnergy < 0) {
+        ditheredArray[idx] = newPixel;
+        errorArray[idx] += deltaError;
+
+        BlueNoiseUtils.convolveDeltaUpdateInPlace(
+          width,
+          height,
+          idx,
+          deltaError,
+          blurredArray,
+          kernelArray,
+          kernelWidth,
+          kernelHeight
+        );
+      }
+    }
+  };
+
+  /**
    * Taken from VACluster
    *
    * @param {*} inArray
@@ -684,7 +784,7 @@ const BlueNoiseFloat64 = (function () {
    * @param {*} customKernel
    */
 
-  const _candidateMethodInPlace = (inArray, width, height, sigma, customKernel) => {
+  const _candidateMethodWrapAroundInPlace = (inArray, width, height, sigma, customKernel) => {
     if (inArray == null) throw new Error("Inputted array is null");
     if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not an ArrayBuffer");
     if (!Number.isInteger(width) || !Number.isInteger(height)) {
@@ -701,10 +801,14 @@ const BlueNoiseFloat64 = (function () {
     const sqSz = width * height;
     let filled1 = 0;
 
-    const tmp = new Uint32Array(sqSz);
-
     for (let i = 0; i < sqSz; i++) {
-      if (inArray[i] === 1) tmp[filled1++] = i;
+      if (inArray[i] === 1) filled1++;
+    }
+
+    const tmp = new Uint32Array(filled1);
+
+    for (let i = 0, idx = 0; i < sqSz; i++) {
+      if (inArray[i] === 1) tmp[idx++] = i;
     }
 
     if (filled1 === 0) {
@@ -719,14 +823,14 @@ const BlueNoiseFloat64 = (function () {
 
     const blurredArray = new Float64Array(sqSz);
 
-    let kernel = _getGaussianKernel(sigma);
+    let kernelArray = _getGaussianKernel(sigma);
     let kernelWidth = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
     let kernelHeight = kernelWidth;
 
     if (kernelCheck) {
       kernelHeight = customKernel.length;
       kernelWidth = customKernel[0].length;
-      kernel = new Float64Array(customKernel.flat());
+      kernelArray = new Float64Array(customKernel.flat());
     }
 
     BlueNoiseUtils.convolveWrapAroundInPlace(
@@ -734,7 +838,7 @@ const BlueNoiseFloat64 = (function () {
       width,
       height,
       blurredArray,
-      kernel,
+      kernelArray,
       kernelWidth,
       kernelHeight
     );
@@ -758,6 +862,7 @@ const BlueNoiseFloat64 = (function () {
       }
 
       inArray[clusterIdx] = 0;
+      sampleIndexes[clusterIndexesIdx] = voidIdx;
 
       BlueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
         width,
@@ -765,7 +870,7 @@ const BlueNoiseFloat64 = (function () {
         clusterIdx,
         -1,
         blurredArray,
-        kernel,
+        kernelArray,
         kernelWidth,
         kernelHeight
       );
@@ -784,7 +889,6 @@ const BlueNoiseFloat64 = (function () {
       if (clusterIdx === voidIdx) break;
 
       inArray[voidIdx] = 1;
-      sampleIndexes[clusterIndexesIdx] = voidIdx;
 
       BlueNoiseUtils.convolveDeltaUpdateWrapAroundInPlace(
         width,
@@ -792,7 +896,7 @@ const BlueNoiseFloat64 = (function () {
         voidIdx,
         1,
         blurredArray,
-        kernel,
+        kernelArray,
         kernelWidth,
         kernelHeight
       );
@@ -807,7 +911,7 @@ const BlueNoiseFloat64 = (function () {
    * @param {*} height
    */
 
-  const _adaptiveCandidateMethodInPlace = (inArray, width, height) => {
+  const _adaptiveCandidateMethodWrapAroundInPlace = (inArray, width, height) => {
     if (inArray == null) throw new Error("Inputted array is null");
     if (!ArrayBuffer.isView(inArray)) throw new Error("Inputted array is not an ArrayBuffer");
 
@@ -817,7 +921,7 @@ const BlueNoiseFloat64 = (function () {
       if (inArray[i] === 1) filled1++;
     }
 
-    _candidateMethodInPlace(
+    _candidateMethodWrapAroundInPlace(
       inArray,
       width,
       height,
@@ -826,7 +930,26 @@ const BlueNoiseFloat64 = (function () {
     );
   };
 
-  const _wronskiCandidateMethod = (idx, width, height, sigma, density = 0.1, customKernel) => {
+  /**
+   * https://bartwronski.com/2022/08/31/progressive-image-stippling-and-greedy-blue-noise-importance-sampling/
+   *
+   * @param {*} idx
+   * @param {*} width
+   * @param {*} height
+   * @param {*} sigma
+   * @param {*} density
+   * @param {*} customKernel
+   * @returns
+   */
+
+  const _wronskiCandidateMethodWrapAround = (
+    idx,
+    width,
+    height,
+    sigma,
+    density = 0.1,
+    customKernel
+  ) => {
     if (idx == null) throw new Error("Inputted index is null");
     if (idx < 0) throw new Error("Inputted index is less than 0");
 
@@ -844,14 +967,14 @@ const BlueNoiseFloat64 = (function () {
     binArray[idx] = 1;
     const blurredArray = new Float64Array(sqSz);
 
-    let kernel = _getGaussianKernel(sigma);
+    let kernelArray = _getGaussianKernel(sigma);
     let kernelWidth = (Math.ceil(_gaussianSigmaRadiusMultiplier * sigma) << 1) + 1;
     let kernelHeight = kernelWidth;
 
     if (kernelCheck) {
       kernelHeight = customKernel.length;
       kernelWidth = customKernel[0].length;
-      kernel = new Float64Array(customKernel.flat());
+      kernelArray = new Float64Array(customKernel.flat());
     }
 
     BlueNoiseUtils.convolveWrapAroundInPlace(
@@ -859,7 +982,7 @@ const BlueNoiseFloat64 = (function () {
       width,
       height,
       blurredArray,
-      kernel,
+      kernelArray,
       kernelWidth,
       kernelHeight
     );
@@ -887,7 +1010,7 @@ const BlueNoiseFloat64 = (function () {
         idx,
         1,
         blurredArray,
-        kernel,
+        kernelArray,
         kernelWidth,
         kernelHeight
       );
@@ -907,7 +1030,7 @@ const BlueNoiseFloat64 = (function () {
    * @returns
    */
 
-  const _bestCandidate = (width, height, samples, candidates) => {
+  const _bestCandidateWrapAround = (width, height, samples, candidates) => {
     const sqSz = width * height;
 
     const halfWidth = width >> 1;
@@ -937,13 +1060,16 @@ const BlueNoiseFloat64 = (function () {
         let minDistance = Infinity;
 
         for (let i = 0; i < samples; i++) {
-          let distanceX = Math.abs(randomIdxX - samplesIdxX[i]);
-          let distanceY = Math.abs(randomIdxY - samplesIdxY[i]);
+          let distanceX = randomIdxX - samplesIdxX[i];
+          let distanceY = randomIdxY - samplesIdxY[i];
+
+          if (distanceX < 0) distanceX = -distanceX;
+          if (distanceY < 0) distanceY = -distanceY;
 
           if (distanceX > halfWidth) distanceX = width - distanceX;
           if (distanceY > halfHeight) distanceY = height - distanceY;
 
-          const distance = distanceX ** 2 + distanceY ** 2;
+          const distance = distanceX * distanceX + distanceY * distanceY;
           if (distance < minDistance) minDistance = distance;
         }
 
@@ -973,13 +1099,12 @@ const BlueNoiseFloat64 = (function () {
    * @param {*} height
    */
 
-  const _relaxation = (inArray, width, height) => {
+  const _relaxationWrapAroundInPlace = (inArray, width, height) => {
     const sqSz = width * height;
+    const filled1 = inArray.length;
 
     const halfWidth = width >> 1;
     const halfHeight = height >> 1;
-
-    const filled1 = inArray.length;
 
     const unflattenedSamplesIdxX = new Uint32Array(filled1);
     const unflattenedSamplesIdxY = new Uint32Array(filled1);
@@ -1003,11 +1128,14 @@ const BlueNoiseFloat64 = (function () {
       let nearestSampleIdx = 0;
 
       for (let sample = 0; sample < filled1; sample++) {
-        let distanceX = Math.abs(idxX - unflattenedSamplesIdxX[sample]);
-        let distanceY = Math.abs(idxY - unflattenedSamplesIdxY[sample]);
+        let distanceX = idxX - unflattenedSamplesIdxX[sample];
+        let distanceY = idxY - unflattenedSamplesIdxY[sample];
 
-        if (distanceX > halfWidth) distanceX = width - distanceX;
-        if (distanceY > halfHeight) distanceY = height - distanceY;
+        if (distanceX < 0) distanceX = -distanceX;
+        else if (distanceX > halfWidth) distanceX = width - distanceX;
+
+        if (distanceY < 0) distanceY = -distanceY;
+        else if (distanceY > halfHeight) distanceY = height - distanceY;
 
         const distance = distanceX * distanceX + distanceY * distanceY;
 
@@ -1047,7 +1175,73 @@ const BlueNoiseFloat64 = (function () {
   };
 
   /**
-   * Function for getting/generating Gaussian kernel with LUT
+   * Gaussian Blue Noise
+   * https://arxiv.org/pdf/2206.07798
+   *
+   * @param {*} inArray
+   * @param {*} width
+   * @param {*} height
+   * @param {*} sigma
+   */
+
+  const _gaussianBlueNoiseWrapAroundInPlace = (inArray, width, height, sigma) => {
+    const filled1 = inArray.length;
+
+    const halfWidth = width >> 1;
+    const halfHeight = height >> 1;
+
+    if (_useAdaptiveSigmaCandidateAlgo) {
+      sigma = Math.sqrt((width * height) / filled1) * _initialSigmaScale;
+    }
+
+    const invSigma2 = 1 / (2 * sigma * sigma);
+
+    const unflattenedSamplesIdxX = new Uint32Array(filled1);
+    const unflattenedSamplesIdxY = new Uint32Array(filled1);
+
+    for (let i = 0; i < filled1; i++) {
+      const idx = inArray[i];
+
+      unflattenedSamplesIdxX[i] = idx % width;
+      unflattenedSamplesIdxY[i] = (idx / width) | 0;
+    }
+
+    for (let i = 0; i < filled1; i++) {
+      let gaussianDistanceX = 0;
+      let gaussianDistanceY = 0;
+
+      const iIdxX = unflattenedSamplesIdxX[i];
+      const iIdxY = unflattenedSamplesIdxY[i];
+
+      for (let j = 0; j < filled1; j++) {
+        if (i === j) continue;
+
+        let distanceX = iIdxX - unflattenedSamplesIdxX[j];
+        let distanceY = iIdxY - unflattenedSamplesIdxY[j];
+
+        if (distanceX > halfWidth) distanceX -= width;
+        else if (distanceX < -halfWidth) distanceX += width;
+
+        if (distanceY > halfHeight) distanceY -= height;
+        else if (distanceY < -halfHeight) distanceY += height;
+
+        // Custom equation
+        const kernelValue = Math.exp(
+          -(distanceX * distanceX + distanceY * distanceY) * invSigma2
+        );
+
+        gaussianDistanceX += distanceX * kernelValue;
+        gaussianDistanceY += distanceY * kernelValue;
+      }
+
+      inArray[i] =
+        (((iIdxY + gaussianDistanceY + 0.5) | 0) % height) * width +
+        (((iIdxX + gaussianDistanceX + 0.5) | 0) % width);
+    }
+  };
+
+  /**
+   * Function for getting/generating Gaussian kernelArray with LUT
    *
    * @param {float} sigma
    * @returns {array}
@@ -1057,24 +1251,26 @@ const BlueNoiseFloat64 = (function () {
     const radius = Math.ceil(_gaussianSigmaRadiusMultiplier * sigma);
     const kernelSize = (radius << 1) + 1;
     const sqSz = kernelSize * kernelSize;
-    const kernel = new Float64Array(sqSz);
+    const kernelArray = new Float64Array(sqSz);
 
     const invSigma2 = 1 / (2 * sigma * sigma);
 
+    let sum = 0;
     for (let y = -radius; y < radius; y++) {
       const dbY = y * y;
       const yOffs = (y + radius) * kernelSize;
 
       for (let x = -radius; x < radius; x++) {
-        kernel[yOffs + (x + radius)] = Math.exp(-(x * x + dbY) * invSigma2);
+        const v = Math.exp(-(x * x + dbY) * invSigma2);
+        kernelArray[yOffs + (x + radius)] = v;
+
+        sum += v;
       }
     }
 
-    let sum = 0;
-    for (let i = 0; i < sqSz; i++) sum += kernel[i];
-    for (let i = 0; i < sqSz; i++) kernel[i] /= sum;
+    for (let i = 0; i < sqSz; i++) kernelArray[i] /= sum;
 
-    return kernel;
+    return kernelArray;
   };
 
   return {
@@ -1104,17 +1300,22 @@ const BlueNoiseFloat64 = (function () {
       _initialSigmaScale = value;
     },
 
-    originalVoidAndCluster: _originalVoidAndCluster,
-    extendedVoidAndCluster: _extendedVoidAndCluster,
-    georgievFajardoInPlace: _georgievFajardoInPlace,
+    extendedVoidAndClusterWrapAround: _extendedVoidAndClusterWrapAround,
+    georgievFajardoWrapAroundInPlace: _georgievFajardoWrapAroundInPlace,
 
-    directBinarySearch: _directBinarySearch,
+    directBinarySearchInPlace: _directBinarySearchInPlace,
 
-    candidateMethodInPlace: _candidateMethodInPlace,
-    adaptiveCandidateMethodInPlace: _adaptiveCandidateMethodInPlace,
-    wronskiCandidateMethod: _wronskiCandidateMethod,
-    bestCandidate: _bestCandidate,
-    relaxation: _relaxation,
+    candidateMethodWrapAroundInPlace: _candidateMethodWrapAroundInPlace,
+    adaptiveCandidateMethodWrapAroundInPlace: _adaptiveCandidateMethodWrapAroundInPlace,
+    wronskiCandidateMethodWrapAround: _wronskiCandidateMethodWrapAround,
+
+    bestCandidateWrapAround: _bestCandidateWrapAround,
+    mitchellBestCandidateWrapAround: _bestCandidateWrapAround,
+
+    relaxationWrapAroundInPlace: _relaxationWrapAroundInPlace,
+    lloydRelaxationWrapAroundInPlace: _relaxationWrapAroundInPlace,
+
+    gaussianBlueNoiseWrapAroundInPlace: _gaussianBlueNoiseWrapAroundInPlace,
 
     getGaussianKernel: _getGaussianKernel,
   };
