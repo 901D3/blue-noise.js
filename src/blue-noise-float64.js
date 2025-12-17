@@ -269,7 +269,7 @@ const BlueNoiseFloat64 = (function () {
     const filled1 = (sqSz * density) | 0;
 
     if (density !== 0 && density !== 1) {
-      for (let i = 0; i < filled1; i++) binArray[i] = 1;
+      for (let i = 0; i < filled1 + 1; i++) binArray[i] = 1;
 
       BlueNoiseUtils.shuffle(binArray);
     } else if (density === 1) binArray.fill(1);
@@ -931,7 +931,7 @@ const BlueNoiseFloat64 = (function () {
   };
 
   /**
-   * https://bartwronski.com/2022/08/31/progressive-image-stippling-and-greedy-blue-noise-importance-sampling/
+   * https://bartwronski.com/2022/08/31/progressive-image-stippling-and-greedy-blue-noise-importance-sampling
    *
    * @param {*} idx
    * @param {*} width
