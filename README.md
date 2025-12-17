@@ -74,3 +74,11 @@ Check out the source code!\
 [blog.demofox.org/2019/06/25/generating-blue-noise-textures-with-void-and-cluster](https://blog.demofox.org/2019/06/25/generating-blue-noise-textures-with-void-and-cluster)\
 [momentsingraphics.de/BlueNoise.html](https://momentsingraphics.de/BlueNoise.html)\
 [xaloez.com/o/bluenoise](https://xaloez.com/o/bluenoise)
+
+[www.iliyan.com/publications/DitheredSampling/DitheredSampling_Sig2016.pdf](https://www.iliyan.com/publications/DitheredSampling/DitheredSampling_Sig2016.pdf)\
+[ieeexplore.ieee.org/document/559555](https://ieeexplore.ieee.org/document/559555)\
+[bartwronski.com/2022/08/31/progressive-image-stippling-and-greedy-blue-noise-importance-sampling](https://bartwronski.com/2022/08/31/progressive-image-stippling-and-greedy-blue-noise-importance-sampling)\
+[dl.acm.org/doi/10.1145/127719.122736](https://dl.acm.org/doi/10.1145/127719.122736)\
+[en.wikipedia.org/wiki/Lloyd's_algorithm](https://en.wikipedia.org/wiki/Lloyd's_algorithm)\
+[arxiv.org/pdf/2206.07798](https://arxiv.org/pdf/2206.07798)
+
