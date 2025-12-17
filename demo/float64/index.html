@@ -32,6 +32,7 @@
           <option value="wronskiCandidateMethod">Wronski Candidate Method</option>
           <option value="bestCandidate">Best Candidate(Mitchell's)</option>
           <option value="relaxation">Relaxation(Lloyd's)</option>
+          <option value="gaussianBlueNoise">Gaussian Blue Noise</option>
         </select>
       </div>
       <textarea id="blueNoiseCustomKernel" placeholder="Convolve kernel. 2D array"></textarea>
@@ -64,20 +65,24 @@
       </div>
       <div class="settings_label-input">
         <span>Iterations</span>
-        <input type="number" id="blueNoiseIterations" value="5" />
+        <input type="number" id="blueNoiseIterations" value="15" />
       </div>
       <div class="settings_label-input">
-        <span>Samples</span>
-        <input type="number" id="blueNoiseSamples" value="20" />
+        <span>MBC Samples</span>
+        <input type="number" id="blueNoiseMBCSamples" value="20" />
       </div>
       <div class="settings_label-input">
-        <span>Candidates</span>
-        <input type="number" id="blueNoiseCandidates" value="20" />
+        <span>MBC Candidates</span>
+        <input type="number" id="blueNoiseMBCCandidates" value="20" />
+      </div>
+      <div class="settings_label-input">
+        <span>P Norm</span>
+        <input type="number" id="blueNoisePNorm" value="0.5" />
       </div>
       <div class="settings_checkbox-label-input">
         <input type="checkbox" id="blueNoiseUseAdaptiveSigma" />
         <span>Use adaptive sigma(uneven dots fix)</span>
-        <input type="number" id="blueNoiseInitialSigmaScale" value="0.4" />
+        <input type="number" id="blueNoiseInitialSigmaScale" value="0.5" />
       </div>
       <button onclick="blueNoiseWrapper()">Generate</button>
       <button onclick="downloadRaw()">Download raw</button>
@@ -109,7 +114,15 @@
       const blueNoiseAlgo = document.getElementById("blueNoiseAlgo").value;
       blueNoiseCanvas.width = blueNoiseWidth;
       blueNoiseCanvas.height = blueNoiseHeight;
+
       const sqSz = blueNoiseWidth * blueNoiseHeight;
+
+      const density = Number(document.getElementById("blueNoiseDensity").value);
+      const filled1 = (sqSz * density) | 0;
+      const sigmaImage = Number(document.getElementById("blueNoiseSigmaImage").value);
+      const sigmaSample = Number(document.getElementById("blueNoiseSigmaSample").value);
+      const iterations = Number(document.getElementById("blueNoiseIterations").value);
+
       const t0 = performance.now();
 
       BlueNoiseFloat64.gaussianSigmaRadiusMultiplier = Number(
@@ -131,12 +144,12 @@
           kernel = JSON.parse(document.getElementById("blueNoiseCustomKernel").value);
         }
 
-        result = BlueNoiseFloat64.extendedVoidAndCluster(
+        result = BlueNoiseFloat64.extendedVoidAndClusterWrapAround(
           blueNoiseWidth,
           blueNoiseHeight,
-          Number(document.getElementById("blueNoiseSigmaImage").value),
-          Number(document.getElementById("blueNoiseSigmaSample").value),
-          Number(document.getElementById("blueNoiseDensity").value),
+          sigmaImage,
+          sigmaSample,
+          density,
           kernel
         );
       } else if (blueNoiseAlgo === "georgievFajardo") {
@@ -148,14 +161,15 @@
 
         result = new Uint32Array(sqSz);
         for (let i = 0; i < sqSz; i++) result[i] = i;
+        BlueNoiseUtils.shuffle(result);
 
-        BlueNoiseFloat64.georgievFajardoInPlace(
+        BlueNoiseFloat64.georgievFajardoWrapAroundInPlace(
           result,
           blueNoiseWidth,
           blueNoiseHeight,
-          Number(document.getElementById("blueNoiseSigmaImage").value),
-          Number(document.getElementById("blueNoiseSigmaSample").value),
-          Number(document.getElementById("blueNoiseIterations").value),
+          sigmaImage,
+          sigmaSample,
+          iterations,
           1,
           kernel
         );
@@ -166,42 +180,28 @@
           kernel = JSON.parse(document.getElementById("blueNoiseCustomKernel").value);
         }
 
-        if (
-          Number(document.getElementById("blueNoiseDensity").value) !== 0 &&
-          Number(document.getElementById("blueNoiseDensity").value) !== 1
-        ) {
+        if (density !== 0 && density !== 1) {
           result = new Uint32Array(sqSz);
-
-          for (
-            let i =
-              ((sqSz * Number(document.getElementById("blueNoiseDensity").value)) | 0) - 1;
-            i >= 0;
-            i--
-          ) {
-            result[i] = 1;
-          }
-
+          for (let i = 0; i < filled1; i++) result[i] = 1;
           BlueNoiseUtils.shuffle(result);
 
           if (BlueNoiseFloat64.useAdaptiveSigmaCandidateAlgo) {
-            BlueNoiseFloat64.adaptiveCandidateMethodInPlace(
+            BlueNoiseFloat64.adaptiveCandidateMethodWrapAroundInPlace(
               result,
               blueNoiseWidth,
               blueNoiseHeight,
               BlueNoiseFloat64.gaussianSigmaRadiusMultiplier
             );
           } else {
-            BlueNoiseFloat64.candidateMethodInPlace(
+            BlueNoiseFloat64.candidateMethodWrapAroundInPlace(
               result,
               blueNoiseWidth,
               blueNoiseHeight,
-              Number(document.getElementById("blueNoiseSigmaSample").value),
+              sigmaSample,
               kernel
             );
           }
-        } else if (Number(document.getElementById("blueNoiseDensity").value) === 1) {
-          result.fill(1);
-        }
+        } else if (density === 1) result.fill(1);
       } else if (blueNoiseAlgo === "wronskiCandidateMethod") {
         let kernel = null;
 
@@ -209,63 +209,60 @@
           kernel = JSON.parse(document.getElementById("blueNoiseCustomKernel").value);
         }
 
-        result = BlueNoiseFloat64.wronskiCandidateMethod(
+        result = BlueNoiseFloat64.wronskiCandidateMethodWrapAround(
           (Math.random() * sqSz) | 0,
           blueNoiseWidth,
           blueNoiseHeight,
-          Number(document.getElementById("blueNoiseSigmaImage").value),
-          Number(document.getElementById("blueNoiseDensity").value),
+          sigmaImage,
+          density,
           kernel
         );
       } else if (blueNoiseAlgo === "bestCandidate") {
-        const idxResult = BlueNoiseFloat64.bestCandidate(
+        const idxResult = BlueNoiseFloat64.mitchellBestCandidateWrapAround(
           blueNoiseWidth,
           blueNoiseHeight,
-          Number(document.getElementById("blueNoiseSamples").value),
-          Number(document.getElementById("blueNoiseCandidates").value)
+          Number(document.getElementById("blueNoiseMBCSamples").value),
+          Number(document.getElementById("blueNoiseMBCCandidates").value)
         );
 
         result = new Uint32Array(sqSz);
 
-        for (let i = idxResult.length - 1; i >= 0; i--) {
-          result[idxResult[i]] = 1;
-        }
+        for (let i = idxResult.length - 1; i >= 0; i--) result[idxResult[i]] = 1;
       } else if (blueNoiseAlgo === "relaxation") {
-        result = new Uint32Array(
-          (sqSz * Number(document.getElementById("blueNoiseDensity").value)) | 0
-        );
+        result = new Uint32Array(filled1);
+        for (let i = 0; i < filled1; i++) result[i] = (Math.random() * sqSz) | 0;
 
-        for (
-          let i = ((sqSz * Number(document.getElementById("blueNoiseDensity").value)) | 0) - 1;
-          i >= 0;
-          i--
-        ) {
-          result[i] = (Math.random() * sqSz) | 0;
-        }
-
-        BlueNoiseUtils.shuffle(result);
-
-        for (
-          let i = Number(document.getElementById("blueNoiseIterations").value) - 1;
-          i >= 0;
-          i--
-        ) {
-          BlueNoiseFloat64.relaxation(result, blueNoiseWidth, blueNoiseHeight);
+        for (let i = 0; i < iterations; i++) {
+          BlueNoiseFloat64.lloydRelaxationWrapAroundInPlace(result, blueNoiseWidth, blueNoiseHeight);
         }
 
         const temp = result.slice();
         result = new Uint32Array(sqSz);
 
-        for (
-          let i = (sqSz * Number(document.getElementById("blueNoiseDensity").value)) | 0;
-          i >= 0;
-          i--
-        ) {
+        for (let i = temp.length - 1; i >= 0; i--) {
           result[temp[i]] = 1;
         }
+      } else if (blueNoiseAlgo === "gaussianBlueNoise") {
+        result = new Uint32Array(filled1);
+        for (let i = 0; i < filled1; i++) result[i] = (Math.random() * sqSz) | 0;
+
+        for (let i = 0; i < iterations; i++) {
+          BlueNoiseFloat64.gaussianBlueNoiseWrapAroundInPlace(
+            result,
+            blueNoiseWidth,
+            blueNoiseHeight,
+            sigmaImage
+          );
+        }
+
+        const temp = result.slice();
+        result = new Uint32Array(sqSz);
+
+        for (let i = 0; i < filled1; i++) result[temp[i]] = 1;
       }
 
       generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
+
       const frame = blueNoiseCtx.getImageData(0, 0, blueNoiseWidth, blueNoiseHeight);
       const imageData = frame.data;
       const sqSz4 = sqSz * 4;
@@ -277,7 +274,8 @@
         const yOffs = y * blueNoiseWidth;
         for (let x = 0; x < blueNoiseWidth; x++) {
           let i = yOffs + x;
-          const v = Math.round(result[i] * denom);
+          const v = (result[i] * denom + 0.5) | 0;
+
           i <<= 2;
           imageData[i] = v;
           imageData[i + 1] = v;
