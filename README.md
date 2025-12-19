@@ -79,5 +79,6 @@ Check out the source code!\
 [bartwronski.com/2022/08/31/progressive-image-stippling-and-greedy-blue-noise-importance-sampling](https://bartwronski.com/2022/08/31/progressive-image-stippling-and-greedy-blue-noise-importance-sampling)\
 [dl.acm.org/doi/10.1145/127719.122736](https://dl.acm.org/doi/10.1145/127719.122736)\
 [en.wikipedia.org/wiki/Lloyd's_algorithm](https://en.wikipedia.org/wiki/Lloyd's_algorithm)\
-[arxiv.org/pdf/2206.07798](https://arxiv.org/pdf/2206.07798)
+[arxiv.org/pdf/2206.07798](https://arxiv.org/pdf/2206.07798)\
+[dl.acm.org/doi/10.1145/3550454.3555519](https://dl.acm.org/doi/10.1145/3550454.3555519)
 
