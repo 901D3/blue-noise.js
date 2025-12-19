@@ -15,7 +15,7 @@ Linking the required scripts in HTML, the utils is mandatory
 <script src="<path to script>/blue-noise-float64.js"></script>
 ```
 
-To generate a blue noise texture(32 Bits Float), simply run
+To generate a blue noise texture(_**64**_ Bits Float), simply run
 
 ```
 blueNoiseFloat64.extendedVoidAndClusterWrapAround(
