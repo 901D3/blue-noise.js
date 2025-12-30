@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link this script
  *
- * v0.2.6
+ * v0.2.6.1
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -60,19 +60,15 @@ const BlueNoiseUtils = (function () {
         let total = 0;
 
         for (let kernelIdxY = 0; kernelIdxY < kernelHeight; kernelIdxY++) {
-          let convolveIdxY = (kernelIdxY + currentKernelCenteredIdxY) % height;
-          if (convolveIdxY < 0) convolveIdxY += height;
-
           const kernelIdxYOffs = kernelIdxY * kernelWidth;
-          const convolveIdxYOffs = convolveIdxY * width;
+          const convolveIdxYOffs =
+            ((kernelIdxY + currentKernelCenteredIdxY + height) % height) * width;
 
           for (let kernelIdxX = 0; kernelIdxX < kernelWidth; kernelIdxX++) {
-            let convolveIdxX = (kernelIdxX + currentKernelCenteredIdxX) % width;
-            if (convolveIdxX < 0) convolveIdxX += width;
-
             total +=
-              inArray[convolveIdxYOffs + convolveIdxX] *
-              kernelArray[kernelIdxYOffs + kernelIdxX];
+              inArray[
+                convolveIdxYOffs + ((kernelIdxX + currentKernelCenteredIdxX + width) % width)
+              ] * kernelArray[kernelIdxYOffs + kernelIdxX];
           }
         }
 
@@ -112,18 +108,13 @@ const BlueNoiseUtils = (function () {
 
     for (let kernelIdxY = 0; kernelIdxY < kernelHeight; kernelIdxY++) {
       const kernelIdxYOffs = kernelIdxY * kernelWidth;
-
-      let convolveIdxY = (kernelIdxY + currentKernelCenteredIdxY) % height;
-      if (convolveIdxY < 0) convolveIdxY += height;
-
-      const convolveIdxYOffs = convolveIdxY * width;
+      const convolveIdxYOffs =
+        ((kernelIdxY + currentKernelCenteredIdxY + height) % height) * width;
 
       for (let kernelIdxX = 0; kernelIdxX < kernelWidth; kernelIdxX++) {
-        let convolveIdxX = (kernelIdxX + currentKernelCenteredIdxX) % width;
-        if (convolveIdxX < 0) convolveIdxX += width;
-
-        blurredArray[convolveIdxYOffs + convolveIdxX] +=
-          kernelArray[kernelIdxYOffs + kernelIdxX] * amount;
+        blurredArray[
+          convolveIdxYOffs + ((kernelIdxX + currentKernelCenteredIdxX + width) % width)
+        ] += kernelArray[kernelIdxYOffs + kernelIdxX] * amount;
       }
     }
   };
@@ -156,17 +147,14 @@ const BlueNoiseUtils = (function () {
 
     for (let kernelIdxY = 0; kernelIdxY < kernelHeight; kernelIdxY++) {
       const kernelIdxYOffs = kernelIdxY * kernelWidth;
-
-      let convolveIdxY = (kernelIdxY + currentKernelCenteredIdxY) % height;
-      if (convolveIdxY < 0) convolveIdxY += height;
-
-      const convolveIdxYOffs = convolveIdxY * width;
+      const convolveIdxYOffs =
+        ((kernelIdxY + currentKernelCenteredIdxY + height) % height) * width;
 
       for (let kernelIdxX = 0; kernelIdxX < kernelWidth; kernelIdxX++) {
-        let convolveIdxX = (kernelIdxX + currentKernelCenteredIdxX) % width;
-        if (convolveIdxX < 0) convolveIdxX += width;
-
-        outArray[kernelIdxYOffs + kernelIdxX] = inArray[convolveIdxYOffs + convolveIdxX];
+        outArray[kernelIdxYOffs + kernelIdxX] =
+          inArray[
+            convolveIdxYOffs + ((kernelIdxX + currentKernelCenteredIdxX + width) % width)
+          ];
       }
     }
   };
@@ -190,18 +178,14 @@ const BlueNoiseUtils = (function () {
 
     for (let kernelIdxY = 0; kernelIdxY < kernelHeight; kernelIdxY++) {
       const kernelIdxYOffs = kernelIdxY * kernelWidth;
-
-      let convolveIdxY = (kernelIdxY + currentKernelCenteredIdxY) % height;
-      if (convolveIdxY < 0) convolveIdxY += height;
-
-      const convolveIdxYOffs = convolveIdxY * width;
+      const convolveIdxYOffs =
+        ((kernelIdxY + currentKernelCenteredIdxY + height) % height) * width;
 
       for (let kernelIdxX = 0; kernelIdxX < kernelWidth; kernelIdxX++) {
-        let convolveIdxX = (kernelIdxX + currentKernelCenteredIdxX) % width;
-        if (convolveIdxX < 0) convolveIdxX += width;
-
         total +=
-          inArray[convolveIdxYOffs + convolveIdxX] * kernelArray[kernelIdxYOffs + kernelIdxX];
+          inArray[
+            convolveIdxYOffs + ((kernelIdxX + currentKernelCenteredIdxX + width) % width)
+          ] * kernelArray[kernelIdxYOffs + kernelIdxX];
       }
     }
 
@@ -413,11 +397,9 @@ const BlueNoiseUtils = (function () {
         let total = 0;
 
         for (let kernelIdxY = 0; kernelIdxY < kernelHeight; kernelIdxY++) {
-          let convolveIdxY = (kernelIdxY + currentKernelCenteredIdxY) % height;
-          if (convolveIdxY < 0) convolveIdxY += height;
-
           const kernelIdxYOffs = kernelIdxY * kernelWidth;
-          const convolveIdxYOffs = convolveIdxY * width;
+          const convolveIdxYOffs =
+            ((kernelIdxY + currentKernelCenteredIdxY + height) % height) * width;
 
           for (let kernelIdxX = 0; kernelIdxX < kernelWidth; kernelIdxX++) {
             let convolveIdxX = (kernelIdxX + currentKernelCenteredIdxX) % width;
@@ -439,6 +421,20 @@ const BlueNoiseUtils = (function () {
       }
     }
   };
+
+  /**
+   *
+   * @param {*} inArray
+   * @param {*} width
+   * @param {*} height
+   * @param {*} idx
+   * @param {*} sigmaSample
+   * @param {*} pNorm
+   * @param {*} kernelArray
+   * @param {*} kernelWidth
+   * @param {*} kernelHeight
+   * @returns
+   */
 
   const _computeEnergyGeorgevFajardoWrapAround = (
     inArray,
@@ -464,26 +460,66 @@ const BlueNoiseUtils = (function () {
 
     for (let kernelIdxY = 0; kernelIdxY < kernelHeight; kernelIdxY++) {
       const kernelIdxYOffs = kernelIdxY * kernelWidth;
-
-      let convolveIdxY = (kernelIdxY + currentKernelCenteredIdxY) % height;
-      if (convolveIdxY < 0) convolveIdxY += height;
-
-      const convolveIdxYOffs = convolveIdxY * width;
+      const convolveIdxYOffs =
+        ((kernelIdxY + currentKernelCenteredIdxY + height) % height) * width;
 
       for (let kernelIdxX = 0; kernelIdxX < kernelWidth; kernelIdxX++) {
-        let convolveIdxX = (kernelIdxX + currentKernelCenteredIdxX) % width;
-        if (convolveIdxX < 0) convolveIdxX += width;
-
         total +=
           kernelArray[kernelIdxYOffs + kernelIdxX] *
           -(
-            Math.abs(centerConvolveIdx - inArray[convolveIdxYOffs + convolveIdxX]) ** pNorm *
+            Math.abs(
+              centerConvolveIdx -
+                inArray[
+                  convolveIdxYOffs + ((kernelIdxX + currentKernelCenteredIdxX + width) % width)
+                ]
+            ) **
+              pNorm *
             invSigmaSample2
           );
       }
     }
 
     return total;
+  };
+
+  const _computeEnergyWrapAround = (
+    inArray,
+    width,
+    height,
+    kernelArray,
+    kernelWidth,
+    kernelHeight
+  ) => {
+    const halfkernelWidth = kernelWidth >> 1;
+    const halfkernelHeight = kernelHeight >> 1;
+
+    let totalEnergy = 0;
+
+    for (let idxY = 0; idxY < height; idxY++) {
+      const currentKernelCenteredIdxY = idxY - halfkernelHeight;
+
+      for (let idxX = 0; idxX < width; idxX++) {
+        const currentKernelCenteredIdxX = idxX - halfkernelWidth;
+        let total = 0;
+
+        for (let kernelIdxY = 0; kernelIdxY < kernelHeight; kernelIdxY++) {
+          const kernelIdxYOffs = kernelIdxY * kernelWidth;
+          const convolveIdxYOffs =
+            ((kernelIdxY + currentKernelCenteredIdxY + height) % height) * width;
+
+          for (let kernelIdxX = 0; kernelIdxX < kernelWidth; kernelIdxX++) {
+            total +=
+              inArray[
+                convolveIdxYOffs + ((kernelIdxX + currentKernelCenteredIdxX + width) % width)
+              ] * kernelArray[kernelIdxYOffs + kernelIdxX];
+          }
+        }
+
+        totalEnergy += total * total;
+      }
+    }
+
+    return totalEnergy;
   };
 
   return {
@@ -502,5 +538,7 @@ const BlueNoiseUtils = (function () {
     computeTotalEnergyGeorgevFajardoWrapAroundInPlace:
       _computeTotalEnergyGeorgevFajardoWrapAroundInPlace,
     computeEnergyGeorgevFajardoWrapAround: _computeEnergyGeorgevFajardoWrapAround,
+
+    computeEnergyWrapAround: _computeEnergyWrapAround,
   };
 })();
