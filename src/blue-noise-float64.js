@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link blue-noise-utils.js
  *
- * v0.2.6.2
+ * v0.2.6.21
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -1032,14 +1032,10 @@ const BlueNoiseFloat64 = (function () {
     for (let i = 0; i < samples; i++) {
       const currentSampleZoneGridCount = samplesCountArray[i];
 
-      let idxX = (samplesSumXArray[i] / currentSampleZoneGridCount + idxXArray[i]) % width;
-      let idxY = (samplesSumYArray[i] / currentSampleZoneGridCount + idxYArray[i]) % height;
-
-      if (idxX < 0) idxX += width;
-      if (idxY < 0) idxY += height;
-
-      idxXArray[i] = idxX;
-      idxYArray[i] = idxY;
+      idxXArray[i] =
+        (samplesSumXArray[i] / currentSampleZoneGridCount + idxXArray[i] + width) % width;
+      idxYArray[i] =
+        (samplesSumYArray[i] / currentSampleZoneGridCount + idxYArray[i] + height) % height;
     }
   };
 
@@ -1096,14 +1092,8 @@ const BlueNoiseFloat64 = (function () {
         gaussianDistanceY += distanceY * kernelValue;
       }
 
-      let idxX = (iIdxX + gaussianDistanceX) % width;
-      let idxY = (iIdxY + gaussianDistanceY) % height;
-
-      if (idxX < 0) idxX += width;
-      if (idxY < 0) idxY += height;
-
-      idxXArray[i] = idxX;
-      idxYArray[i] = idxY;
+      idxXArray[i] = (iIdxX + gaussianDistanceX + width) % width;
+      idxYArray[i] = (iIdxY + gaussianDistanceY + height) % height;
     }
   };
 
