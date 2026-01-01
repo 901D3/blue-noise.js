@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link this script
  *
- * v0.2.6.1
+ * v0.2.7
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -21,9 +21,9 @@ const BlueNoiseUtils = (function () {
     for (let i = inArray.length - 1; i >= 0; i--) {
       const j = (Math.random() * (i + 1)) | 0;
 
-      const tmp = inArray[i];
+      const temp = inArray[i];
       inArray[i] = inArray[j];
-      inArray[j] = tmp;
+      inArray[j] = temp;
     }
   };
 
@@ -522,6 +522,149 @@ const BlueNoiseUtils = (function () {
     return totalEnergy;
   };
 
+  const _buildVoronoiDiagramWrapAround = (idxXArray, idxYArray, width, height) => {
+    const samples = idxXArray.length;
+
+    const halfWidth = width * 0.5;
+    const halfHeight = height * 0.5;
+
+    const voronoi = Array(samples);
+
+    for (let sample = 0; sample < samples; sample++) {
+      const sampleIdxX = idxXArray[sample];
+      const sampleIdxY = idxYArray[sample];
+
+      let cell = [
+        [0, 0],
+        [width, 0],
+        [width, height],
+        [0, height],
+      ];
+
+      for (let candidate = 0; candidate < samples; candidate++) {
+        if (candidate === sample) continue;
+
+        let distanceCandidateToSampleX = idxXArray[candidate] - sampleIdxX;
+        let distanceCandidateToSampleY = idxYArray[candidate] - sampleIdxY;
+
+        if (distanceCandidateToSampleX > halfWidth) distanceCandidateToSampleX -= width;
+        else if (distanceCandidateToSampleX < -halfWidth) distanceCandidateToSampleX += width;
+
+        if (distanceCandidateToSampleY > halfHeight) distanceCandidateToSampleY -= height;
+        else if (distanceCandidateToSampleY < -halfHeight) distanceCandidateToSampleY += height;
+
+        const absoluteDistanceIdxX = sampleIdxX + distanceCandidateToSampleX;
+        const absoluteDistanceIdxY = sampleIdxY + distanceCandidateToSampleY;
+
+        const newCell = [];
+        const cellLength = cell.length;
+
+        for (let i = 0; i < cellLength; i++) {
+          const vertex1 = cell[i];
+          const vertex1IdxX = vertex1[0];
+          const vertex1IdxY = vertex1[1];
+
+          const vertex2 = cell[(i + 1) % cellLength];
+          const vertex2IdxX = vertex2[0];
+          const vertex2IdxY = vertex2[1];
+
+          const distanceVertex1Diffs =
+            (vertex1IdxX - sampleIdxX) ** 2 + // distanceVertex1ToSample
+            (vertex1IdxY - sampleIdxY) ** 2 -
+            (vertex1IdxX - absoluteDistanceIdxX) ** 2 - // distanceVertex1ToCandidate
+            (vertex1IdxY - absoluteDistanceIdxY) ** 2;
+
+          const distanceVertex2Diffs =
+            (vertex2IdxX - sampleIdxX) ** 2 + // distanceVertex2ToSample
+            (vertex2IdxY - sampleIdxY) ** 2 -
+            (vertex2IdxX - absoluteDistanceIdxX) ** 2 - // distanceVertex2ToCandidate
+            (vertex2IdxY - absoluteDistanceIdxY) ** 2;
+
+          if (distanceVertex1Diffs < 0) {
+            if (distanceVertex2Diffs < 0) {
+              newCell.push([vertex2IdxX, vertex2IdxY]);
+            } else {
+              const t = distanceVertex1Diffs / (distanceVertex1Diffs - distanceVertex2Diffs);
+
+              newCell.push([
+                vertex1IdxX + t * (vertex2IdxX - vertex1IdxX),
+                vertex1IdxY + t * (vertex2IdxY - vertex1IdxY),
+              ]);
+            }
+          } else if (distanceVertex1Diffs >= 0 && distanceVertex2Diffs < 0) {
+            const t = distanceVertex1Diffs / (distanceVertex1Diffs - distanceVertex2Diffs);
+
+            newCell.push([
+              vertex1IdxX + t * (vertex2IdxX - vertex1IdxX),
+              vertex1IdxY + t * (vertex2IdxY - vertex1IdxY),
+            ]);
+
+            newCell.push([vertex2IdxX, vertex2IdxY]);
+          }
+        }
+
+        cell = newCell;
+      }
+
+      voronoi[sample] = cell;
+    }
+
+    return voronoi;
+  };
+
+  const _extractVoronoiPolygonEdges = (voronoi) => {
+    const polygons = voronoi.length;
+    const voronoiEdges = Array(polygons);
+
+    for (let polygon = 0; polygon < polygons; polygon++) {
+      const currentPolygon = voronoi[polygon];
+      const vertices = currentPolygon.length;
+
+      const angles = new Array(vertices);
+      for (let vertex = 0; vertex < vertices; vertex++) {
+        const currentVertex = currentPolygon[vertex];
+
+        angles[vertex] = Math.atan2(
+          currentVertex[1] - sampleIdxY,
+          currentVertex[0] - sampleIdxX
+        );
+      }
+
+      for (let i = 0; i < vertices - 1; i++) {
+        let idx = i;
+        let minAngle = angles[i];
+
+        for (let j = i + 1; j < vertices; j++) {
+          const angle = angles[j];
+
+          if (angle < minAngle) {
+            minAngle = angle;
+            idx = j;
+          }
+        }
+
+        if (idx !== i) {
+          let temp = angles[i];
+          angles[i] = angles[idx];
+          angles[idx] = temp;
+
+          temp = currentPolygon[i];
+          currentPolygon[i] = currentPolygon[idx];
+          currentPolygon[idx] = temp;
+        }
+      }
+
+      const edges = Array(vertices);
+      for (let edge = 0; edge < vertices; edge++) {
+        edges[edge] = [currentPolygon[edge], currentPolygon[(edge + 1) % vertices]];
+      }
+
+      voronoiEdges[polygon] = edges;
+    }
+
+    return voronoiEdges;
+  };
+
   return {
     shuffle: _shuffle,
 
@@ -540,5 +683,7 @@ const BlueNoiseUtils = (function () {
     computeEnergyGeorgevFajardoWrapAround: _computeEnergyGeorgevFajardoWrapAround,
 
     computeEnergyWrapAround: _computeEnergyWrapAround,
+
+    buildVoronoiDiagramWrapAround: _buildVoronoiDiagramWrapAround,
   };
 })();
