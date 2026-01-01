@@ -29,7 +29,6 @@
           <option value="extendedVACluster">Extended Void and Cluster</option>
           <option value="georgievFajardo">Georgiev-Fajardo(Simulated annealing)</option>
           <option value="candidateMethodVACluster">Candidate Method(Void and Cluster)</option>
-          <option value="wronskiCandidateMethod">Wronski Candidate Method</option>
           <option value="bestCandidate">Best Candidate(Mitchell's)</option>
           <option value="relaxation">Relaxation(Lloyd's)</option>
           <option value="gaussianBlueNoise">Gaussian Blue Noise</option>
@@ -60,16 +59,12 @@
         <input type="number" id="blueNoiseSigmaSample" value="1" />
       </div>
       <div class="settings_label-input">
-        <span>Density</span>
-        <input type="number" id="blueNoiseDensity" value="0.02" />
+        <span>Samples</span>
+        <input type="number" id="blueNoiseSamples" value="100" />
       </div>
       <div class="settings_label-input">
         <span>Iterations</span>
         <input type="number" id="blueNoiseIterations" value="15" />
-      </div>
-      <div class="settings_label-input">
-        <span>MBC Samples</span>
-        <input type="number" id="blueNoiseMBCSamples" value="20" />
       </div>
       <div class="settings_label-input">
         <span>MBC Candidates</span>
@@ -97,15 +92,25 @@
     let result;
 
     function findHighest(matrix) {
-      let maxValue = 0;
-      const matrixLength = matrix.length;
+      let value = -Infinity;
 
-      for (let i = 0; i < matrixLength; i++) {
+      for (let i = matrix.length - 1; i >= 0; i--) {
         const v = matrix[i];
-        if (v > maxValue) maxValue = v;
+        if (v > value) value = v;
       }
 
-      return maxValue;
+      return value;
+    }
+
+    function findLowest(matrix) {
+      let value = Infinity;
+
+      for (let i = matrix.length - 1; i >= 0; i--) {
+        const v = matrix[i];
+        if (v < value) value = v;
+      }
+
+      return value;
     }
 
     function blueNoiseWrapper() {
@@ -117,11 +122,13 @@
 
       const sqSz = blueNoiseWidth * blueNoiseHeight;
 
-      const density = Number(document.getElementById("blueNoiseDensity").value);
-      const filled1 = (sqSz * density) | 0;
+      const samples = Number(document.getElementById("blueNoiseSamples").value);
       const sigmaImage = Number(document.getElementById("blueNoiseSigmaImage").value);
       const sigmaSample = Number(document.getElementById("blueNoiseSigmaSample").value);
       const iterations = Number(document.getElementById("blueNoiseIterations").value);
+      const pNorm = Number(document.getElementById("blueNoisePNorm").value);
+
+      const MBCCandidates = Number(document.getElementById("blueNoiseMBCCandidates").value);
 
       const t0 = performance.now();
 
@@ -149,7 +156,7 @@
           blueNoiseHeight,
           sigmaImage,
           sigmaSample,
-          density,
+          samples,
           kernel
         );
       } else if (blueNoiseAlgo === "georgievFajardo") {
@@ -159,9 +166,9 @@
           kernel = JSON.parse(document.getElementById("blueNoiseCustomKernel").value);
         }
 
-        result = new Uint32Array(sqSz);
+        result = new Float64Array(sqSz);
         for (let i = 0; i < sqSz; i++) result[i] = i;
-        BlueNoiseUtils.shuffle(result);
+        //BlueNoiseUtils.shuffle(result);
 
         BlueNoiseFloat64.georgievFajardoWrapAroundInPlace(
           result,
@@ -170,7 +177,7 @@
           sigmaImage,
           sigmaSample,
           iterations,
-          1,
+          pNorm,
           kernel
         );
       } else if (blueNoiseAlgo === "candidateMethodVACluster") {
@@ -180,9 +187,9 @@
           kernel = JSON.parse(document.getElementById("blueNoiseCustomKernel").value);
         }
 
-        if (density !== 0 && density !== 1) {
+        if (samples > 0 && samples < sqSz) {
           result = new Uint32Array(sqSz);
-          for (let i = 0; i < filled1; i++) result[i] = 1;
+          for (let i = 0; i < samples; i++) result[i] = 1;
           BlueNoiseUtils.shuffle(result);
 
           if (BlueNoiseFloat64.useAdaptiveSigmaCandidateAlgo) {
@@ -201,80 +208,83 @@
               kernel
             );
           }
-        } else if (density === 1) result.fill(1);
-      } else if (blueNoiseAlgo === "wronskiCandidateMethod") {
-        let kernel = null;
-
-        if (document.getElementById("blueNoiseCustomKernel").value) {
-          kernel = JSON.parse(document.getElementById("blueNoiseCustomKernel").value);
-        }
-
-        result = BlueNoiseFloat64.wronskiCandidateMethodWrapAround(
-          (Math.random() * sqSz) | 0,
-          blueNoiseWidth,
-          blueNoiseHeight,
-          sigmaImage,
-          density,
-          kernel
-        );
+        } else if (samples === sqSz) result.fill(1);
       } else if (blueNoiseAlgo === "bestCandidate") {
         const idxResult = BlueNoiseFloat64.mitchellBestCandidateWrapAround(
           blueNoiseWidth,
           blueNoiseHeight,
-          Number(document.getElementById("blueNoiseMBCSamples").value),
-          Number(document.getElementById("blueNoiseMBCCandidates").value)
+          samples,
+          MBCCandidates
         );
 
         result = new Uint32Array(sqSz);
 
-        for (let i = idxResult.length - 1; i >= 0; i--) result[idxResult[i]] = 1;
+        for (let i = 0; i < samples; i++) result[idxResult[i] | 0] = 1;
       } else if (blueNoiseAlgo === "relaxation") {
-        result = new Uint32Array(filled1);
-        for (let i = 0; i < filled1; i++) result[i] = (Math.random() * sqSz) | 0;
+        const idxXArray = new Float64Array(samples);
+        const idxYArray = new Float64Array(samples);
+
+        for (let i = 0; i < samples; i++) {
+          idxXArray[i] = Math.random() * blueNoiseWidth;
+          idxYArray[i] = Math.random() * blueNoiseHeight;
+        }
 
         for (let i = 0; i < iterations; i++) {
-          BlueNoiseFloat64.lloydRelaxationWrapAroundInPlace(result, blueNoiseWidth, blueNoiseHeight);
+          BlueNoiseFloat64.lloydRelaxationWrapAroundInPlace(
+            idxXArray,
+            idxYArray,
+            blueNoiseWidth,
+            blueNoiseHeight
+          );
         }
 
-        const temp = result.slice();
-        result = new Uint32Array(sqSz);
+        result = new Uint8Array(sqSz);
 
-        for (let i = temp.length - 1; i >= 0; i--) {
-          result[temp[i]] = 1;
+        for (let i = 0; i < samples; i++) {
+          result[(idxYArray[i] | 0) * blueNoiseWidth + (idxXArray[i] | 0)] = 1;
         }
       } else if (blueNoiseAlgo === "gaussianBlueNoise") {
-        result = new Uint32Array(filled1);
-        for (let i = 0; i < filled1; i++) result[i] = (Math.random() * sqSz) | 0;
+        const idxXArray = new Float64Array(samples);
+        const idxYArray = new Float64Array(samples);
+
+        for (let i = 0; i < samples; i++) {
+          idxXArray[i] = Math.random() * blueNoiseWidth;
+          idxYArray[i] = Math.random() * blueNoiseHeight;
+        }
 
         for (let i = 0; i < iterations; i++) {
           BlueNoiseFloat64.gaussianBlueNoiseWrapAroundInPlace(
-            result,
+            idxXArray,
+            idxYArray,
             blueNoiseWidth,
             blueNoiseHeight,
             sigmaImage
           );
         }
 
-        const temp = result.slice();
-        result = new Uint32Array(sqSz);
+        result = new Uint8Array(sqSz);
 
-        for (let i = 0; i < filled1; i++) result[temp[i]] = 1;
+        for (let i = 0; i < samples; i++) {
+          result[(idxYArray[i] | 0) * blueNoiseWidth + (idxXArray[i] | 0)] = 1;
+        }
       }
 
       generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
 
       const frame = blueNoiseCtx.getImageData(0, 0, blueNoiseWidth, blueNoiseHeight);
       const imageData = frame.data;
-      const sqSz4 = sqSz * 4;
       const denom = (1 / findHighest(result)) * 255;
+      const lowest = findLowest(result);
 
-      for (let i = 0; i < sqSz4; i += 4) imageData[i + 3] = 255;
+      for (let i = 0; i < sqSz; i++) imageData[i * 4 + 3] = 255;
 
       for (let y = 0; y < blueNoiseHeight; y++) {
         const yOffs = y * blueNoiseWidth;
+
         for (let x = 0; x < blueNoiseWidth; x++) {
           let i = yOffs + x;
-          const v = (result[i] * denom + 0.5) | 0;
+
+          const v = ((result[i] - lowest) * denom + 0.5) | 0;
 
           i <<= 2;
           imageData[i] = v;
