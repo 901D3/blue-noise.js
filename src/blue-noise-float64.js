@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link blue-noise-utils.js
  *
- * v0.2.6.21
+ * v0.2.7
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -469,9 +469,9 @@ const BlueNoiseFloat64 = (function () {
       const q_i = iter % sqSz;
 
       // Swap pixels
-      const tmp = inArray[p_i];
+      const temp = inArray[p_i];
       inArray[p_i] = inArray[q_i];
-      inArray[q_i] = tmp;
+      inArray[q_i] = temp;
 
       // Compute energy for both swapped pixel indexes
       const newEnergy1 = BlueNoiseUtils.computeEnergyGeorgevFajardoWrapAround(
@@ -502,9 +502,9 @@ const BlueNoiseFloat64 = (function () {
         energyArray[p_i] = newEnergy1;
         energyArray[q_i] = newEnergy2;
       } else {
-        const tmp = inArray[p_i];
+        const temp = inArray[p_i];
         inArray[p_i] = inArray[q_i];
-        inArray[q_i] = tmp;
+        inArray[q_i] = temp;
       }
     }
   };
@@ -751,6 +751,8 @@ const BlueNoiseFloat64 = (function () {
     }
   };
 
+  const stochasticClusterDot = (idxXArray, idxYArray, width, height) => {};
+
   // -------------------- SAMPLING --------------------
 
   /**
@@ -980,62 +982,45 @@ const BlueNoiseFloat64 = (function () {
    */
 
   const _relaxationWrapAroundInPlace = (idxXArray, idxYArray, width, height) => {
-    const sqSz = width * height;
-    const samples = idxXArray.length;
-
     const halfWidth = width * 0.5;
     const halfHeight = height * 0.5;
 
-    const samplesSumXArray = new Float64Array(samples);
-    const samplesSumYArray = new Float64Array(samples);
-    const samplesCountArray = new Uint32Array(samples);
+    const voronoi = BlueNoiseUtils.buildVoronoiDiagramWrapAround(
+      idxXArray,
+      idxYArray,
+      width,
+      height
+    );
 
-    for (let i = 0; i < sqSz; i++) {
-      let idxX = i % width;
-      let idxY = (i / width) | 0;
+    for (let sample = voronoi.length - 1; sample >= 0; sample--) {
+      const polygon = voronoi[sample];
+      const vertices = polygon.length;
+      if (vertices === 0) continue;
 
-      let minDistance = Infinity;
-      let nearestSampleIdx = 0;
+      let sumX = 0;
+      let sumY = 0;
 
-      for (let sample = 0; sample < samples; sample++) {
-        let distanceX = idxX - idxXArray[sample];
-        let distanceY = idxY - idxYArray[sample];
+      const baseVertexIdxX = polygon[0][0];
+      const baseVertexIdxY = polygon[0][1];
 
-        if (distanceX < 0) distanceX = -distanceX;
-        else if (distanceX > halfWidth) distanceX = width - distanceX;
+      for (let vertex = 0; vertex < vertices; vertex++) {
+        const currentVertex = polygon[vertex];
 
-        if (distanceY < 0) distanceY = -distanceY;
-        else if (distanceY > halfHeight) distanceY = height - distanceY;
+        let distanceX = currentVertex[0] - baseVertexIdxX;
+        let distanceY = currentVertex[1] - baseVertexIdxY;
 
-        const distance = distanceX * distanceX + distanceY * distanceY;
+        if (distanceX > halfWidth) distanceX -= width;
+        else if (distanceX < -halfWidth) distanceX += width;
 
-        if (distance < minDistance) {
-          minDistance = distance;
-          nearestSampleIdx = sample;
-        }
+        if (distanceY > halfHeight) distanceY -= height;
+        else if (distanceY < -halfHeight) distanceY += height;
+
+        sumX += baseVertexIdxX + distanceX;
+        sumY += baseVertexIdxY + distanceY;
       }
 
-      idxX -= idxXArray[nearestSampleIdx];
-      idxY -= idxYArray[nearestSampleIdx];
-
-      if (idxX > halfWidth) idxX -= width;
-      else if (idxX < -halfWidth) idxX += width;
-
-      if (idxY > halfHeight) idxY -= height;
-      else if (idxY < -halfHeight) idxY += height;
-
-      samplesSumXArray[nearestSampleIdx] += idxX;
-      samplesSumYArray[nearestSampleIdx] += idxY;
-      samplesCountArray[nearestSampleIdx]++;
-    }
-
-    for (let i = 0; i < samples; i++) {
-      const currentSampleZoneGridCount = samplesCountArray[i];
-
-      idxXArray[i] =
-        (samplesSumXArray[i] / currentSampleZoneGridCount + idxXArray[i] + width) % width;
-      idxYArray[i] =
-        (samplesSumYArray[i] / currentSampleZoneGridCount + idxYArray[i] + height) % height;
+      idxXArray[sample] = (sumX / vertices + width) % width;
+      idxYArray[sample] = (sumY / vertices + height) % height;
     }
   };
 
