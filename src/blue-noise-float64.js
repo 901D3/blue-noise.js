@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link blue-noise-utils.js
  *
- * v0.2.7
+ * v0.2.7.01
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -985,7 +985,7 @@ const BlueNoiseFloat64 = (function () {
     const halfWidth = width * 0.5;
     const halfHeight = height * 0.5;
 
-    const voronoi = BlueNoiseUtils.buildVoronoiDiagramWrapAround(
+    const voronoi = BlueNoiseUtils.buildVoronoiDiagramWrapAroundOutOfBounds(
       idxXArray,
       idxYArray,
       width,
@@ -993,7 +993,7 @@ const BlueNoiseFloat64 = (function () {
     );
 
     for (let sample = voronoi.length - 1; sample >= 0; sample--) {
-      const polygon = voronoi[sample];
+      const polygon = voronoi[sample]
       const vertices = polygon.length;
       if (vertices === 0) continue;
 
@@ -1015,12 +1015,19 @@ const BlueNoiseFloat64 = (function () {
         if (distanceY > halfHeight) distanceY -= height;
         else if (distanceY < -halfHeight) distanceY += height;
 
+        // Sum
         sumX += baseVertexIdxX + distanceX;
         sumY += baseVertexIdxY + distanceY;
       }
 
-      idxXArray[sample] = (sumX / vertices + width) % width;
-      idxYArray[sample] = (sumY / vertices + height) % height;
+      let centerIdxX = (sumX / vertices) % width;
+      let centerIdxY = (sumY / vertices) % height;
+
+      if (centerIdxX < 0) centerIdxX += width;
+      if (centerIdxY < 0) centerIdxY += height;
+
+      idxXArray[sample] = centerIdxX;
+      idxYArray[sample] = centerIdxY;
     }
   };
 
