@@ -32,6 +32,7 @@
           <option value="bestCandidate">Best Candidate(Mitchell's)</option>
           <option value="relaxation">Relaxation(Lloyd's)</option>
           <option value="gaussianBlueNoise">Gaussian Blue Noise</option>
+          <option value="delaunay">delaunay</option>
         </select>
       </div>
       <textarea id="blueNoiseCustomKernel" placeholder="Convolve kernel. 2D array"></textarea>
@@ -87,8 +88,8 @@
   <script src="../../src/blue-noise-utils.js"></script>
   <script src="../../src/blue-noise-float64.js"></script>
   <script>
-    var blueNoiseCanvas = document.getElementById("blueNoiseCanvas");
-    var blueNoiseCtx = blueNoiseCanvas.getContext("2d");
+    const blueNoiseCanvas = document.getElementById("blueNoiseCanvas");
+    const blueNoiseCtx = blueNoiseCanvas.getContext("2d");
     let result;
 
     function findHighest(matrix) {
@@ -267,6 +268,57 @@
         for (let i = 0; i < samples; i++) {
           result[(idxYArray[i] | 0) * blueNoiseWidth + (idxXArray[i] | 0)] = 1;
         }
+      } else if (blueNoiseAlgo === "delaunay") {
+        const idxXArray = new Float64Array(samples);
+        const idxYArray = new Float64Array(samples);
+
+        for (let i = 0; i < samples; i++) {
+          idxXArray[i] = Math.random() * blueNoiseWidth;
+          idxYArray[i] = Math.random() * blueNoiseHeight;
+        }
+
+        for (let i = 0; i < iterations; i++) {
+          BlueNoiseFloat64.gaussianBlueNoiseWrapAroundInPlace(
+            idxXArray,
+            idxYArray,
+            blueNoiseWidth,
+            blueNoiseHeight,
+            sigmaImage
+          );
+        }
+
+        const temp = BlueNoiseUtils.buildDelaunayTrianglesWrapAroundOutOfBound(
+          idxXArray,
+          idxYArray,
+          blueNoiseWidth,
+          blueNoiseHeight
+        );
+
+        blueNoiseCtx.fillStyle = `#ff00ff`;
+        blueNoiseCtx.fillRect(0, 0, blueNoiseWidth, blueNoiseHeight);
+
+        blueNoiseCtx.strokeStyle = `gray`;
+
+        for (let polygon = 0; polygon < temp.length; polygon++) {
+          const currentPolygon = temp[polygon];
+
+          const grad = ((polygon / temp.length) * 255) | 0;
+          blueNoiseCtx.fillStyle = `rgb(${grad},${grad},${grad})`;
+
+          blueNoiseCtx.beginPath();
+          blueNoiseCtx.moveTo(currentPolygon[0][0] | 0, currentPolygon[0][1] | 0);
+
+          for (let j = 1; j < currentPolygon.length; j++) {
+            blueNoiseCtx.lineTo(currentPolygon[j][0] | 0, currentPolygon[j][1] | 0);
+          }
+
+          blueNoiseCtx.closePath();
+          blueNoiseCtx.fill();
+          blueNoiseCtx.stroke();
+        }
+
+        generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
+        return;
       }
 
       generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
