@@ -2,7 +2,7 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link this script
  *
- * v0.2.7
+ * v0.2.8
  * https://github.com/901D3/blue-noise.js
  *
  * Copyright (c) 901D3
@@ -12,6 +12,24 @@
 "use strict";
 
 const BlueNoiseUtils = (function () {
+  const voronoiCandidateShifts = [
+    [0, 0],
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+  ];
+  const voronoiInitialBoundingPolygon = [
+    [-1, -1],
+    [2, -1],
+    [2, 2],
+    [-1, 2],
+  ];
+
   /**
    *
    * @param {*} inArray
@@ -522,11 +540,21 @@ const BlueNoiseUtils = (function () {
     return totalEnergy;
   };
 
-  const _buildVoronoiDiagramWrapAround = (idxXArray, idxYArray, width, height) => {
-    const samples = idxXArray.length;
+  /**
+   * Voronoi diagram builder with out of bounds vertices
+   * https://en.wikipedia.org/wiki/Voronoi_diagram
+   *
+   * @param {*} idxXArray
+   * @param {*} idxYArray
+   * @param {*} width
+   * @param {*} height
+   * @returns
+   */
 
-    const halfWidth = width * 0.5;
-    const halfHeight = height * 0.5;
+  const _buildVoronoiDiagramWrapAroundOutOfBounds = (idxXArray, idxYArray, width, height) => {
+    const samples = idxXArray.length;
+    const shiftsLength = voronoiCandidateShifts.length;
+    const initialBoundingPolygonVertices = voronoiInitialBoundingPolygon.length;
 
     const voronoi = Array(samples);
 
@@ -534,135 +562,294 @@ const BlueNoiseUtils = (function () {
       const sampleIdxX = idxXArray[sample];
       const sampleIdxY = idxYArray[sample];
 
-      let cell = [
-        [0, 0],
-        [width, 0],
-        [width, height],
-        [0, height],
-      ];
+      let polygon = [];
+      for (let i = 0; i < initialBoundingPolygonVertices; i++) {
+        const currentVertex = voronoiInitialBoundingPolygon[i];
+
+        polygon[i] = [currentVertex[0] * width, currentVertex[1] * height, -1];
+      }
 
       for (let candidate = 0; candidate < samples; candidate++) {
         if (candidate === sample) continue;
 
-        let distanceCandidateToSampleX = idxXArray[candidate] - sampleIdxX;
-        let distanceCandidateToSampleY = idxYArray[candidate] - sampleIdxY;
+        const candidateIdxX = idxXArray[candidate];
+        const candidateIdxY = idxYArray[candidate];
 
-        if (distanceCandidateToSampleX > halfWidth) distanceCandidateToSampleX -= width;
-        else if (distanceCandidateToSampleX < -halfWidth) distanceCandidateToSampleX += width;
+        for (let shift = 0; shift < shiftsLength; shift++) {
+          const currentShift = voronoiCandidateShifts[shift];
+          const shiftedCandidateIdxX = candidateIdxX + currentShift[0] * width;
+          const shiftedCandidateIdxY = candidateIdxY + currentShift[1] * height;
 
-        if (distanceCandidateToSampleY > halfHeight) distanceCandidateToSampleY -= height;
-        else if (distanceCandidateToSampleY < -halfHeight) distanceCandidateToSampleY += height;
+          const newVerticesList = [];
+          const verticesListLength = polygon.length;
 
-        const absoluteDistanceIdxX = sampleIdxX + distanceCandidateToSampleX;
-        const absoluteDistanceIdxY = sampleIdxY + distanceCandidateToSampleY;
+          for (let vertex = 0; vertex < verticesListLength; vertex++) {
+            const voronoiVertex = polygon[vertex];
+            const voronoiVertexIdxX = voronoiVertex[0];
+            const voronoiVertexIdxY = voronoiVertex[1];
 
-        const newCell = [];
-        const cellLength = cell.length;
+            const vertex2 = polygon[(vertex + 1) % verticesListLength];
+            const vertex2IdxX = vertex2[0];
+            const vertex2IdxY = vertex2[1];
 
-        for (let i = 0; i < cellLength; i++) {
-          const vertex1 = cell[i];
-          const vertex1IdxX = vertex1[0];
-          const vertex1IdxY = vertex1[1];
+            const distanceVoronoiVertex1Diffs =
+              (voronoiVertexIdxX - sampleIdxX) ** 2 +
+              (voronoiVertexIdxY - sampleIdxY) ** 2 -
+              (voronoiVertexIdxX - shiftedCandidateIdxX) ** 2 -
+              (voronoiVertexIdxY - shiftedCandidateIdxY) ** 2;
 
-          const vertex2 = cell[(i + 1) % cellLength];
-          const vertex2IdxX = vertex2[0];
-          const vertex2IdxY = vertex2[1];
+            const distanceVoronoiVertex2Diffs =
+              (vertex2IdxX - sampleIdxX) ** 2 +
+              (vertex2IdxY - sampleIdxY) ** 2 -
+              (vertex2IdxX - shiftedCandidateIdxX) ** 2 -
+              (vertex2IdxY - shiftedCandidateIdxY) ** 2;
 
-          const distanceVertex1Diffs =
-            (vertex1IdxX - sampleIdxX) ** 2 + // distanceVertex1ToSample
-            (vertex1IdxY - sampleIdxY) ** 2 -
-            (vertex1IdxX - absoluteDistanceIdxX) ** 2 - // distanceVertex1ToCandidate
-            (vertex1IdxY - absoluteDistanceIdxY) ** 2;
+            if (distanceVoronoiVertex1Diffs < 0) {
+              if (distanceVoronoiVertex2Diffs < 0) newVerticesList.push(vertex2);
+              else {
+                const interpolation =
+                  distanceVoronoiVertex1Diffs /
+                  (distanceVoronoiVertex1Diffs - distanceVoronoiVertex2Diffs);
 
-          const distanceVertex2Diffs =
-            (vertex2IdxX - sampleIdxX) ** 2 + // distanceVertex2ToSample
-            (vertex2IdxY - sampleIdxY) ** 2 -
-            (vertex2IdxX - absoluteDistanceIdxX) ** 2 - // distanceVertex2ToCandidate
-            (vertex2IdxY - absoluteDistanceIdxY) ** 2;
+                newVerticesList.push([
+                  voronoiVertexIdxX + (vertex2IdxX - voronoiVertexIdxX) * interpolation,
+                  voronoiVertexIdxY + (vertex2IdxY - voronoiVertexIdxY) * interpolation,
+                  candidate,
+                ]);
+              }
+            } else if (distanceVoronoiVertex1Diffs >= 0 && distanceVoronoiVertex2Diffs < 0) {
+              const interpolation =
+                distanceVoronoiVertex1Diffs /
+                (distanceVoronoiVertex1Diffs - distanceVoronoiVertex2Diffs);
 
-          if (distanceVertex1Diffs < 0) {
-            if (distanceVertex2Diffs < 0) {
-              newCell.push([vertex2IdxX, vertex2IdxY]);
-            } else {
-              const t = distanceVertex1Diffs / (distanceVertex1Diffs - distanceVertex2Diffs);
-
-              newCell.push([
-                vertex1IdxX + t * (vertex2IdxX - vertex1IdxX),
-                vertex1IdxY + t * (vertex2IdxY - vertex1IdxY),
+              newVerticesList.push([
+                voronoiVertexIdxX + (vertex2IdxX - voronoiVertexIdxX) * interpolation,
+                voronoiVertexIdxY + (vertex2IdxY - voronoiVertexIdxY) * interpolation,
+                candidate,
               ]);
+
+              newVerticesList.push(vertex2);
             }
-          } else if (distanceVertex1Diffs >= 0 && distanceVertex2Diffs < 0) {
-            const t = distanceVertex1Diffs / (distanceVertex1Diffs - distanceVertex2Diffs);
-
-            newCell.push([
-              vertex1IdxX + t * (vertex2IdxX - vertex1IdxX),
-              vertex1IdxY + t * (vertex2IdxY - vertex1IdxY),
-            ]);
-
-            newCell.push([vertex2IdxX, vertex2IdxY]);
           }
-        }
 
-        cell = newCell;
+          polygon = newVerticesList;
+        }
       }
 
-      voronoi[sample] = cell;
+      voronoi[sample] = [polygon, sample];
     }
 
     return voronoi;
   };
 
-  const _extractVoronoiPolygonEdges = (voronoi) => {
-    const polygons = voronoi.length;
-    const voronoiEdges = Array(polygons);
+  /**
+   * Delaunay triangles builder with out of bounds vertices
+   * https://en.wikipedia.org/wiki/Delaunay_triangulation
+   *
+   * @param {*} idxXArray
+   * @param {*} idxYArray
+   * @param {*} width
+   * @param {*} height
+   * @returns
+   */
 
-    for (let polygon = 0; polygon < polygons; polygon++) {
-      const currentPolygon = voronoi[polygon];
-      const vertices = currentPolygon.length;
+  const _buildDelaunayTrianglesWrapAroundOutOfBounds = (
+    idxXArray,
+    idxYArray,
+    width,
+    height
+  ) => {
+    const samples = idxXArray.length;
+    const delaunay = [];
 
-      const angles = new Array(vertices);
-      for (let vertex = 0; vertex < vertices; vertex++) {
-        const currentVertex = currentPolygon[vertex];
+    const halfWidth = width * 0.5;
+    const halfHeight = height * 0.5;
 
-        angles[vertex] = Math.atan2(
-          currentVertex[1] - sampleIdxY,
-          currentVertex[0] - sampleIdxX
-        );
-      }
+    for (let sample = 0; sample < samples - 2; sample++) {
+      // A
+      const sampleIdxX = idxXArray[sample];
+      const sampleIdxY = idxYArray[sample];
 
-      for (let i = 0; i < vertices - 1; i++) {
-        let idx = i;
-        let minAngle = angles[i];
+      for (let candidate1 = sample + 1; candidate1 < samples - 1; candidate1++) {
+        // B
+        let candidate1IdxX = idxXArray[candidate1];
+        let candidate1IdxY = idxYArray[candidate1];
 
-        for (let j = i + 1; j < vertices; j++) {
-          const angle = angles[j];
+        let distanceCandidate1SampleX = candidate1IdxX - sampleIdxX;
+        let distanceCandidate1SampleY = candidate1IdxY - sampleIdxY;
 
-          if (angle < minAngle) {
-            minAngle = angle;
-            idx = j;
+        if (distanceCandidate1SampleX > halfWidth) candidate1IdxX -= width;
+        else if (distanceCandidate1SampleX < -halfWidth) candidate1IdxX += width;
+
+        if (distanceCandidate1SampleY > halfHeight) candidate1IdxY -= height;
+        else if (distanceCandidate1SampleY < -halfHeight) candidate1IdxY += height;
+
+        // Recompute distances with toroidal candidates indexes
+        distanceCandidate1SampleX = candidate1IdxX - sampleIdxX;
+        distanceCandidate1SampleY = candidate1IdxY - sampleIdxY;
+
+        for (let candidate2 = candidate1 + 1; candidate2 < samples; candidate2++) {
+          // C
+          let candidate2IdxX = idxXArray[candidate2];
+          let candidate2IdxY = idxYArray[candidate2];
+
+          let distanceCandidate2SampleX = candidate2IdxX - sampleIdxX;
+          let distanceCandidate2SampleY = candidate2IdxY - sampleIdxY;
+
+          if (distanceCandidate2SampleX > halfWidth) candidate2IdxX -= width;
+          else if (distanceCandidate2SampleX < -halfWidth) candidate2IdxX += width;
+
+          if (distanceCandidate2SampleY > halfHeight) candidate2IdxY -= height;
+          else if (distanceCandidate2SampleY < -halfHeight) candidate2IdxY += height;
+
+          distanceCandidate2SampleX = candidate2IdxX - sampleIdxX;
+          distanceCandidate2SampleY = candidate2IdxY - sampleIdxY;
+
+          const RHSAB =
+            distanceCandidate1SampleX * (sampleIdxX + candidate1IdxX) +
+            distanceCandidate1SampleY * (sampleIdxY + candidate1IdxY);
+
+          const RHSAC =
+            distanceCandidate2SampleX * (sampleIdxX + candidate2IdxX) +
+            distanceCandidate2SampleY * (sampleIdxY + candidate2IdxY);
+
+          const G =
+            2 *
+            (distanceCandidate1SampleX * (candidate2IdxY - candidate1IdxY) -
+              distanceCandidate1SampleY * (candidate2IdxX - candidate1IdxX));
+
+          const circumcenterX =
+            (distanceCandidate2SampleY * RHSAB - distanceCandidate1SampleY * RHSAC) / G;
+          const circumcenterY =
+            (distanceCandidate1SampleX * RHSAC - distanceCandidate2SampleX * RHSAB) / G;
+
+          const circleRadius =
+            (circumcenterX - sampleIdxX) ** 2 + (circumcenterY - sampleIdxY) ** 2;
+
+          let empty = true;
+          for (let otherSample = 0; otherSample < samples; otherSample++) {
+            if (
+              otherSample === sample ||
+              otherSample === candidate1 ||
+              otherSample === candidate2
+            ) {
+              continue;
+            }
+
+            let distanceX = idxXArray[otherSample] - circumcenterX;
+            let distanceY = idxYArray[otherSample] - circumcenterY;
+
+            if (distanceX < 0) distanceX = -distanceX;
+            if (distanceY < 0) distanceY = -distanceY;
+
+            if (distanceX > halfWidth) distanceX = width - distanceX;
+            if (distanceY > halfHeight) distanceY = height - distanceY;
+
+            if (distanceX * distanceX + distanceY * distanceY < circleRadius) {
+              empty = false;
+              break;
+            }
+          }
+
+          if (empty) {
+            delaunay.push([
+              [sampleIdxX, sampleIdxY],
+              [candidate1IdxX, candidate1IdxY],
+              [candidate2IdxX, candidate2IdxY],
+            ]);
           }
         }
-
-        if (idx !== i) {
-          let temp = angles[i];
-          angles[i] = angles[idx];
-          angles[idx] = temp;
-
-          temp = currentPolygon[i];
-          currentPolygon[i] = currentPolygon[idx];
-          currentPolygon[idx] = temp;
-        }
       }
-
-      const edges = Array(vertices);
-      for (let edge = 0; edge < vertices; edge++) {
-        edges[edge] = [currentPolygon[edge], currentPolygon[(edge + 1) % vertices]];
-      }
-
-      voronoiEdges[polygon] = edges;
     }
 
-    return voronoiEdges;
+    return delaunay;
+  };
+
+  /**
+   * Without toroidal
+   *
+   * @param {*} idxXArray
+   * @param {*} idxYArray
+   * @returns
+   */
+
+  const _buildDelaunayTriangles = (idxXArray, idxYArray) => {
+    const samples = idxXArray.length;
+    const delaunay = [];
+
+    for (let sample = 0; sample < samples - 2; sample++) {
+      const sampleIdxX = idxXArray[sample];
+      const sampleIdxY = idxYArray[sample];
+
+      for (let candidate1 = sample + 1; candidate1 < samples - 1; candidate1++) {
+        const candidate1IdxX = idxXArray[candidate1];
+        const candidate1IdxY = idxYArray[candidate1];
+
+        const distanceCandidate1SampleX = candidate1IdxX - sampleIdxX;
+        const distanceCandidate1SampleY = candidate1IdxY - sampleIdxY;
+
+        for (let candidate2 = candidate1 + 1; candidate2 < samples; candidate2++) {
+          const candidate2IdxX = idxXArray[candidate2];
+          const candidate2IdxY = idxYArray[candidate2];
+
+          const distanceCandidate2SampleX = candidate2IdxX - sampleIdxX;
+          const distanceCandidate2SampleY = candidate2IdxY - sampleIdxY;
+
+          const RHSAB =
+            distanceCandidate1SampleX * (sampleIdxX + candidate1IdxX) +
+            distanceCandidate1SampleY * (sampleIdxY + candidate1IdxY);
+
+          const RHSAC =
+            distanceCandidate2SampleX * (sampleIdxX + candidate2IdxX) +
+            distanceCandidate2SampleY * (sampleIdxY + candidate2IdxY);
+
+          const G =
+            2 *
+            (distanceCandidate1SampleX * (candidate2IdxY - candidate1IdxY) -
+              distanceCandidate1SampleY * (candidate2IdxX - candidate1IdxX));
+
+          const circumcenterX =
+            (distanceCandidate2SampleY * RHSAB - distanceCandidate1SampleY * RHSAC) / G;
+          const circumcenterY =
+            (distanceCandidate1SampleX * RHSAC - distanceCandidate2SampleX * RHSAB) / G;
+
+          const circleRadius =
+            (circumcenterX - sampleIdxX) ** 2 + (circumcenterY - sampleIdxY) ** 2;
+
+          let empty = true;
+          for (let otherSample = 0; otherSample < samples; otherSample++) {
+            if (
+              otherSample === sample ||
+              otherSample === candidate1 ||
+              otherSample === candidate2
+            ) {
+              continue;
+            }
+
+            let distanceX = idxXArray[otherSample] - circumcenterX;
+            let distanceY = idxYArray[otherSample] - circumcenterY;
+
+            if (distanceX < 0) distanceX = -distanceX;
+            if (distanceY < 0) distanceY = -distanceY;
+
+            if (distanceX * distanceX + distanceY * distanceY < circleRadius) {
+              empty = false;
+              break;
+            }
+          }
+
+          if (empty) {
+            delaunay.push([
+              [sampleIdxX, sampleIdxY],
+              [candidate1IdxX, candidate1IdxY],
+              [candidate2IdxX, candidate2IdxY],
+            ]);
+          }
+        }
+      }
+    }
+
+    return delaunay;
   };
 
   return {
@@ -684,6 +871,9 @@ const BlueNoiseUtils = (function () {
 
     computeEnergyWrapAround: _computeEnergyWrapAround,
 
-    buildVoronoiDiagramWrapAround: _buildVoronoiDiagramWrapAround,
+    buildVoronoiDiagramWrapAroundOutOfBounds: _buildVoronoiDiagramWrapAroundOutOfBounds,
+
+    buildDelaunayTrianglesWrapAroundOutOfBounds: _buildDelaunayTrianglesWrapAroundOutOfBounds,
+    buildDelaunayTriangles: _buildDelaunayTriangles,
   };
 })();
