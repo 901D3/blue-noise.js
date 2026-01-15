@@ -81,4 +81,8 @@ Check out the source code!\
 [en.wikipedia.org/wiki/Lloyd's_algorithm](https://en.wikipedia.org/wiki/Lloyd's_algorithm)\
 [arxiv.org/pdf/2206.07798](https://arxiv.org/pdf/2206.07798)\
 [dl.acm.org/doi/10.1145/3550454.3555519](https://dl.acm.org/doi/10.1145/3550454.3555519)
-
+[www.hajim.rochester.edu/ece/sites/parker/assets/pdf/44%20-%20Digital%20halftoning%20technique%20using%20a%20blue-noise%20mask.pdf](https://www.hajim.rochester.edu/ece/sites/parker/assets/pdf/44%20-%20Digital%20halftoning%20technique%20using%20a%20blue-noise%20mask.pdf)\
+[github.com/yosefm/blue_noise](https://github.com/yosefm/blue_noise)\
+[en.wikipedia.org/wiki/Voronoi_diagram](https://en.wikipedia.org/wiki/Voronoi_diagram)\
+[en.wikipedia.org/wiki/Delaunay_triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation)\
+[en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm](https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm)
