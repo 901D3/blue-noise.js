@@ -32,7 +32,8 @@
           <option value="bestCandidate">Best Candidate(Mitchell's)</option>
           <option value="relaxation">Relaxation(Lloyd's)</option>
           <option value="gaussianBlueNoise">Gaussian Blue Noise</option>
-          <option value="delaunay">delaunay</option>
+          <option value="voronoi">Voronoi Diagram</option>
+          <option value="delaunay">Delaunay Triangulation</option>
         </select>
       </div>
       <textarea id="blueNoiseCustomKernel" placeholder="Convolve kernel. 2D array"></textarea>
@@ -268,6 +269,58 @@
         for (let i = 0; i < samples; i++) {
           result[(idxYArray[i] | 0) * blueNoiseWidth + (idxXArray[i] | 0)] = 1;
         }
+      } else if (blueNoiseAlgo === "voronoi") {
+        const idxXArray = new Float64Array(samples);
+        const idxYArray = new Float64Array(samples);
+
+        for (let i = 0; i < samples; i++) {
+          idxXArray[i] = Math.random() * blueNoiseWidth;
+          idxYArray[i] = Math.random() * blueNoiseHeight;
+        }
+
+        for (let i = 0; i < iterations; i++) {
+          BlueNoiseFloat64.gaussianBlueNoiseWrapAroundInPlace(
+            idxXArray,
+            idxYArray,
+            blueNoiseWidth,
+            blueNoiseHeight,
+            sigmaImage
+          );
+        }
+
+        const voronoi = BlueNoiseUtils.buildVoronoiDiagramWrapAroundOutOfBounds(
+          idxXArray,
+          idxYArray,
+          blueNoiseWidth,
+          blueNoiseHeight
+        );
+
+        generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
+
+        blueNoiseCtx.fillStyle = `#ff00ff`;
+        blueNoiseCtx.fillRect(0, 0, blueNoiseWidth, blueNoiseHeight);
+
+        blueNoiseCtx.strokeStyle = `gray`;
+
+        for (let polygon = 0; polygon < samples; polygon++) {
+          const currentPolygon = voronoi[polygon];
+
+          const grad = ((polygon / voronoi.length) * 255) | 0;
+          blueNoiseCtx.fillStyle = `rgb(${grad},${grad},${grad})`;
+
+          blueNoiseCtx.beginPath();
+          blueNoiseCtx.moveTo(currentPolygon[0][0] | 0, currentPolygon[0][1] | 0);
+
+          for (let j = 1; j < currentPolygon.length; j++) {
+            blueNoiseCtx.lineTo(currentPolygon[j][0] | 0, currentPolygon[j][1] | 0);
+          }
+
+          blueNoiseCtx.closePath();
+          blueNoiseCtx.fill();
+          blueNoiseCtx.stroke();
+        }
+
+        return;
       } else if (blueNoiseAlgo === "delaunay") {
         const idxXArray = new Float64Array(samples);
         const idxYArray = new Float64Array(samples);
@@ -287,37 +340,42 @@
           );
         }
 
-        const temp = BlueNoiseUtils.buildDelaunayTrianglesWrapAroundOutOfBounds(
+        const triangleList = BlueNoiseUtils.buildDelaunayTrianglesBowyerWatsonWrapAroundOutOfBounds(
           idxXArray,
           idxYArray,
           blueNoiseWidth,
           blueNoiseHeight
         );
 
+        const delaunay = BlueNoiseUtils.delaunayTrianglesBowyerWatsonFilter(
+          triangleList,
+          blueNoiseWidth,
+          blueNoiseHeight
+        );
+
+        generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
+
         blueNoiseCtx.fillStyle = `#ff00ff`;
         blueNoiseCtx.fillRect(0, 0, blueNoiseWidth, blueNoiseHeight);
 
         blueNoiseCtx.strokeStyle = `gray`;
 
-        for (let polygon = 0; polygon < temp.length; polygon++) {
-          const currentPolygon = temp[polygon];
+        for (let polygon = delaunay.length - 1; polygon >= 0; polygon--) {
+          const currentPolygon = delaunay[polygon];
 
-          const grad = ((polygon / temp.length) * 255) | 0;
+          const grad = ((polygon / delaunay.length) * 255) | 0;
           blueNoiseCtx.fillStyle = `rgb(${grad},${grad},${grad})`;
 
           blueNoiseCtx.beginPath();
-          blueNoiseCtx.moveTo(currentPolygon[0][0] | 0, currentPolygon[0][1] | 0);
-
-          for (let j = 1; j < currentPolygon.length; j++) {
-            blueNoiseCtx.lineTo(currentPolygon[j][0] | 0, currentPolygon[j][1] | 0);
-          }
-
+          blueNoiseCtx.moveTo(currentPolygon[0][0], currentPolygon[0][1]);
+          blueNoiseCtx.lineTo(currentPolygon[1][0], currentPolygon[1][1]);
+          blueNoiseCtx.lineTo(currentPolygon[2][0], currentPolygon[2][1]);
           blueNoiseCtx.closePath();
+
           blueNoiseCtx.fill();
           blueNoiseCtx.stroke();
         }
 
-        generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
         return;
       }
 
