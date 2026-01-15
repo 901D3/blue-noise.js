@@ -2,10 +2,10 @@
  * Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
  * Remember to link blue-noise-utils.js
  *
- * v0.2.7.01
+ * v0.2.7.1
  * https://github.com/901D3/blue-noise.js
  *
- * Copyright (c) 901D3
+ * Cody0right (c) 901D3
  * This code is licensed with GPLv3 license
  */
 
@@ -166,7 +166,7 @@ const BlueNoiseFloat64 = (function () {
     // End of Phase 2
 
     // Phase 3
-    // Copy binary array to temp and invert it, 0 becomes 1 and vice versa
+    // Cody0 binary array to temp and invert it, 0 becomes 1 and vice versa
     for (let i = 0; i < sqSz; i++) temp[i] = 1 - binArray[i];
 
     // Blur the inverted array
@@ -244,7 +244,7 @@ const BlueNoiseFloat64 = (function () {
     const sqSz = width * height;
 
     if (samples >= sqSz) throw new Error("Samples >= " + sqSz);
-    else if (samples <= 0) throw new Error("Samples <= 0");
+    else if (samples <= 0) throw new Error("Samples = 0");
 
     const kernelArrayCheck = Array.isArray(customKernelArray);
     if (!kernelArrayCheck && sigma == null) throw new Error("sigma = " + sigma);
@@ -308,10 +308,10 @@ const BlueNoiseFloat64 = (function () {
     for (let rank = samples - 1; rank >= 0; rank--) {
       let idx;
       let value = -Infinity;
-      //let valueTemp = -Infinity;
 
       for (let i = 0; i < samples; i++) {
         const sampleIdx = sampleIndexesArray[i];
+
         if (binArray[sampleIdx] === 1) {
           // "Find tightest cluster"
           const blurredValue = blurredArray[sampleIdx];
@@ -320,18 +320,6 @@ const BlueNoiseFloat64 = (function () {
             value = blurredValue;
             idx = sampleIdx;
           }
-
-          /*
-          // If the current 1 have the same energy as the previous one, go to this tie-breaker
-          else if (blurredValue === value) {
-            const blurredTempValue = blurredTemp[sampleIdx];
-  
-            if (blurredTempValue > valueTemp) {
-              valueTemp = blurredTempValue;
-              idx = sampleIdx;
-            }
-          }
-          */
         }
       }
 
@@ -358,7 +346,6 @@ const BlueNoiseFloat64 = (function () {
     for (let rank = samples; rank < sqSz; rank++) {
       let idx;
       let value = Infinity;
-      //let valueTemp = Infinity;
 
       for (let i = 0; i < sqSz; i++) {
         if (binArray[i] === 0) {
@@ -369,18 +356,6 @@ const BlueNoiseFloat64 = (function () {
             value = blurredValue;
             idx = i;
           }
-
-          /*
-          // If the current 0 have the same energy as the previous one, go to this tie-breaker
-          else if (blurredValue === value) {
-            const blurredTempValue = blurredTemp[i];
-
-            if (blurredTempValue < valueTemp) {
-              valueTemp = blurredTempValue;
-              idx = i;
-            }
-          }
-          */
         }
       }
 
@@ -751,8 +726,6 @@ const BlueNoiseFloat64 = (function () {
     }
   };
 
-  const stochasticClusterDot = (idxXArray, idxYArray, width, height) => {};
-
   // -------------------- SAMPLING --------------------
 
   /**
@@ -782,7 +755,7 @@ const BlueNoiseFloat64 = (function () {
 
     for (let i = 0; i < sqSz; i++) {
       if (inArray[i] === 1) break;
-      if (i === sqSz - 1) throw new Error("Samples <= 0");
+      if (i === sqSz - 1) throw new Error("Samples = 0");
     }
 
     const kernelArrayCheck = Array.isArray(customKernelArray);
@@ -889,7 +862,7 @@ const BlueNoiseFloat64 = (function () {
 
     for (let i = 0; i < sqSz; i++) {
       if (inArray[i] === 1) samples++;
-      if (i === sqSz - 1 && samples === 0) throw new Error("Samples <= 0");
+      if (i === sqSz - 1 && samples === 0) throw new Error("Samples = 0");
     }
 
     _candidateMethodWrapAroundInPlace(
@@ -993,17 +966,17 @@ const BlueNoiseFloat64 = (function () {
     );
 
     for (let sample = voronoi.length - 1; sample >= 0; sample--) {
-      const polygon = voronoi[sample]
+      const polygon = voronoi[sample];
       const vertices = polygon.length;
       if (vertices === 0) continue;
-
-      let sumX = 0;
-      let sumY = 0;
 
       const baseVertexIdxX = polygon[0][0];
       const baseVertexIdxY = polygon[0][1];
 
-      for (let vertex = 0; vertex < vertices; vertex++) {
+      let sumX = baseVertexIdxX;
+      let sumY = baseVertexIdxY;
+
+      for (let vertex = 1; vertex < vertices; vertex++) {
         const currentVertex = polygon[vertex];
 
         let distanceX = currentVertex[0] - baseVertexIdxX;
@@ -1020,14 +993,8 @@ const BlueNoiseFloat64 = (function () {
         sumY += baseVertexIdxY + distanceY;
       }
 
-      let centerIdxX = (sumX / vertices) % width;
-      let centerIdxY = (sumY / vertices) % height;
-
-      if (centerIdxX < 0) centerIdxX += width;
-      if (centerIdxY < 0) centerIdxY += height;
-
-      idxXArray[sample] = centerIdxX;
-      idxYArray[sample] = centerIdxY;
+      idxXArray[sample] = (sumX / vertices + width) % width;
+      idxYArray[sample] = (sumY / vertices + height) % height;
     }
   };
 
@@ -1109,13 +1076,13 @@ const BlueNoiseFloat64 = (function () {
     let sum = 0;
     for (let y = -radius; y < radius; y++) {
       const dbY = y * y;
-      const yOffs = (y + radius) * kernelSize;
+      const idxYOffs = (y + radius) * kernelSize;
 
       for (let x = -radius; x < radius; x++) {
         const v = Math.exp(-(x * x + dbY) * invSigma2);
         if (v === 0) continue;
 
-        kernelArray[yOffs + (x + radius)] = v;
+        kernelArray[idxYOffs + (x + radius)] = v;
         sum += v;
       }
     }
@@ -1123,6 +1090,64 @@ const BlueNoiseFloat64 = (function () {
     for (let i = 0; i < sqSz; i++) kernelArray[i] /= sum;
 
     return kernelArray;
+  };
+
+  /**
+   * https://www.hajim.rochester.edu/ece/sites/parker/assets/pdf/44%20-%20Digital%20halftoning%20technique%20using%20a%20blue-noise%20mask.pdf
+   * https://github.com/yosefm/blue_noise
+   *
+   *
+   * @param {*} width
+   * @param {*} height
+   * @param {*} gray
+   * @param {*} peakScale
+   */
+
+  const _computeDesiredPSD = (width, height, gray, peakScale) => {
+    const sqSz = width * height;
+
+    const halfWidth = width >> 1;
+    const halfHeight = height >> 1;
+
+    const halfPI = Math.PI * 0.5;
+
+    const maxRadius = Math.sqrt(halfWidth ** 2 + halfHeight ** 2);
+    const totalEnergy = sqSz * gray;
+    const DCPower = totalEnergy ** 2;
+    const requiredSum = sqSz * totalEnergy - DCPower;
+
+    const peak = Math.sqrt(gray * 0.5) * maxRadius;
+    const scaledPeak = peakScale * peak;
+    const peakValue = Math.sin(halfPI * (scaledPeak / peak)) ** 4;
+
+    const PSD = new Float64Array(sqSz);
+
+    let sum = 0;
+    for (let idxY = 0; idxY < height; idxY++) {
+      const yOffs = idxY * width;
+      const y = idxY - halfHeight;
+
+      for (let idxX = 0; idxX < width; idxX++) {
+        const x = idxX - halfWidth;
+        const radius = Math.sqrt(x * x + y * y);
+
+        if (radius <= scaledPeak) {
+          const v = Math.sin(halfPI * (radius / peak)) ** 4;
+          PSD[yOffs + idxX] = v;
+          sum += v;
+        } else {
+          PSD[yOffs + idxX] = peakValue;
+          sum += peakValue;
+        }
+      }
+    }
+
+    const parseval = requiredSum / sum;
+    for (let i = 0; i < sqSz; i++) PSD[i] *= parseval;
+
+    PSD[halfHeight * width + halfWidth] = DCPower;
+
+    return PSD;
   };
 
   return {
@@ -1169,5 +1194,6 @@ const BlueNoiseFloat64 = (function () {
     gaussianBlueNoiseWrapAroundInPlace: _gaussianBlueNoiseWrapAroundInPlace,
 
     getGaussianKernel: _getGaussianKernel,
+    computeDesiredPSD: _computeDesiredPSD,
   };
 })();
