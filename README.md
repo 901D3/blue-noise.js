@@ -1,39 +1,8 @@
 # _**blue-noise.js**_
-### Free JS implementation of Void and Cluster method by Robert Ulichney and other methods
-
-I went around the internet to find a Void and Cluster JS implementation but there seems to be not many\
-Ethan Shulman did implement Void and Cluster but he didn't put a clear license or legal notice so I can't use his\
-Kinda devastated so I implement Void and Cluster myself with my optimization skills
-
-_**Free blue noise texture and raw data is at the bottom of README**_
-
-# _How to use_
-Linking the required scripts in HTML, the utils is mandatory
-
-```
-<script src="<path to script>/blue-noise-utils.js"></script>
-<script src="<path to script>/blue-noise-float64.js"></script>
-```
-
-To generate a blue noise texture(_**64**_ Bits Float), simply run
-
-```
-blueNoiseFloat64.extendedVoidAndClusterWrapAround(
-    width,
-    height,
-    sigma,
-    candidateMethodSigma,
-    density
-)
-```
-
-It will return a 2D flattened array, it's values ranging from 0 to (width * height)
-
-──────────
+### Free JS implementation of every blue noise related stuff 
 
 Comparing mine, Atrix256 and Ethan Shulman Void and Cluster output\
-The results is from [5905481bf29252a04ab397ca017b680d6fd59cd6](https://github.com/901D3/blue-noise.js/commit/5905481bf29252a04ab397ca017b680d6fd59cd6)
-Generating time may vary
+Commit [5905481bf29252a04ab397ca017b680d6fd59cd6](https://github.com/901D3/blue-noise.js/commit/5905481bf29252a04ab397ca017b680d6fd59cd6)
 
 ### Mine
 Float 64\
@@ -57,32 +26,12 @@ Density: 0.1
 168.78s\
 <img width="256" height="256" alt="image" src="https://github.com/user-attachments/assets/1c126adc-ec9c-4216-8092-9d6b37725989" />
 
-My implement completely beats Atrix256 and Ethan Shulman implementation in generate time while the quality is similar to Atrix256's
+Demo\
+[901d3.github.io/blue-noise.js/demo/float64](https://901d3.github.io/blue-noise.js)
 
-Demo for you guys!\
-[901d3.github.io/blue-noise.js/demo/float64](https://901d3.github.io/blue-noise.js/demo/float64)
-
-Free blue noise texture and raw data\
+Blue noise texture and raw data\
 [github.com/901D3/blue-noise.js/tree/main/out](https://github.com/901D3/blue-noise.js/tree/main/out)
 
-Check out the source code!\
+Source code:\
 [github.com/901D3/blue-noise.js](https://github.com/901D3/blue-noise.js)
 
-## References
-[cv.ulichney.com/papers/1993-void-cluster.pdf](http://cv.ulichney.com/papers/1993-void-cluster.pdf)\
-[blog.demofox.org/2019/06/25/generating-blue-noise-textures-with-void-and-cluster](https://blog.demofox.org/2019/06/25/generating-blue-noise-textures-with-void-and-cluster)\
-[momentsingraphics.de/BlueNoise.html](https://momentsingraphics.de/BlueNoise.html)\
-[xaloez.com/o/bluenoise](https://xaloez.com/o/bluenoise)
-
-[www.iliyan.com/publications/DitheredSampling/DitheredSampling_Sig2016.pdf](https://www.iliyan.com/publications/DitheredSampling/DitheredSampling_Sig2016.pdf)\
-[ieeexplore.ieee.org/document/559555](https://ieeexplore.ieee.org/document/559555)\
-[bartwronski.com/2022/08/31/progressive-image-stippling-and-greedy-blue-noise-importance-sampling](https://bartwronski.com/2022/08/31/progressive-image-stippling-and-greedy-blue-noise-importance-sampling)\
-[dl.acm.org/doi/10.1145/127719.122736](https://dl.acm.org/doi/10.1145/127719.122736)\
-[en.wikipedia.org/wiki/Lloyd's_algorithm](https://en.wikipedia.org/wiki/Lloyd's_algorithm)\
-[arxiv.org/pdf/2206.07798](https://arxiv.org/pdf/2206.07798)\
-[dl.acm.org/doi/10.1145/3550454.3555519](https://dl.acm.org/doi/10.1145/3550454.3555519)
-[www.hajim.rochester.edu/ece/sites/parker/assets/pdf/44%20-%20Digital%20halftoning%20technique%20using%20a%20blue-noise%20mask.pdf](https://www.hajim.rochester.edu/ece/sites/parker/assets/pdf/44%20-%20Digital%20halftoning%20technique%20using%20a%20blue-noise%20mask.pdf)\
-[github.com/yosefm/blue_noise](https://github.com/yosefm/blue_noise)\
-[en.wikipedia.org/wiki/Voronoi_diagram](https://en.wikipedia.org/wiki/Voronoi_diagram)\
-[en.wikipedia.org/wiki/Delaunay_triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation)\
-[en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm](https://en.wikipedia.org/wiki/Bowyer%E2%80%93Watson_algorithm)
