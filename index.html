@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <script src="blue-noise.js"></script>
+
+  <title>blue-noise.js Demo</title>
+</head>
+
+<body
+  style="gap: 8px; background-color: black; color: white; display: flex; flex-direction: column; align-items: flex-start;">
+
+  <span>blue-noise.js Demo</span>
+
+  <canvas id="BNCanvas" style="border: 3px solid #ff0; image-rendering: pixelated"></canvas>
+
+  <div class="settings_container"
+    style="background-color: #a4947b; border: 2px solid #ff9d00; padding: 3px; width: 500px">
+    <div class="settings_select">
+      <select id="BNAlgo">
+        <optgroup label="Mask">
+          <option value="VoidAndCluster">Void and Cluster</option>
+          <option value="Iliyan">Iliyan's Dithered Sampling</option>
+        </optgroup>
+
+        <optgroup label="Sampler">
+          <option value="VACCandidate">Candidate Method (Void and Cluster)</option>
+          <option value="Mitchell">Best Candidate (Mitchell's)</option>
+          <option value="Lloyd">Relaxation (Lloyd's)</option>
+          <option value="GaussianBlueNoise">Gaussian Blue Noise</option>
+          <option value="GeneralNoise">General Noise Sampling</option>
+        </optgroup>
+
+        <optgroup label="Misc">
+          <option value="Voronoi">Voronoi Diagram</option>
+          <option value="Delaunay">Delaunay Triangulation</option>
+          <option value="DDF">Differential Domain</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <textarea id="BNCustomKernel" placeholder="Convolve kernel, 2D array"></textarea>
+    <textarea id="BNMatrixOutput" placeholder="Output array"></textarea>
+    <button onclick="ToMatrix()">To Matrix</button>
+    <div class="whitehr"></div>
+    <div class="settings_label-input">
+      <span>Width</span>
+      <input type="number" id="BNWidth" value="64" />
+    </div>
+    <div class="settings_label-input">
+      <span>Height</span>
+      <input type="number" id="BNHeight" value="64" />
+    </div>
+    <div class="settings_label-input">
+      <span>Radius Multiplier</span>
+      <input type="number" id="BNRadiusMul" value="5" />
+    </div>
+    <div class="settings_label-input">
+      <span>Sigma 1</span>
+      <input type="number" id="BNSigma1" value="1.9" />
+    </div>
+    <div class="settings_label-input">
+      <span>Sigma 2</span>
+      <input type="number" id="BNSigma2" value="1" />
+    </div>
+    <div class="settings_label-input">
+      <span>Samples</span>
+      <input type="number" id="BNSamples" value="100" />
+    </div>
+    <div class="settings_label-input">
+      <span>Target samples</span>
+      <input type="number" id="BNTargetSamples" value="200" />
+    </div>
+    <div class="settings_label-input">
+      <span>Step scale</span>
+      <input type="number" id="BNStepScale" value="0.01" />
+    </div>
+    <div class="settings_label-input">
+      <span>Iterations</span>
+      <input type="number" id="BNIterations" value="15" />
+    </div>
+    <div class="settings_label-input">
+      <span>Candidates (Mitchell)</span>
+      <input type="number" id="BNMBCCandidates" value="20" />
+    </div>
+    <div class="settings_label-input">
+      <span>P Norm (Iliyan)</span>
+      <input type="number" id="BNPNorm" value="0.5" />
+    </div>
+    <button onclick="blueNoiseWrapper()">Generate</button>
+    <button onclick="downloadRaw()">Download raw</button>
+    <span id="generateTime"></span>
+  </div>
+</body>
+<script src="script.js"></script>
+
+</html>
