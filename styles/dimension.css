@@ -1,0 +1,15 @@
+.z-index {z-index: var(--z-index, 0) !important;}
+
+.width {width: var(--width, 1280px) !important;}
+.full-width {width: 100% !important;}
+.width-30px {width: 30px !important;}
+.width-fit-content {width: fit-content !important;}
+.max-width {max-width: var(--max-width, 1280px) !important;}
+.max-width-fit-content {max-width: fit-content !important;}
+
+.height {height: var(--height, 1280px) !important;}
+.full-height {height: 100% !important;}
+.height-30px {height: 30px !important;}
+.height-fit-content {height: fit-content !important;}
+.max-height {max-height: var(--max-height, 1280px) !important;}
+.max-height-fit-content {max-height: fit-content !important;}

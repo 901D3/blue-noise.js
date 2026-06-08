@@ -1,0 +1,79 @@
+@import url("coloring.css");
+@import url("dimension.css");
+@import url("spacing.css");
+
+.display-flex {
+  display: flex;
+}
+
+.top-bottom-flow {
+  flex-direction: column;
+}
+
+.bottom-top-flow {
+  flex-direction: column-reverse;
+}
+
+.left-right-flow {
+  flex-direction: row;
+}
+
+.right-left-flow {
+  flex-direction: row-reverse;
+}
+
+.border-radius-4px {border-radius: 4px !important;}
+
+.font-size {font-size: var(--font-size, 18px) !important;}
+.border-radius {border-radius: var(--border-radius, 0px) !important;}
+.border-color {border-color: var(--border-color, #ffffff) !important;}
+.border-width {border-color: var(--border-width, 2px) !important;}
+.border-top-width {border-top-width: var(--border-top-width, 2px) !important;}
+.border-bottom-width {border-bottom-width: var(--border-bottom-width, 2px) !important;}
+.border-left-width {border-left-width: var(--border-left-width, 2px) !important;}
+.border-right-width {border-right-width: var(--border-right-width, 2px) !important;}
+
+.border-style-none {border-style: none !important;}
+.border-style-hidden {border-style: hidden !important;}
+.border-style-dotted {border-style: dotted !important;}
+.border-style-dashed {border-style: dashed !important;}
+.border-style-solid {border-style: solid !important;}
+.border-style-double {border-style: double !important;}
+.border-style-groove {border-style: groove !important;}
+.border-style-ridge {border-style: ridge !important;}
+.border-style-inset {border-style: inset !important;}
+.border-style-outset {border-style: outset !important;}
+
+.text-align-left {text-align: left !important;}
+.text-align-right {text-align: right !important;}
+.text-align-center {text-align: center !important;}
+.text-align-justify {text-align: justify !important;}
+.text-align-justify-all {text-align: justify-all !important;}
+.text-align-start {text-align: start !important;}
+.text-align-end {text-align: end !important;}
+.text-align-match-parent {text-align: match-parent !important;}
+.text-align-inherit {text-align: inherit !important;}
+.text-align-initial {text-align: initial !important;}
+.text-align-unset {text-align: unset !important;}
+
+.font-weight-bold {font-weight: bold !important;}
+.font-weight-normal {font-weight: normal !important;}
+.font-weight-thin {font-weight: thin !important;}
+
+.font-style-normal {font-style: normal !important;}
+.font-style-italic {font-style: italic !important;}
+
+.opacity {opacity: var(--opacity, 0px) !important;}
+
+.record {
+  width: 18px;
+  height: 18px;
+  background-color: red;
+  border-radius: 50%;
+}
+
+.stopRecord {
+  width: 18px;
+  height: 18px;
+  background-color: yellow;
+}
