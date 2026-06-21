@@ -252,9 +252,9 @@ function blueNoiseWrapper() {
   }
 
   else if (bnAlgo === "GeneralNoise") {
-    for (let i = 0; i < sampleCount * 2; i++) {
-      sampleList[i] = Math.random() * bnWidth;
-      sampleList[i + 1] = Math.random() * bnHeight;
+    for (let i = 0; i < sampleCount; i++) {
+      sampleList[i * 2] = Math.random() * bnWidth;
+      sampleList[i * 2 + 1] = Math.random() * bnHeight;
     }
 
     const derivativeKernelX = new Float64Array(kWidth * kHeight);
