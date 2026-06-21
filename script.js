@@ -81,23 +81,20 @@ function blueNoiseWrapper() {
 
     result = new Uint32Array(sqSz);
 
-    BNJS.VoidAndClusterWrap(
-      result, blurMap, sampleMap, bnWidth, bnHeight,
-      sampleCount,
-      kernel, kWidth, kHeight);
+    BNJS.VoidAndClusterWrap(result, blurMap, sampleMap, bnWidth, bnHeight, sampleCount, kernel, kWidth, kHeight);
   }
 
   else if (bnAlgo === "Iliyan") {
     result = new Uint32Array(sqSz);
     for (let i = 0; i < sqSz; i++) result[i] = i;
-    BNUtils.Shuffle(result);
+    //BNUtils.Shuffle(result);
 
     const energyMap = new Float64Array(sqSz);
 
     BNJS.IliyanDitheredSamplingWrap(
       result, energyMap, bnWidth, bnHeight,
-      sigma2, pNorm, iterationCount,
-      kernel, kWidth, kHeight);
+      kernel, kWidth, kHeight,
+      sigma2, pNorm, iterationCount);
   }
 
   else if (bnAlgo === "VACCandidate") {
@@ -124,12 +121,12 @@ function blueNoiseWrapper() {
       sampleList[i * 2 + 1] = Math.random() * bnHeight;
     }
 
-    BNJS.LloydRelaxationWrap(sampleList, sampleCount, bnWidth, bnHeight, iterationCount);
+    BNJS.LloydRelaxationWrap(sampleList, sampleCount, bnWidth, bnHeight, bnWidth / 2, bnHeight / 2, iterationCount);
 
     result = new Uint8Array(sqSz);
 
     for (let i = 0; i < sampleCount; i++)
-      result[Math.floor(sampleList[i * 2 + 1]) * bnWidth + Math.floor(sampleList[i * 2])] = 1;
+      result[Math.floor(sampleList[i * 2 + 1]) * bnWidth + Math.floor(sampleList[i * 2])] += 1;
   }
 
   else if (bnAlgo === "GaussianBlueNoise") {
@@ -142,7 +139,7 @@ function blueNoiseWrapper() {
     result = new Uint8Array(sqSz);
 
     for (let i = 0; i < sampleCount; i++)
-      result[Math.floor(sampleList[i * 2 + 1]) * bnWidth + Math.floor(sampleList[i * 2])] = 1;
+      result[Math.floor(sampleList[i * 2 + 1]) * bnWidth + Math.floor(sampleList[i * 2])] += 1;
   }
 
   else if (bnAlgo === "SamplingViaDelaunayTriangles") {
@@ -153,12 +150,12 @@ function blueNoiseWrapper() {
     result = new Uint8Array(sqSz);
 
     for (let i = 0; i < sampleCount; i++)
-      result[Math.floor(sampleList[i * 2]) * bnWidth + Math.floor(sampleList[i * 2 + 1])] = 1;
+      result[Math.floor(sampleList[i * 2]) * bnWidth + Math.floor(sampleList[i * 2 + 1])] += 1;
 
     for (let i = targetSamples - sampleCount - 1; i >= 0; i--) {
       const currentSample = addedSamples[i];
 
-      result[Math.floor(currentSample[0]) * bnWidth + Math.floor(currentSample[1])] = 1;
+      result[Math.floor(currentSample[0]) * bnWidth + Math.floor(currentSample[1])] += 1;
     }
   }
 
@@ -273,7 +270,7 @@ function blueNoiseWrapper() {
 
     const maxR = Math.sqrt(halfWidth * halfWidth + halfHeight * halfHeight);
 
-    const r0 = 0.5;
+    const r0 = 0.2;
     const midGain = 1;
 
     for (let y = 0; y < bnHeight; y++) {
@@ -284,25 +281,15 @@ function blueNoiseWrapper() {
 
         let val = 0;
 
-        if (r < r0) val = midGain;
+        if (r < r0) val = 0;
+        else if (r < 0.25) val = midGain;
         else val = 0;
 
         targetFT[row + x] = val;
       }
     }
 
-    const centerNormalizedXLUT = new Float64Array(bnWidth);
-    const centerNormalizedYLUT = new Float64Array(bnHeight);
-
-    const outerProductXLUT = new Float64Array(bnWidth ** 2);
-    const outerProductYLUT = new Float64Array(bnHeight ** 2);
-
-    BNJS.CosineTransformFast.BuildCenterNormalizedLUT(centerNormalizedXLUT, bnWidth, bnWidth / 2);
-    BNJS.CosineTransformFast.BuildCenterNormalizedLUT(centerNormalizedYLUT, bnHeight, bnHeight / 2);
-    BNJS.CosineTransformFast.BuildOuterProductLUT(centerNormalizedXLUT, outerProductXLUT, bnWidth);
-    BNJS.CosineTransformFast.BuildOuterProductLUT(centerNormalizedYLUT, outerProductYLUT, bnHeight);
-
-    BNJS.CosineTransform2D(targetFT, targetDDA, bnWidth, bnHeight, bnWidth / 2, bnHeight / 2);
+    BNJS.InvCosineTransform2D(targetFT, targetDDA, bnWidth, bnHeight, bnWidth / 2, bnHeight / 2);
 
     const currentDDA = new Float64Array(bnWidth * bnHeight);
     const errorDDA = new Float64Array(bnWidth * bnHeight);
@@ -314,15 +301,14 @@ function blueNoiseWrapper() {
     BNJS.GeneralSpectrumNoiseWrap(
       sampleList, sampleCount, bnWidth, bnHeight, bnWidth / 2, bnHeight / 2,
       currentDDA, targetDDA, errorDDA, errorDerivateX, errorDerivateY, forceX, forceY, bnWidth, bnHeight,
-      stepScale, iterationCount,
-      derivativeKernelX, derivativeKernelY, kWidth, kHeight);
+      derivativeKernelX, derivativeKernelY, kWidth, kHeight,
+      stepScale, iterationCount);
 
     result = new Uint8Array(sqSz);
 
     for (let i = 0; i < sampleCount; i++)
-      result[Math.floor(sampleList[i * 2 + 1]) * bnWidth + Math.floor(sampleList[i * 2])] = 1;
+      result[Math.floor(sampleList[i * 2 + 1]) * bnWidth + Math.floor(sampleList[i * 2])] += 1;
   }
-
 
   generateTime.innerHTML = "Generating took " + (performance.now() - t0) + "ms";
 
