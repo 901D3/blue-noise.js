@@ -54,6 +54,7 @@ const BNJS = {
   BuildDelaunayTrianglesBowyerWatsonWrapOOB() { throw new Error("not implemented"); },
   DelaunayTrianglesBowyerWatsonOOBFilter() { throw new Error("not implemented"); },
 
+  // [12]: https://dl.acm.org/doi/10.1145/1964921.1964945
   BuildDifferentialDomainBilinearWrap() { throw new Error("not implemented"); },
   DifferentialDomainAddBilinearWrap() { throw new Error("not implemented"); },
   DifferentialDomainUpdateBilinearWrap() { throw new Error("not implemented"); },
