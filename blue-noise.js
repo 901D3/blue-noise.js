@@ -1,7 +1,7 @@
 /**
  * Free JS implementation of every blue noise related stuff 
  *
- * v0.3.01
+ * v0.3.02
  * https://github.com/901D3/blue-noise.js
  *
  * Cody0right (c) 901D3
@@ -90,24 +90,22 @@ const BNUtils = {
 
 BNJS.VoidAndClusterWrap = function (
   rankMap, blurMap, sampleMap, width, height, sampleCount,
-  kernel, kWidth, kHeight) {
+  kernel, kernelWidth, kernelHeight) {
 
-  const sqSz = width * height;
+  const squareSize = width * height;
 
-  BNUtils.ConvolveWrap(sampleMap, blurMap, width, height, kernel, kWidth, kHeight);
+  BNUtils.ConvolveWrap(sampleMap, blurMap, width, height, kernel, kernelWidth, kernelHeight);
 
   const blurTemp = blurMap.slice();
 
   const sampleCache = [];
-  for (let i = 0, i2 = 0; i < sqSz; i++) {
-    if (sampleMap[i])
-      sampleCache[i2++] = i;
+  for (let i = 0, j = 0; i < squareSize; i++) {
+    if (sampleMap[i]) sampleCache[j++] = i;
   }
 
   let aliveSampleCount = sampleCount;
 
   for (let rank = sampleCount - 1; rank >= 0; rank--) {
-    let idx;
     let value = -Infinity;
 
     let cacheIdx = 0;
@@ -130,19 +128,19 @@ BNJS.VoidAndClusterWrap = function (
 
     BNUtils.ConvolveAddWrap(
       blurMap, width, height,
-      idx % width, Math.floor(idx / width),
-      kernel, kWidth, kHeight, -1);
+      sampleIdx % width, Math.floor(sampleIdx / width),
+      kernel, kernelWidth, kernelHeight, -1);
   }
 
   blurMap.set(blurTemp);
   for (let i = 0; i < sampleCount; i++)
     sampleMap[sampleCache[i]] = 1;
 
-  for (let rank = sampleCount; rank < sqSz; rank++) {
+  for (let rank = sampleCount; rank < squareSize; rank++) {
     let idx;
     let value = Infinity;
 
-    for (let i = 0; i < sqSz; i++) {
+    for (let i = 0; i < squareSize; i++) {
       if (sampleMap[i] === 0) {
         const blurredValue = blurMap[i];
 
@@ -159,27 +157,25 @@ BNJS.VoidAndClusterWrap = function (
     BNUtils.ConvolveAddWrap(
       blurMap, width, height,
       idx % width, Math.floor(idx / width),
-      kernel, kWidth, kHeight, 1);
+      kernel, kernelWidth, kernelHeight, 1);
   }
-
-  return rankMap;
-}
+};
 
 BNJS.IliyanDitheredSamplingWrap = function (
   inArray, energyMap, width, height,
-  kernel, kWidth, kHeight,
+  kernel, kernelWidth, kernelHeight,
   sigmaSample, pNorm, iterationCount) {
 
-  const sqSz = width * height;
+  const squareSize = width * height;
 
   BNJS.CalcTotalEnergyIliyanWrap(
     inArray, energyMap, width, height,
-    kernel, kWidth, kHeight,
+    kernel, kernelWidth, kernelHeight,
     sigmaSample, pNorm);
 
   for (let i = 0; i < iterationCount; i++) {
-    const p = Math.floor(Math.random() * sqSz);
-    const q = i % sqSz;
+    const p = Math.floor(Math.random() * squareSize);
+    const q = i % squareSize;
 
     // Swap pixels
     const temp = inArray[p];
@@ -189,12 +185,12 @@ BNJS.IliyanDitheredSamplingWrap = function (
     // Compute energy for both swapped pixel indexes
     const newEnergy1 = BNJS.CalcEnergyIliyanWrap(
       inArray, width, height, p % width, Math.floor(p / width),
-      kernel, kWidth, kHeight,
+      kernel, kernelWidth, kernelHeight,
       sigmaSample, pNorm);
 
     const newEnergy2 = BNJS.CalcEnergyIliyanWrap(
       inArray, width, height, q % width, Math.floor(q / width),
-      kernel, kWidth, kHeight,
+      kernel, kernelWidth, kernelHeight,
       sigmaSample, pNorm);
 
     if (newEnergy1 + newEnergy2 < energyMap[p] + energyMap[q]) {
@@ -207,52 +203,57 @@ BNJS.IliyanDitheredSamplingWrap = function (
       inArray[q] = tmp;
     }
   }
-}
+};
+
+BNJS.LeastErrorFirst = function (sourceMap, ditheredMap, width, height) {
+  const squareSize = width * height;
+
+
+
+};
 
 BNJS.DirectBinarySearch = function (
-  inArray, ditheredArray, errorMap, blurMap, indicesMap, width, height,
-  kernel, kWidth, kHeight, iterationCount) {
+  sourceMao, ditheredMap, errorMap, blurMap, indicesMap, width, height,
+  kernel, kernelWidth, kernelHeight, iterationCount) {
 
-  const sqSz = width * height;
+  const squareSize = width * height;
 
   let kernelEnergy = 0;
-  for (let i = kWidth * kHeight - 1; i >= 0; i--) kernelEnergy += kernel[i] ** 2;
+  for (let i = kernelWidth * kernelHeight - 1; i >= 0; i--) kernelEnergy += kernel[i] ** 2;
 
-  for (let i = 0; i < sqSz; i++)
-    errorMap[i] = inArray[i] - ditheredArray[i];
+  for (let i = 0; i < squareSize; i++) errorMap[i] = sourceMao[i] - ditheredMap[i];
 
-  BNUtils.Convolve(errorMap, blurMap, width, height, kernel, kWidth, kHeight);
+  BNUtils.Convolve(errorMap, blurMap, width, height, kernel, kernelWidth, kernelHeight);
 
   for (let iter = 0; iter < iterationCount; iter++) {
-    for (let i = 0; i < sqSz; i++) {
+    for (let i = 0; i < squareSize; i++) {
       const idx = indicesMap[i];
 
       const x = idx % width;
       const y = Math.floor(idx / width);
 
-      const oldPixel = ditheredArray[idx];
+      const oldPixel = ditheredMap[idx];
       const newPixel = !oldPixel;
       const deltaErr = oldPixel - newPixel;
 
-      const dotProduct =
-        BNUtils.GetConvolvedAreaDotProduct(blurMap, width, height, x, y, kernel, kWidth, kHeight);
+      const dotProduct = BNUtils.GetConvolvedAreaDotProduct(blurMap, width, height, x, y, kernel, kernelWidth, kernelHeight);
 
       const deltaEnergy = 2 * deltaErr * dotProduct + deltaErr * deltaErr * kernelEnergy;
 
       if (deltaEnergy < 0) {
-        ditheredArray[idx] = newPixel;
+        ditheredMap[idx] = newPixel;
         errorMap[idx] += deltaErr;
 
-        BNUtils.ConvolveAdd(blurMap, width, height, x, y, kernel, kWidth, kHeight, deltaErr);
+        BNUtils.ConvolveAdd(blurMap, width, height, x, y, kernel, kernelWidth, kernelHeight, deltaErr);
       }
     }
   }
-}
+};
 
-BNJS.VoidAndClusterCandidateWrap = function (sampleMap, blurMap, width, height, kernel, kWidth, kHeight) {
-  const sqSz = width * height;
+BNJS.VoidAndClusterCandidateWrap = function (sampleMap, blurMap, width, height, kernel, kernelWidth, kernelHeight) {
+  const squareSize = width * height;
 
-  BNUtils.ConvolveWrap(sampleMap, blurMap, width, height, kernel, kWidth, kHeight);
+  BNUtils.ConvolveWrap(sampleMap, blurMap, width, height, kernel, kernelWidth, kernelHeight);
 
   while (true) {
     let clusterValue = -Infinity;
@@ -260,7 +261,7 @@ BNJS.VoidAndClusterCandidateWrap = function (sampleMap, blurMap, width, height, 
     let clusterIdx;
     let voidIdx;
 
-    for (let i = 0; i < sqSz; i++) {
+    for (let i = 0; i < squareSize; i++) {
       if (sampleMap[i] === 1) {
         const blurredValue = blurMap[i];
 
@@ -276,9 +277,9 @@ BNJS.VoidAndClusterCandidateWrap = function (sampleMap, blurMap, width, height, 
     BNUtils.ConvolveAddWrap(
       blurMap, width, height,
       clusterIdx % width, Math.floor(clusterIdx / width),
-      kernel, kWidth, kHeight, -1);
+      kernel, kernelWidth, kernelHeight, -1);
 
-    for (let i = 0; i < sqSz; i++) {
+    for (let i = 0; i < squareSize; i++) {
       if (sampleMap[i] === 0) {
         const blurredValue = blurMap[i];
 
@@ -299,9 +300,63 @@ BNJS.VoidAndClusterCandidateWrap = function (sampleMap, blurMap, width, height, 
     BNUtils.ConvolveAddWrap(
       blurMap, width, height,
       voidIdx % width, Math.floor(voidIdx / width),
-      kernel, kWidth, kHeight, 1);
+      kernel, kernelWidth, kernelHeight, 1);
   }
-}
+};
+
+BNJS.VoidAndClusterCandidateWrap = function (sampleMap, blurMap, width, height, kernel, kernelWidth, kernelHeight) {
+  const squareSize = width * height;
+
+  BNUtils.ConvolveWrap(sampleMap, blurMap, width, height, kernel, kernelWidth, kernelHeight);
+
+  while (true) {
+    let clusterValue = -Infinity;
+    let voidValue = Infinity;
+    let clusterIdx;
+    let voidIdx;
+
+    for (let i = 0; i < squareSize; i++) {
+      if (sampleMap[i] === 1) {
+        const blurredValue = blurMap[i];
+
+        if (blurredValue > clusterValue) {
+          clusterValue = blurredValue;
+          clusterIdx = i;
+        }
+      }
+    }
+
+    sampleMap[clusterIdx] = 0;
+
+    BNUtils.ConvolveAddWrap(
+      blurMap, width, height,
+      clusterIdx % width, Math.floor(clusterIdx / width),
+      kernel, kernelWidth, kernelHeight, -1);
+
+    for (let i = 0; i < squareSize; i++) {
+      if (sampleMap[i] === 0) {
+        const blurredValue = blurMap[i];
+
+        if (blurredValue < voidValue) {
+          voidValue = blurredValue;
+          voidIdx = i;
+        }
+      }
+    }
+
+    if (clusterIdx === voidIdx) {
+      sampleMap[clusterIdx] = 1;
+      break;
+    }
+
+    sampleMap[voidIdx] = 1;
+
+    BNUtils.ConvolveAddWrap(
+      blurMap, width, height,
+      voidIdx % width, Math.floor(voidIdx / width),
+      kernel, kernelWidth, kernelHeight, 1);
+  }
+};
 
 BNJS.MitchellBestCandidateWrap = function (sampleList, sampleCount, candidateCount, width, height, wrapX, wrapY) {
   // initalize with a randomly placed point
@@ -324,11 +379,8 @@ BNJS.MitchellBestCandidateWrap = function (sampleList, sampleCount, candidateCou
         let dx = Math.abs(randomX - sampleList[k * 2]);
         let dy = Math.abs(randomY - sampleList[k * 2 + 1]);
 
-        if (dx > wrapX)
-          dx = width - dx;
-
-        if (dy > wrapY)
-          dy = height - dy;
+        if (dx > wrapX) dx = width - dx;
+        if (dy > wrapY) dy = height - dy;
 
         minDist = Math.min(minDist, dx ** 2 + dy ** 2);
       }
@@ -345,7 +397,7 @@ BNJS.MitchellBestCandidateWrap = function (sampleList, sampleCount, candidateCou
   }
 
   return sampleList;
-}
+};
 
 BNJS.LloydRelaxationWrap = function (sampleList, sampleCount, width, height, wrapX, wrapY, iterationCount) {
   for (let iter = 0; iter < iterationCount; iter++) {
@@ -429,7 +481,7 @@ BNJS.GaussianBlueNoiseWrap = function (
 BNJS.GeneralSpectrumNoiseWrap = function (
   sampleList, sampleCount, width, height, centerX, centerY,
   currentDDA, targetDDA, errorDDA, errorDerivateX, errorDerivateY, forceX, forceY, ddaWidth, ddaHeight,
-  derivativeKernelX, derivativeKernelY, kWidth, kHeight,
+  derivativeKernelX, derivativeKernelY, kernelWidth, kernelHeight,
   stepScale, iterationCount) {
 
   const ddaSqSz = ddaWidth * ddaHeight;
@@ -452,11 +504,11 @@ BNJS.GeneralSpectrumNoiseWrap = function (
 
     BNUtils.ConvolveWrap(
       errorDDA, errorDerivateX, ddaWidth, ddaHeight,
-      derivativeKernelX, kWidth, kHeight);
+      derivativeKernelX, kernelWidth, kernelHeight);
 
     BNUtils.ConvolveWrap(
       errorDDA, errorDerivateY, ddaWidth, ddaHeight,
-      derivativeKernelY, kWidth, kHeight);
+      derivativeKernelY, kernelWidth, kernelHeight);
 
     let maxPower = -Infinity;
 
@@ -470,8 +522,10 @@ BNJS.GeneralSpectrumNoiseWrap = function (
       for (let j = 0; j < sampleCount; j++) {
         if (i === j) continue;
 
-        let distanceX = sampleX - sampleList[j * 2];
-        let distanceY = sampleY - sampleList[j * 2 + 1];
+        const j2 = j * 2;
+
+        let distanceX = sampleX - sampleList[j2];
+        let distanceY = sampleY - sampleList[j2 + 1];
 
         if (distanceX > centerX) distanceX -= width;
         else if (distanceX < -centerX) distanceX += width;
@@ -516,14 +570,14 @@ BNJS.GeneralSpectrumNoiseWrap = function (
 
 BNJS.BuildGaussianKernel = function (outKernel, sigma, radiusMul) {
   const radius = Math.ceil(radiusMul * sigma);
-  const kWidth = radius * 2 + 1;
+  const kernelWidth = radius * 2 + 1;
 
   const invDenom = 1 / (2 * sigma ** 2);
 
   let accum = 0;
   for (let y = -radius; y < radius; y++) {
     const yPow2 = y ** 2;
-    const yRow = (y + radius) * kWidth;
+    const yRow = (y + radius) * kernelWidth;
 
     for (let x = -radius; x < radius; x++) {
       const v = Math.exp(-(x ** 2 + yPow2) * invDenom);
@@ -533,7 +587,7 @@ BNJS.BuildGaussianKernel = function (outKernel, sigma, radiusMul) {
     }
   }
 
-  for (let i = 0, length = kWidth * 2; i < length; i++)
+  for (let i = 0, length = kernelWidth * 2; i < length; i++)
     outKernel[i] /= accum;
 
   return outKernel;
@@ -541,7 +595,7 @@ BNJS.BuildGaussianKernel = function (outKernel, sigma, radiusMul) {
 
 BNJS.BuildGaussianDerivateKernels = function (derivativeKernelX, derivativeKernelY, sigma, radiusMul) {
   const radius = Math.ceil(radiusMul * sigma);
-  const kWidth = radius * 2 + 1;
+  const kernelWidth = radius * 2 + 1;
 
   const dbSigma = sigma ** 2;
 
@@ -552,7 +606,7 @@ BNJS.BuildGaussianDerivateKernels = function (derivativeKernelX, derivativeKerne
 
   for (let y = -radius; y < radius; y++) {
     const yPow2 = y ** 2;
-    const yRow = (y + radius) * kWidth;
+    const yRow = (y + radius) * kernelWidth;
 
     for (let x = -radius; x < radius; x++) {
       const idx = yRow + (x + radius);
@@ -571,14 +625,14 @@ BNJS.BuildGaussianDerivateKernels = function (derivativeKernelX, derivativeKerne
     }
   }
 
-  for (let i = 0; i < kWidth ** 2; i++) {
+  for (let i = 0; i < kernelWidth ** 2; i++) {
     derivativeKernelX[i] /= accumX;
     derivativeKernelY[i] /= accumY;
   }
 }
 
 BNJS.ComputeDesiredPSD = function (PSD, width, height, gray, peakScale) {
-  const sqSz = width * height;
+  const squareSize = width * height;
 
   const halfWidth = Math.floor(width / 2);
   const halfHeight = Math.floor(height / 2);
@@ -586,9 +640,9 @@ BNJS.ComputeDesiredPSD = function (PSD, width, height, gray, peakScale) {
   const halfPI = Math.PI / 2;
 
   const maxRadius = Math.sqrt(halfWidth ** 2 + halfHeight ** 2);
-  const totalEnergy = sqSz * gray;
+  const totalEnergy = squareSize * gray;
   const DCPower = totalEnergy ** 2;
-  const requiredSum = sqSz * totalEnergy - DCPower;
+  const requiredSum = squareSize * totalEnergy - DCPower;
 
   const peak = Math.sqrt(gray / 2) * maxRadius;
   const scaledPeak = peakScale * peak;
@@ -616,16 +670,16 @@ BNJS.ComputeDesiredPSD = function (PSD, width, height, gray, peakScale) {
   }
 
   const parseval = requiredSum / accum;
-  for (let i = 0; i < sqSz; i++) PSD[i] *= parseval;
+  for (let i = 0; i < squareSize; i++) PSD[i] *= parseval;
 
   PSD[halfHeight * width + halfWidth] = DCPower;
 
   return PSD;
 }
 
-BNJS.CalcTotalEnergyIliyanWrap = function (inArray, energyMap, width, height, kernel, kWidth, kHeight, sigmaSample, pNorm) {
-  const halfKernelWidth = Math.floor(kWidth / 2);
-  const halfKernelHeight = Math.floor(kHeight / 2);
+BNJS.CalcTotalEnergyIliyanWrap = function (inArray, energyMap, width, height, kernel, kernelWidth, kernelHeight, sigmaSample, pNorm) {
+  const halfKernelWidth = Math.floor(kernelWidth / 2);
+  const halfKernelHeight = Math.floor(kernelHeight / 2);
 
   const invDenom = 1 / (sigmaSample ** 2);
 
@@ -644,13 +698,13 @@ BNJS.CalcTotalEnergyIliyanWrap = function (inArray, energyMap, width, height, ke
       let convY = baseConvY;
       let accum = 0;
 
-      for (let ky = 0; ky < kHeight; ky++) {
+      for (let ky = 0; ky < kernelHeight; ky++) {
         const convYRow = convY * width;
-        const kyRow = ky * kWidth;
+        const kyRow = ky * kernelWidth;
 
         let convX = baseConvX;
 
-        for (let kx = 0; kx < kWidth; kx++) {
+        for (let kx = 0; kx < kernelWidth; kx++) {
           accum += kernel[kyRow + kx] * Math.exp(-(Math.abs(centerValue - inArray[convYRow + convX]) ** pNorm * invDenom));
 
           if (++convX === width) convX = 0;
@@ -664,11 +718,11 @@ BNJS.CalcTotalEnergyIliyanWrap = function (inArray, energyMap, width, height, ke
   }
 }
 
-BNJS.CalcEnergyIliyanWrap = function (inArray, width, height, x, y, kernel, kWidth, kHeight, sigmaSample, pNorm) {
-  let convY = y - Math.floor(kHeight / 2);
+BNJS.CalcEnergyIliyanWrap = function (inArray, width, height, x, y, kernel, kernelWidth, kernelHeight, sigmaSample, pNorm) {
+  let convY = y - Math.floor(kernelHeight / 2);
   if (convY < 0) convY = (convY + height) % height;
 
-  let baseConvX = x - Math.floor(kWidth / 2);
+  let baseConvX = x - Math.floor(kernelWidth / 2);
   if (baseConvX < 0) baseConvX = (baseConvX + width) % width;
 
   const invDenom = 1 / (sigmaSample * sigmaSample);
@@ -676,13 +730,13 @@ BNJS.CalcEnergyIliyanWrap = function (inArray, width, height, x, y, kernel, kWid
 
   let accum = 0;
 
-  for (let ky = 0; ky < kHeight; ky++) {
+  for (let ky = 0; ky < kernelHeight; ky++) {
     const convYRow = convY * width;
-    const kyRow = ky * kWidth;
+    const kyRow = ky * kernelWidth;
 
     let convX = baseConvX;
 
-    for (let kx = 0; kx < kWidth; kx++) {
+    for (let kx = 0; kx < kernelWidth; kx++) {
       accum +=
         kernel[kyRow + kx] *
         Math.exp(-(Math.abs(center - inArray[convYRow + convX]) ** pNorm * invDenom));
@@ -1125,34 +1179,34 @@ BNUtils.Shuffle = function (inArray) {
     inArray[i] = inArray[j];
     inArray[j] = temp;
   }
-}
+};
 
-BNUtils.ConvolveWrap = function (inArray, outArray, width, height, kernel, kWidth, kHeight) {
-  const halfKWidth = kWidth >> 1;
-  const halfKHeight = kHeight >> 1;
+BNUtils.ConvolveWrap = function (inArray, outArray, width, height, kernel, kernelWidth, kernelHeight) {
+  const halfkernelWidth = kernelWidth >> 1;
+  const halfkernelHeight = kernelHeight >> 1;
 
   for (let y = 0; y < height; y++) {
     const yRow = y * width;
 
-    let baseConvY = y - halfKHeight;
+    let baseConvY = y - halfkernelHeight;
     if (baseConvY < 0)
       baseConvY = (baseConvY + height) % height;
 
     for (let x = 0; x < width; x++) {
-      let baseConvX = x - halfKWidth;
+      let baseConvX = x - halfkernelWidth;
       if (baseConvX < 0)
         baseConvX = (baseConvX + width) % width;
 
       let convY = baseConvY;
       let accum = 0;
 
-      for (let ky = 0; ky < kHeight; ky++) {
+      for (let ky = 0; ky < kernelHeight; ky++) {
         const convYRow = convY * width;
-        const kyRow = ky * kWidth;
+        const kyRow = ky * kernelWidth;
 
         let convX = baseConvX;
 
-        for (let kx = 0; kx < kWidth; kx++) {
+        for (let kx = 0; kx < kernelWidth; kx++) {
           accum += inArray[convYRow + convX] * kernel[kyRow + kx];
 
           if (++convX === width)
@@ -1166,24 +1220,24 @@ BNUtils.ConvolveWrap = function (inArray, outArray, width, height, kernel, kWidt
       outArray[yRow + x] = accum;
     }
   }
-}
+};
 
-BNUtils.ConvolveAddWrap = function (inArray, width, height, x, y, kernel, kWidth, kHeight, amount) {
-  let convY = y - (kHeight >> 1);
+BNUtils.ConvolveAddWrap = function (inArray, width, height, x, y, kernel, kernelWidth, kernelHeight, amount) {
+  let convY = y - (kernelHeight >> 1);
   if (convY < 0)
     convY = (convY + height) % height;
 
-  let baseConvX = x - (kWidth >> 1);
+  let baseConvX = x - (kernelWidth >> 1);
   if (baseConvX < 0)
     baseConvX = (baseConvX + width) % width;
 
-  for (let ky = 0; ky < kHeight; ky++) {
+  for (let ky = 0; ky < kernelHeight; ky++) {
     const convYRow = convY * width;
-    const kyRow = ky * kWidth;
+    const kyRow = ky * kernelWidth;
 
     let convX = baseConvX;
 
-    for (let kx = 0; kx < kWidth; kx++) {
+    for (let kx = 0; kx < kernelWidth; kx++) {
       inArray[convYRow + convX] += kernel[kyRow + kx] * amount;
 
       if (++convX === width)
@@ -1193,44 +1247,44 @@ BNUtils.ConvolveAddWrap = function (inArray, width, height, x, y, kernel, kWidth
     if (++convY === height)
       convY = 0;
   }
-}
+};
 
-BNUtils.GetConvolvedAreaWrap = function (inArray, width, height, x, y, outArray, kWidth, kHeight) {
-  let convY = y - (kHeight >> 1);
+BNUtils.GetConvolvedAreaWrap = function (inArray, width, height, x, y, outArray, kernelWidth, kernelHeight) {
+  let convY = y - (kernelHeight >> 1);
   if (convY < 0) convY = (convY + height) % height;
 
-  let baseConvX = x - (kWidth >> 1);
+  let baseConvX = x - (kernelWidth >> 1);
   if (baseConvX < 0) baseConvX = (baseConvX + width) % width;
 
-  for (let ky = 0; ky < kHeight; ky++, convY++) {
+  for (let ky = 0; ky < kernelHeight; ky++, convY++) {
     if (convY === height) convY = 0;
 
     const convYRow = convY * width;
-    const kyRow = ky * kWidth;
+    const kyRow = ky * kernelWidth;
 
-    for (let kx = 0, convX = baseConvX; kx < kWidth; kx++, convX++) {
+    for (let kx = 0, convX = baseConvX; kx < kernelWidth; kx++, convX++) {
       if (convX === width) convX = 0;
 
       outArray[kyRow + kx] = inArray[convYRow + convX];
     }
   }
-}
+};
 
-BNUtils.GetConvolvedAreaDotProductWrap = function (inArray, width, height, x, y, kernel, kWidth, kHeight) {
-  let convY = y - (kHeight >> 1);
+BNUtils.GetConvolvedAreaDotProductWrap = function (inArray, width, height, x, y, kernel, kernelWidth, kernelHeight) {
+  let convY = y - (kernelHeight >> 1);
   if (convY < 0) convY = (convY + height) % height;
 
-  let baseConvX = x - (kWidth >> 1);
+  let baseConvX = x - (kernelWidth >> 1);
   if (baseConvX < 0) baseConvX = (baseConvX + width) % width;
 
   let dotProduct = 0;
 
-  for (let ky = 0; ky < kHeight; ky++, convY++) {
+  for (let ky = 0; ky < kernelHeight; ky++, convY++) {
     if (convY === height) convY = 0;
     const convYRow = convY * width;
-    const kyRow = ky * kWidth;
+    const kyRow = ky * kernelWidth;
 
-    for (let kx = 0, convX = baseConvX; kx < kWidth; kx++, convX++) {
+    for (let kx = 0, convX = baseConvX; kx < kernelWidth; kx++, convX++) {
       if (convX === width) convX = 0;
 
       dotProduct += inArray[convYRow + convX] * kernel[kyRow + kx];
@@ -1238,29 +1292,29 @@ BNUtils.GetConvolvedAreaDotProductWrap = function (inArray, width, height, x, y,
   }
 
   return dotProduct;
-}
+};
 
-BNUtils.Convolve = function (inArray, blurredArray, width, height, kernel, kWidth, kHeight) {
-  const halfkWidth = kWidth >> 1;
-  const halfkHeight = kHeight >> 1;
+BNUtils.Convolve = function (inArray, blurredArray, width, height, kernel, kernelWidth, kernelHeight) {
+  const halfkernelWidth = kernelWidth >> 1;
+  const halfkernelHeight = kernelHeight >> 1;
 
   for (let y = 0; y < height; y++) {
     const yRow = y * width;
-    const baseConvY = y - halfkHeight;
+    const baseConvY = y - halfkernelHeight;
 
-    const kyStart = Math.max(0, halfkHeight - y);
-    const kyEnd = Math.min(kHeight, height + halfkHeight - y);
+    const kyStart = Math.max(0, halfkernelHeight - y);
+    const kyEnd = Math.min(kernelHeight, height + halfkernelHeight - y);
 
     for (let x = 0; x < width; x++) {
-      const baseConvX = x - halfkWidth;
+      const baseConvX = x - halfkernelWidth;
       let accum = 0;
 
-      const kxStart = Math.max(0, halfkWidth - x);
-      const kxEnd = Math.min(kWidth, width + halfkWidth - x);
+      const kxStart = Math.max(0, halfkernelWidth - x);
+      const kxEnd = Math.min(kernelWidth, width + halfkernelWidth - x);
 
       for (let ky = kyStart; ky < kyEnd; ky++) {
         const convYRow = (baseConvY + ky) * width;
-        const kyRow = ky * kWidth;
+        const kyRow = ky * kernelWidth;
 
         for (let kx = kxStart; kx < kxEnd; kx++)
           accum += inArray[convYRow + baseConvX + kx] * kernel[kyRow + kx];
@@ -1269,77 +1323,77 @@ BNUtils.Convolve = function (inArray, blurredArray, width, height, kernel, kWidt
       blurredArray[yRow + x] = accum;
     }
   }
-}
+};
 
-BNUtils.ConvolveAdd = function (blurredArray, width, height, x, y, kernel, kWidth, kHeight, amount) {
-  const halfkWidth = kWidth >> 1;
-  const halfkHeight = kHeight >> 1;
+BNUtils.ConvolveAdd = function (blurredArray, width, height, x, y, kernel, kernelWidth, kernelHeight, amount) {
+  const halfkernelWidth = kernelWidth >> 1;
+  const halfkernelHeight = kernelHeight >> 1;
 
-  const convX = x - halfkWidth;
-  const convY = y - halfkHeight;
+  const convX = x - halfkernelWidth;
+  const convY = y - halfkernelHeight;
 
-  const kxStart = Math.max(0, halfkWidth - x);
-  const kxEnd = Math.min(kWidth, width + halfkWidth - x);
+  const kxStart = Math.max(0, halfkernelWidth - x);
+  const kxEnd = Math.min(kernelWidth, width + halfkernelWidth - x);
 
-  const kyStart = Math.max(0, halfkHeight - y);
-  const kyEnd = Math.min(kHeight, height + halfkHeight - y);
+  const kyStart = Math.max(0, halfkernelHeight - y);
+  const kyEnd = Math.min(kernelHeight, height + halfkernelHeight - y);
 
   for (let ky = kyStart; ky < kyEnd; ky++) {
     const convYRow = (convY + ky) * width;
-    const kyRow = ky * kWidth;
+    const kyRow = ky * kernelWidth;
 
     for (let kx = kxStart; kx < kxEnd; kx++)
       blurredArray[convYRow + convX + kx] += kernel[kyRow + kx] * amount;
   }
-}
+};
 
-BNUtils.GetConvolvedArea = function (inArray, width, height, x, y, outArray, kWidth, kHeight) {
-  const halfkWidth = kWidth >> 1;
-  const halfkHeight = kHeight >> 1;
+BNUtils.GetConvolvedArea = function (inArray, width, height, x, y, outArray, kernelWidth, kernelHeight) {
+  const halfkernelWidth = kernelWidth >> 1;
+  const halfkernelHeight = kernelHeight >> 1;
 
-  const convX = x - halfkWidth;
-  const convY = y - halfkHeight;
+  const convX = x - halfkernelWidth;
+  const convY = y - halfkernelHeight;
 
-  const kxStart = Math.max(0, halfkWidth - x);
-  const kxEnd = Math.min(kWidth, width + halfkWidth - x);
+  const kxStart = Math.max(0, halfkernelWidth - x);
+  const kxEnd = Math.min(kernelWidth, width + halfkernelWidth - x);
 
-  const kyStart = Math.max(0, halfkHeight - y);
-  const kyEnd = Math.min(kHeight, height + halfkHeight - y);
+  const kyStart = Math.max(0, halfkernelHeight - y);
+  const kyEnd = Math.min(kernelHeight, height + halfkernelHeight - y);
 
   for (let ky = kyStart; ky < kyEnd; ky++) {
     const convRow = (convY + ky) * width;
-    const kyRow = ky * kWidth;
+    const kyRow = ky * kernelWidth;
 
     for (let kx = kxStart; kx < kxEnd; kx++)
       outArray[kyRow + kx] = inArray[convRow + convX + kx];
   }
-}
+};
 
-BNUtils.GetConvolvedAreaDotProduct = function (inArray, width, height, x, y, kernel, kWidth, kHeight) {
-  const halfkWidth = kWidth >> 1;
-  const halfkHeight = kHeight >> 1;
+BNUtils.GetConvolvedAreaDotProduct = function (inArray, width, height, x, y, kernel, kernelWidth, kernelHeight) {
+  const halfkernelWidth = kernelWidth >> 1;
+  const halfkernelHeight = kernelHeight >> 1;
 
-  const convX = x - halfkWidth;
-  const convY = y - halfkHeight;
+  const convX = x - halfkernelWidth;
+  const convY = y - halfkernelHeight;
 
-  const kxStart = Math.max(0, halfkWidth - x);
-  const kxEnd = Math.min(kWidth, width + halfkWidth - x);
+  const kxStart = Math.max(0, halfkernelWidth - x);
+  const kxEnd = Math.min(kernelWidth, width + halfkernelWidth - x);
 
-  const kyStart = Math.max(0, halfkHeight - y);
-  const kyEnd = Math.min(kHeight, height + halfkHeight - y);
+  const kyStart = Math.max(0, halfkernelHeight - y);
+  const kyEnd = Math.min(kernelHeight, height + halfkernelHeight - y);
 
   let dotProduct = 0;
 
   for (let ky = kyStart; ky < kyEnd; ky++) {
     const convRow = (convY + ky) * width;
-    const kyRow = ky * kWidth;
+    const kyRow = ky * kernelWidth;
 
     for (let kx = kxStart; kx < kxEnd; kx++)
       dotProduct += inArray[convRow + convX + kx] * kernel[kyRow + kx];
   }
 
   return dotProduct;
-}
+};
 
 BNUtils.BilinearAddWrap = function (inArray, width, height, x, y, amount) {
   const floorX = Math.floor(x);
@@ -1367,7 +1421,7 @@ BNUtils.BilinearAddWrap = function (inArray, width, height, x, y, amount) {
   inArray[yRow1 + nextFloorX] += rightScale * invFracY;
   inArray[yRow2 + floorX] += leftScale * fracY;
   inArray[yRow2 + nextFloorX] += rightScale * fracY;
-}
+};
 
 BNUtils.BilinearLookupWrap = function (inArray, width, height, x, y) {
   const floorX = Math.floor(x);
@@ -1392,4 +1446,4 @@ BNUtils.BilinearLookupWrap = function (inArray, width, height, x, y) {
   const bottomValue = inArray[yRow2 + floorX] * invFracX + inArray[yRow2 + nextFloorX] * fracX;
 
   return (bottomValue - topValue) * fracY + topValue;
-}
+};
