@@ -1,12 +1,12 @@
-/**
- * Free JS implementation of every blue noise related stuff 
- *
- * v0.3.02
- * https://github.com/901D3/blue-noise.js
- *
- * Cody0right (c) 901D3
- * Licensed with GPLv3 license
- */
+/*
+blue-noise.js - Free JS implementation of every blue noise related stuff 
+
+v0.3.02-revised
+https://github.com/901D3/blue-noise.js
+
+Copyright (c) 901D3
+Licensed with GPLv3 license
+*/
 
 "use strict";
 
